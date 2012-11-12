@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node app"
+    "start": "node app",
+    "test" : "./node_modules/mocha/bin/mocha test/_helper.js test/dementor-test.coffee"
   },
   "dependencies": {
     "express": "3.0.0rc4",
@@ -11,6 +12,7 @@
   },
   "devDependencies": {
     "mocha": "~1.7.0",
-    "node-dev": "~0.2.8"
+    "node-dev": "~0.2.8",
+    "request": "~2.12.0"
   }
 }

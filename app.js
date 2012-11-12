@@ -6,10 +6,11 @@
 var express = require('express')
   , routes = require('./routes')
   , user = require('./routes/user')
+  , dementor = require('./routes/dementor')
   , http = require('http')
   , path = require('path');
 
-var app = express();
+var app = module.exports = express();
 
 app.configure(function(){
   app.set('port', process.env.PORT || 4000);
@@ -25,8 +26,14 @@ app.configure('development', function(){
   app.use(express.errorHandler());
 });
 
+app.configure('test', function(){
+  app.set('port', 4001)
+  app.use(express.errorHandler());
+});
+
 app.get('/', routes.index);
 app.get('/users', user.list);
+app.get('/init', dementor.init);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
