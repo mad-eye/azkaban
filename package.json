@@ -6,6 +6,11 @@
     "start": "node app"
   },
   "dependencies": {
-    "express": "3.0.0rc4"
+    "express": "3.0.0rc4",
+    "coffee-script": "~1.4.0"
+  },
+  "devDependencies": {
+    "mocha": "~1.7.0",
+    "node-dev": "~0.2.8"
   }
 }
