@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "start": "node app",
-    "test" : "./node_modules/mocha/bin/mocha test/_helper.js test/dementor-test.coffee"
+    "test": "bin/test"
   },
   "dependencies": {
     "express": "3.0.0rc4",
-    "coffee-script": "~1.4.0"
+    "coffee-script": "~1.4.0",
+    "mongodb": "~1.1.11"
   },
   "devDependencies": {
     "mocha": "~1.7.0",

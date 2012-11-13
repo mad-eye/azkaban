@@ -1,3 +1,19 @@
+app = require '../app'
+request = require 'request'
+mongo = require 'mongodb'
+
+console.log "Found app in routes:", app
 
 exports.init = (req, res) ->
-  res.send "Initialized"
+  #TODO: Connect to mongo to create project
+  #options = {
+    #url : "http://" + app.get("mongo.hostname"),
+  #}
+  #Mongo returns the id
+  id = '1234XYZ'
+  url = 'http://' + app.get('apogee.hostname') + '/project/' + id
+  #console.log "Responding with url", url
+  res.send """
+  {
+    "url" : "#{url}"
+  }"""
