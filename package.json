@@ -7,11 +7,13 @@
     "test": "bin/test"
   },
   "dependencies": {
-    "express": "3.0.0rc4",
     "coffee-script": "~1.4.0",
+    "express": "3.0.0rc4",
     "mongodb": "~1.1.11"
   },
   "devDependencies": {
+    "browserchannel": "~0.4.2",
+    "jade": "*",
     "mocha": "~1.7.0",
     "node-dev": "~0.2.8",
     "request": "~2.12.0"
