@@ -1,9 +1,11 @@
 app = require '../app'
 request = require 'request'
-mongo = require 'mongodb'
 
 
 exports.init = (req, res) ->
+  userId = req.params.userId
+  #mongo = new MongoConnector(MONGO_HOSTNAME, MONGO_PORT)
+
   #TODO: Connect to mongo to create project
   #options = {
     #url : "http://" + app.get("mongo.hostname"),

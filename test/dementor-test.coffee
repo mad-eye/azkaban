@@ -3,7 +3,8 @@ request = require 'request'
 url = require 'url'
 app = require '../app'
 
-describe "dementor", ->
+#FIXME: Put this in test/routes
+describe "routes/dementor", ->
   describe "init", ->
     body = bodyStr = response = null
     before (done) ->
@@ -30,4 +31,6 @@ describe "dementor", ->
       u = url.parse(body.url)
       assert.ok u.hostname
       assert.equal u.hostname, app.get('apogee.hostname')
+
+
 
