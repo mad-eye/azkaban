@@ -2,7 +2,6 @@ assert = require 'assert'
 request = require 'request'
 url = require 'url'
 app = require '../app'
-console.log "Found app in test:", app
 
 describe "dementor", ->
   describe "init", ->

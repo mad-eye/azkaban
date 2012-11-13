@@ -2,7 +2,6 @@ app = require '../app'
 request = require 'request'
 mongo = require 'mongodb'
 
-console.log "Found app in routes:", app
 
 exports.init = (req, res) ->
   #TODO: Connect to mongo to create project
