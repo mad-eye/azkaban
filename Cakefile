@@ -3,7 +3,7 @@ fs = require 'fs'
 
 task "test", "Run all the tests", ->
   #TODO figure out a less hacky way to find all the tests to run
-  exec """find test -name '*Test.coffee' | 
+  exec """find test -name '*Test.coffee' |
   xargs node_modules/mocha/bin/mocha --compilers coffee:coffee-script""",
     (error, stdout, stderr) ->
       console.error error if error
