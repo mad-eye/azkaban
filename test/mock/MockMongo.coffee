@@ -13,11 +13,11 @@ class MockDb
       callback(null, this)
 
   collection: (name, options, callback) ->
-    unless @callback?
+    unless callback?
       callback = options
       options = {}
     if @collectionError
-      callback(@collectionError)
+      callback(null, @collectionError)
       return
     if !@collections[name]
       if options.safe
@@ -25,10 +25,10 @@ class MockDb
         return
       else
         @collections[name] = new MockCollection(name)
-    callback(@collections[name])
+    callback(null, @collections[name])
 
   createCollection: (name, options, callback) ->
-    unless @callback?
+    unless callback?
       callback = options
       options = {}
     if @collectionError
@@ -40,7 +40,7 @@ class MockDb
         return
     else
       @collections[name] = new MockCollection(name)
-    callback(@collections[name])
+    callback(null, @collections[name])
 
 
 #@crudError: Error to be thrown on CRUD operation
@@ -49,7 +49,7 @@ class MockCollection
     @docs = {}
 
   insert: (docs, options, callback) ->
-    unless @callback?
+    unless callback?
       callback = options
       options = {}
     if @crudError

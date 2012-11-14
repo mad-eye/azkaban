@@ -13,7 +13,7 @@ describe "routes/dementor", ->
       mockDb = new MockDb()
       mongoConnector = new MongoConnector(mockDb)
       ##Uncomment to put in a broken mock mongo instance.
-      #ServiceKeeper.mongoConnector = mongoConnector
+      ServiceKeeper.mongoConnector = mongoConnector
       options =
         uri: "http://localhost:#{app.get('port')}/init"
       request options, (err, _res, _body) ->
