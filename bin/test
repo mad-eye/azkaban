@@ -2,4 +2,4 @@
 if [ "$1" == "-w" ]; then
   WATCH=--watch
 fi
-./node_modules/mocha/bin/mocha $WATCH test/_helper.js test/dementor-test.coffee
+./node_modules/mocha/bin/mocha $WATCH --compilers coffee:coffee-script test/dementor-test.coffee
