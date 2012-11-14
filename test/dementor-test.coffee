@@ -4,6 +4,7 @@ url = require 'url'
 app = require '../app'
 
 #FIXME: Put this in test/routes
+#FIXME: Remove _helper.js and change the bin/test command to compile via coffeescript
 describe "routes/dementor", ->
   describe "init", ->
     body = bodyStr = response = null
