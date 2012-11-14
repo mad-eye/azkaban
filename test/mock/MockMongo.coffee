@@ -2,6 +2,7 @@ uuid = require 'node-uuid'
 
 #@openError: Error to be thrown on open.
 #@collectionError: Error to be thrown on collection
+#@crudError: Error to be thrown on CRUD operation
 class MockDb
   constructor: (@name, @server) ->
     @collections = {}
@@ -24,7 +25,7 @@ class MockDb
         callback(new Error('Collection does not exist: ' +name))
         return
       else
-        @collections[name] = new MockCollection(name)
+        @collections[name] = new MockCollection(name, @crudError)
     callback(null, @collections[name])
 
   createCollection: (name, options, callback) ->
@@ -39,13 +40,13 @@ class MockDb
         callback(new Error('Collection already exists: ' +name))
         return
     else
-      @collections[name] = new MockCollection(name)
+      @collections[name] = new MockCollection(name, @crudError)
     callback(null, @collections[name])
 
 
 #@crudError: Error to be thrown on CRUD operation
 class MockCollection
-  constructor: (@name) ->
+  constructor: (@name, @crudError) ->
     @docs = {}
 
   insert: (docs, options, callback) ->

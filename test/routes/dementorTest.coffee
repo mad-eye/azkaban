@@ -80,5 +80,24 @@ describe "routes/dementor", ->
       console.log "Found error:", objects.body.error
       assert.equal errMsg, objects.body.error
 
+  describe "init with error in insert", ->
+    objects = {}
+    errMsg = null
+    before (done) ->
+      mockDb = new MockDb()
+      errMsg = "Cannot insert document."
+      mockDb.crudError = new Error(errMsg)
+      sendInitRequest(mockDb, objects, done)
+    it "returns a 200", ->
+      assert.ok objects.response.statusCode == 200
+    it "returns valid JSON", ->
+      assert.doesNotThrow ->
+        JSON.parse(objects.bodyStr)
+    it "returns an error", ->
+      assert.ok objects.body.error, "Body #{objects.bodyStr} doesn't have error property."
+    it "returns an error with the correct message", ->
+      console.log "Found error:", objects.body.error
+      assert.equal errMsg, objects.body.error
+
 
 
