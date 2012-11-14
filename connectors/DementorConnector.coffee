@@ -1,7 +1,6 @@
 browserChannel = require('browserchannel').server
 connect = require('connect')
-
-DEMENTOR_PORT = 4321
+app = require '../app'
 
 route = (data, callback) ->
   switch data.action
@@ -9,12 +8,12 @@ route = (data, callback) ->
     when 'addFiles' then addfiles data, callback
     else callback new Error("Unknown action: " + data.action)
 
-init = (data, callback) ->
-  console.log "Called init with ", data
+addFiles = (data, callback) ->
+  console.log "Called addFiles with ", data
   callback(null, null)
 
-addFiles = (data, callback) ->
-  console.log "Called addfiles with ", data
+removeFiles = (data, callback) ->
+  console.log "Called removeFiles with ", data
   callback(null, null)
 
 server = connect(
@@ -34,6 +33,6 @@ server = connect(
     session.on 'close', (reason) ->
       console.log "Session #{session.id} disconnected (#{reason})"
 
-).listen(DEMENTOR_PORT)
+).listen(app.get("bchannel.port"))
 
-console.log 'Echo server listening on localhost:' + DEMENTOR_PORT
+console.log 'Echo server listening on localhost:' + app.get("bchannel.port")

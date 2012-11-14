@@ -2,11 +2,18 @@ assert = require 'assert'
 request = require 'request'
 url = require 'url'
 app = require '../../app'
+{ServiceKeeper} = require '../../ServiceKeeper'
+{MongoConnector} = require '../../connectors/MongoConnector'
+{MockDb} = require '../mock/MockMongo'
 
 describe "routes/dementor", ->
   describe "init", ->
     body = bodyStr = response = null
     before (done) ->
+      mockDb = new MockDb()
+      mongoConnector = new MongoConnector(mockDb)
+      ##Uncomment to put in a broken mock mongo instance.
+      #ServiceKeeper.mongoConnector = mongoConnector
       options =
         uri: "http://localhost:#{app.get('port')}/init"
       request options, (err, _res, _body) ->

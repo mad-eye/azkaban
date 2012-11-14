@@ -67,4 +67,4 @@ class MockCollection
     callback(null, docs)
 
 
-module.export = MockDb
+exports.MockDb = MockDb

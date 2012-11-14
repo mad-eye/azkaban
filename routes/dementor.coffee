@@ -1,6 +1,7 @@
 app = require '../app'
 request = require 'request'
-{MongoConnector} = require '../connectors/MongoConnector'
+{ServiceKeeper} = require '../ServiceKeeper'
+console.log "Found ServiceKeeper", ServiceKeeper
 
 sendErrorResponse = (res, err) ->
   console.log "Sending error ", err
@@ -9,7 +10,7 @@ sendErrorResponse = (res, err) ->
 
 exports.init = (req, res) ->
   userId = req.params.userId
-  mongo = MongoConnector.instance(app.get("mongo.hostname"), app.get("mongo.port"))
+  mongo = ServiceKeeper.mongoInstance()
   #console.log "Found MongoConnector", mongo
   mongo.createProject (err, projects) ->
     if err

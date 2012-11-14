@@ -19,12 +19,14 @@ app.configure ->
   app.use(express.static(path.join(__dirname, 'public')))
   app.set('mongo.hostname', 'mongo.madeye.io') #FIXME
   app.set('mongo.port', 27017) #FIXME
+  app.set('bchannel.port', 4321) #FIXME
   app.set('apogee.hostname', 'apogee.madeye.io')
 
 app.configure 'development', ->
   app.use(express.errorHandler())
   app.set('mongo.hostname', 'localhost') #FIXME
   app.set('mongo.port', 27017) #FIXME
+  app.set('bchannel.port', 4321) #FIXME
   app.set('apogee.hostname', 'apogee.madeye.io')
 
 app.configure 'test', ->
@@ -32,6 +34,7 @@ app.configure 'test', ->
   app.use(express.errorHandler())
   app.set('mongo.hostname', 'localhost') #FIXME
   app.set('mongo.port', 27017) #FIXME
+  app.set('bchannel.port', 4321) #FIXME
   app.set('apogee.hostname', 'apogee.madeye.io')
 
 app.get('/', routes.index)
