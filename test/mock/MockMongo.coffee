@@ -17,7 +17,7 @@ class MockDb
       callback = options
       options = {}
     if @collectionError
-      callback(null, @collectionError)
+      callback(@collectionError)
       return
     if !@collections[name]
       if options.safe
