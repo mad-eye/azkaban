@@ -1,7 +1,7 @@
 assert = require 'assert'
 request = require 'request'
 url = require 'url'
-app = require '../app'
+app = require '../../app'
 
 #FIXME: Put this in test/routes
 #FIXME: Remove _helper.js and change the bin/test command to compile via coffeescript
