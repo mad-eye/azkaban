@@ -6,7 +6,7 @@ app = require '../../app'
 {MongoConnector} = require '../../connectors/MongoConnector'
 {MockDb} = require '../mock/MockMongo'
 
-describe "routes/dementor", ->
+describe "controllers/dementor", ->
   describe "init", ->
     body = bodyStr = response = null
     before (done) ->
@@ -37,6 +37,3 @@ describe "routes/dementor", ->
       u = url.parse(body.url)
       assert.ok u.hostname
       assert.equal u.hostname, app.get('apogee.hostname')
-
-
-

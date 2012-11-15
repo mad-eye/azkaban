@@ -6,8 +6,7 @@ path = require('path')
 
 app = module.exports = express()
 
-routes = require('./routes')
-dementor = require('./routes/dementor')
+require('./routes')(app)
 
 app.configure ->
   app.set('port', process.env.PORT || 4004)
@@ -37,10 +36,5 @@ app.configure 'test', ->
   app.set('bchannel.port', 4321) #FIXME
   app.set('apogee.hostname', 'apogee.madeye.io')
 
-app.get('/', routes.index)
-app.get('/init', dementor.init)
-
 http.createServer(app).listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))
-
-#TOOD add browserchannel code
