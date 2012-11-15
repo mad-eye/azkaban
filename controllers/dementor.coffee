@@ -1,15 +1,13 @@
-app = require '../app'
-request = require 'request'
-{MongoConnector} = require '../connectors/MongoConnector'
+{ServiceKeeper} = require '../ServiceKeeper'
 
 sendErrorResponse = (res, err) ->
   console.log "Sending error ", err
   resObject = {error:err.message}
   res.send JSON.stringify(resObject)
 
-exports.init = (req, res) ->
+exports.init = (req, res, app) ->
   userId = req.params.userId
-  mongo = MongoConnector.instance(app.get("mongo.hostname"), app.get("mongo.port"))
+  mongo = ServiceKeeper.mongoInstance()
   #console.log "Found MongoConnector", mongo
   mongo.createProject (err, projects) ->
     if err
@@ -17,5 +15,5 @@ exports.init = (req, res) ->
     else
       console.log "Found project", projects
       id = projects[0]._id
-      url = 'http://' + app.get('apogee.hostname') + '/project/' + id
+      url = "http://#{app.get 'apogee.hostname'}/project/#{id}"
       res.send JSON.stringify({url:url, id:id})
