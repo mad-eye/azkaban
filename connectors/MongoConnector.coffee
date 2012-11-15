@@ -22,7 +22,7 @@ class MongoConnector
 
   #callback = (err, objects) ->
   insert: (objects, collectionName, callback) ->
-    console.log "Calling insert with callback", callback
+    #console.log "Calling insert with callback", callback
     helper = new MongoHelper(callback)
     @db.open (err, db) ->
       if err
