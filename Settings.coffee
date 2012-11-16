@@ -5,6 +5,8 @@ Settings = {
   httpPort: process.env["MADEYE_HTTP_PORT"]
   mongoHost: process.env["MADEYE_MONGO_HOST"],
   mongoPort: process.env["MADEYE_MONGO_PORT"]
+  apogeeHost: process.env["MADEYE_APOGEE_HOST"],
+  apogeePort: process.env["MADEYE_APOGEE_PORT"]
 }
 
 exports.Settings = Settings
