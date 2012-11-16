@@ -13,7 +13,7 @@ uuid = require 'node-uuid'
 # }
 describe "SocketConnection", ->
   describe "on receiving message", ->
-    it "should add data", (done) ->
+    it "should add data", () ->
       sentMessages = []
       socket = new MockSocket(
         onsend: (message) ->
@@ -31,13 +31,7 @@ describe "SocketConnection", ->
             {path:'foo/bar/dir1/file2', isDir:false }
           ]
 
-      dementorConnection = new SocketConnection(new DementorRoutes( (err, result) ->
-        if err
-          console.error "Found error", err
-        else
-          #console.log "Found result", result
-        done()
-      ))
+      dementorConnection = new SocketConnection(new DementorRoutes())
       dementorConnection.startup socket
       socket.receive message
 

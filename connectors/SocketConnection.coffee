@@ -1,27 +1,42 @@
 browserChannel = require('browserchannel').server
 connect = require('connect')
+uuid = require 'node-uuid'
+{ServiceKeeper} = require '../ServiceKeeper'
 
 class DementorRoutes
-  constructor: (@callback) ->
+  constructor: () ->
 
-  route : (message) ->
+  route : (message, callback) ->
     switch message.action
-      when 'addFiles' then @addFiles message.data
-      when 'removeFiles' then @removeFiles message.data
+      when 'addFiles' then @addFiles message
+      when 'removeFiles' then @removeFiles message
       else @callback? new Error("Unknown action: " + message.action)
 
-  addFiles : (data) ->
-    #console.log "Called addFiles with ", data
-    @callback? null, data
+  addFiles : (message, callback) ->
+    mongoConnection = ServiceKeeper.mongoInstance()
+    mongoConnection.addFiles message.data.files, message.projectId, (err, results) ->
+      if err
+        console.error "Error in addFiles:", err
+        callback(err)
+      else
+        console.log "Results from addFile:", results
+        #callback(null, results)
 
-  removeFiles : (data) ->
-    #console.log "Called removeFiles with ", data
-    @callback? null, data
+  removeFiles : (message, callback) ->
+    console.log "Called removeFiles with ", data
 
 exports.DementorRoutes = DementorRoutes
 
 class SocketConnection
   constructor: (@controller) ->
+
+  confirmationMessage: (message) ->
+    confirmationMsg =
+      action: 'acknowlege',
+      receivedId:message.uuid,
+      timestamp: new Date().getTime(),
+      uuid: uuid.v4()
+    @socket.send confirmationMsg
 
   startup: (@socket) ->
     console.log "New socket: #{socket.id} from #{socket.address}"
@@ -33,7 +48,7 @@ class SocketConnection
         else
           socket.send result
 
-      socket.send message
+      socket.send @confirmationMessage message
 
     socket.on 'close', (reason) =>
       console.log "Socket #{socket.id} disconnected (#{reason})"
