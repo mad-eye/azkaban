@@ -1,4 +1,4 @@
-app = require './app'
+{Settings} = require "./Settings"
 {MongoConnector} = require './connectors/MongoConnector'
 
 #Set the connection ivars to override the defaults.
