@@ -1,7 +1,7 @@
 browserChannel = require('browserchannel').server
 connect = require('connect')
 
-class DementorController
+class DementorRoutes
   constructor: (@callback) ->
 
   route : (message) ->
@@ -18,7 +18,7 @@ class DementorController
     console.log "Called removeFiles with ", data
     @callback? null, data
 
-exports.DementorController = DementorController
+exports.DementorRoutes = DementorRoutes
 
 class SocketConnection
   constructor: (@controller) ->

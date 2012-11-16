@@ -1,7 +1,7 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket} = require '../mock/MockSocket'
-{SocketConnection, DementorController} = require '../../connectors/DementorConnector'
+{SocketConnection, DementorRoutes} = require '../../connectors/DementorConnector'
 
 #
 # Messages are of the form:
@@ -31,7 +31,7 @@ describe "DementorConnector", ->
             {path:'foo/bar/dir1/file2', isDir:false }
           ]
 
-      dementorConnection = new SocketConnection(new DementorController( (err, result) ->
+      dementorConnection = new SocketConnection(new DementorRoutes( (err, result) ->
         if err
           console.error "Found error", err
         else
