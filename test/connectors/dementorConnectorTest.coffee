@@ -1,7 +1,8 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket} = require '../mock/MockSocket'
-{SocketConnection, DementorRoutes} = require '../../connectors/SocketConnection'
+{SocketConnection} = require '../../connectors/SocketConnection'
+{DementorChannel} = require '../../channels/DementorChannel'
 
 #
 # Messages are of the form:
@@ -31,7 +32,7 @@ describe "SocketConnection", ->
             {path:'foo/bar/dir1/file2', isDir:false }
           ]
 
-      dementorConnection = new SocketConnection(new DementorRoutes())
+      dementorConnection = new SocketConnection(new DementorChannel())
       dementorConnection.startup socket
       socket.receive message
 

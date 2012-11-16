@@ -3,7 +3,8 @@ connect = require('connect')
 express = require('express')
 http = require('http')
 path = require('path')
-{SocketConnection, DementorRoutes} = require './connectors/SocketConnection'
+{SocketConnection} = require './connectors/SocketConnection'
+{DementorChannel} = require './channels/DementorChannel'
 
 #TODO: Replace config params with Settings
 
@@ -40,7 +41,7 @@ app.configure 'test', ->
   app.set('apogee.hostname', 'apogee.madeye.io')
 
 
-dementorConnection = new SocketConnection(new DementorRoutes())
+dementorConnection = new SocketConnection(new DementorChannel())
 dementorConnection.listen app.get('bchannel.port')
 
 
