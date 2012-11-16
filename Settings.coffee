@@ -1,3 +1,4 @@
+#TODO: Change Host to Hostname
 Settings = {
   bcHost: process.env["MADEYE_BC_HOST"],
   bcPort: process.env["MADEYE_BC_PORT"],

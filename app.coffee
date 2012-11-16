@@ -5,6 +5,8 @@ http = require('http')
 path = require('path')
 {SocketConnection, DementorRoutes} = require './connectors/SocketConnection'
 
+#TODO: Replace config params with Settings
+
 app = module.exports = express()
 
 require('./routes')(app)
