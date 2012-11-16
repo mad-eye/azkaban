@@ -3,7 +3,7 @@ connect = require('connect')
 express = require('express')
 http = require('http')
 path = require('path')
-{SocketConnection, DementorRoutes} = require './connectors/DementorConnector'
+{SocketConnection, DementorRoutes} = require './connectors/SocketConnection'
 
 app = module.exports = express()
 

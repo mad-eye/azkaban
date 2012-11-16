@@ -1,7 +1,7 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket} = require '../mock/MockSocket'
-{SocketConnection, DementorRoutes} = require '../../connectors/DementorConnector'
+{SocketConnection, DementorRoutes} = require '../../connectors/SocketConnection'
 
 #
 # Messages are of the form:
@@ -11,7 +11,7 @@ uuid = require 'node-uuid'
 #   timestamp: Date timestamp of sending
 #   data: JSON object, case specific data
 # }
-describe "DementorConnector", ->
+describe "SocketConnection", ->
   describe "on receiving message", ->
     it "should add data", (done) ->
       sentMessages = []
