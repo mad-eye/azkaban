@@ -35,7 +35,7 @@ describe "SocketConnection", ->
         if err
           console.error "Found error", err
         else
-          console.log "Found result", result
+          #console.log "Found result", result
         done()
       ))
       dementorConnection.startup socket

@@ -50,7 +50,7 @@ class MockDb
 #@crudError: Error to be thrown on CRUD operation
 class MockCollection
   constructor: (@name, @crudError) ->
-    @docs = {}
+    @documents = {}
 
   insert: (docs, options, callback) ->
     unless callback?
@@ -59,15 +59,10 @@ class MockCollection
     if @crudError
       callback(@crudError)
       return
-    single = false
-    if typeof docs == 'object'
-      single = true
-      docs = [docs]
     for doc in docs
       doc._id = uuid.v4()
-      @docs[doc._id] = doc
-    if single
-      docs = docs[0]
+      @documents[doc._id] = doc
+      
     callback(null, docs)
 
 

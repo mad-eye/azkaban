@@ -11,11 +11,11 @@ class DementorRoutes
       else @callback? new Error("Unknown action: " + message.action)
 
   addFiles : (data) ->
-    console.log "Called addFiles with ", data
+    #console.log "Called addFiles with ", data
     @callback? null, data
 
   removeFiles : (data) ->
-    console.log "Called removeFiles with ", data
+    #console.log "Called removeFiles with ", data
     @callback? null, data
 
 exports.DementorRoutes = DementorRoutes
@@ -24,10 +24,9 @@ class SocketConnection
   constructor: (@controller) ->
 
   startup: (@socket) ->
-    console.log "New socket: #{socket.id} from #{socket.address} with cookies #{socket.headers.cookie}"
+    console.log "New socket: #{socket.id} from #{socket.address}"
 
     socket.on 'message', (message) =>
-      console.log "#{socket.id} sent #{JSON.stringify message}"
       @controller.route message, (err, result) ->
         if err
           socket.send {error: err.message}

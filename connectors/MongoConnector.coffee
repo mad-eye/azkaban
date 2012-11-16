@@ -14,7 +14,6 @@ class MongoHelper
     @callback(err, null)
 
   handleResult: (result) ->
-    console.log "Found " + result?.length + " result."
     @result = result
     @db.close()
     @callback(null, result)
@@ -24,24 +23,20 @@ class MongoConnector
 
   #callback = (err, objects) ->
   insert: (objects, collectionName, callback) ->
-    #console.log "Calling insert with callback", callback
     helper = new MongoHelper(@db, callback)
+
     @db.open (err, db) ->
       if err
         helper.handleError err
       else
-        console.log "We are connected to #{DB_NAME}"
         db.collection collectionName, (err, collection) ->
           if err
             helper.handleError err
           else
-            console.log "Opening collection #{collectionName}"
             collection.insert objects, {safe:true}, (err, result) ->
               if err
                 helper.handleError err
               else
-                console.log "typeof result:", typeof result
-                console.log "Found insert result", result
                 helper.handleResult result
 
   createProject: (callback) ->
