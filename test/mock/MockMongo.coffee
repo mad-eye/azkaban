@@ -13,6 +13,9 @@ class MockDb
     else
       callback(null, this)
 
+  close: () ->
+    #console.log "Closing db"
+
   collection: (name, options, callback) ->
     unless callback?
       callback = options
