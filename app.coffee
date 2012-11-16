@@ -3,6 +3,8 @@ connect = require('connect')
 express = require('express')
 http = require('http')
 path = require('path')
+{DementorConnection} = require './connectors/DementorConnector'
+{DementorController} = require './connectors/DementorConnector'
 
 app = module.exports = express()
 
@@ -35,6 +37,10 @@ app.configure 'test', ->
   app.set('mongo.port', 27017) #FIXME
   app.set('bchannel.port', 4321) #FIXME
   app.set('apogee.hostname', 'apogee.madeye.io')
+
+
+dementorConnection = new DementorConnection(new DementorController())
+  
 
 http.createServer(app).listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))

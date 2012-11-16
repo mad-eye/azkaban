@@ -6,7 +6,6 @@ sendErrorResponse = (res, err) ->
   res.send JSON.stringify(resObject)
 
 exports.init = (req, res, app) ->
-  userId = req.params.userId
   mongo = ServiceKeeper.mongoInstance()
   #console.log "Found MongoConnector", mongo
   mongo.createProject (err, projects) ->
