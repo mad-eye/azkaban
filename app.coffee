@@ -3,8 +3,7 @@ connect = require('connect')
 express = require('express')
 http = require('http')
 path = require('path')
-{SocketConnection} = require './connectors/DementorConnector'
-{DementorController} = require './connectors/DementorConnector'
+{SocketConnection, DementorController} = require './connectors/DementorConnector'
 
 app = module.exports = express()
 
@@ -41,7 +40,7 @@ app.configure 'test', ->
 
 dementorConnection = new SocketConnection(new DementorController())
 dementorConnection.listen app.get('bchannel.port')
-  
+
 
 http.createServer(app).listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))

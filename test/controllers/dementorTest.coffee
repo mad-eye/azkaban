@@ -12,6 +12,7 @@ sendInitRequest = (mockDb, objects, done) ->
     ServiceKeeper.mongoConnector = mongoConnector
   objects ?= {}
   options =
+    method: "POST"
     uri: "http://localhost:#{app.get('port')}/init"
   request options, (err, _res, _body) ->
     console.log "Found body ", _body
