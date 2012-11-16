@@ -1,5 +1,7 @@
 #! /bin/sh
+
 if [ "$1" == "-w" ]; then
   WATCH=--watch
 fi
-./node_modules/mocha/bin/mocha $WATCH --compilers coffee:coffee-script test/controllers/dementorTest.coffee
+
+find test -name '*Test.coffee' -print0 | xargs -0 node_modules/mocha/bin/mocha $WATCH --compilers coffee:coffee-script
