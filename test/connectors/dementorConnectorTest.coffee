@@ -1,6 +1,7 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket} = require '../mock/MockSocket'
+{SocketConnection, DementorController} = require '../../connectors/DementorConnector'
 
 #
 # Messages are of the form:
@@ -13,6 +14,11 @@ uuid = require 'node-uuid'
 describe "DementorConnector", ->
   describe "on receiving message", ->
     it "should add data", (done) ->
+      sentMessages = []
+      socket = new MockSocket(
+        onsend: (message) ->
+          sentMessages.push message
+      )
       message =
         id: uuid.v4(),
         timestamp: new Date().getTime(),
@@ -24,7 +30,16 @@ describe "DementorConnector", ->
             {path:'foo/bar/dir1', isDir:true },
             {path:'foo/bar/dir1/file2', isDir:false }
           ]
-      done()
+
+      dementorConnection = new SocketConnection(new DementorController( (err, result) ->
+        if err
+          console.error "Found error", err
+        else
+          console.log "Found result", result
+        done()
+      ))
+      dementorConnection.startup socket
+      socket.receive message
 
 
 

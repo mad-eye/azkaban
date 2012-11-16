@@ -4,12 +4,20 @@ _ = require 'underscore'
 #also have 'onsend', which is called on send.
 class MockSocket
   constructor: (callbacks) ->
-    @readyState = 0
+    @setState @CONNECTING
     _.extend(this, callbacks)
+    @options = {}
+    @headers = {}
+
+
+  setState: (state) ->
+    oldState = @readyState
+    @readyState = state
+    @['onopen']?() if @readyState == @OPEN && oldState != @OPEN
+    @['onclose']?() if @readyState == @CLOSED && oldState != @CLOSED
 
   completeConnection: ->
-    @readyState = 1
-    @onopen() if @onopen?
+    @setState @OPEN
 
   send: (message) ->
     @onsend message if @onsend?
@@ -17,7 +25,20 @@ class MockSocket
   receive: (message) ->
     @onmessage message if @onmessage?
 
+  open: ->
+    throw new Error 'Already open' unless @readyState is @CLOSED
+    @setState @CONNECTING
+
   close: ->
-    @closed = true
+    @setState @CLOSED
+
+  on: (action, callback) ->
+    @["on#{action}"] = callback
+
+MockSocket.prototype['CONNECTING'] = MockSocket['CONNECTING'] = MockSocket.CONNECTING = 0
+MockSocket.prototype['OPEN'] = MockSocket['OPEN'] = MockSocket.OPEN = 1
+MockSocket.prototype['CLOSING'] = MockSocket['CLOSING'] = MockSocket.CLOSING = 2
+MockSocket.prototype['CLOSED'] = MockSocket['CLOSED'] = MockSocket.CLOSED = 3
+
 
 exports.MockSocket = MockSocket

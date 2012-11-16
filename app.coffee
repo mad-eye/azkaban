@@ -3,7 +3,7 @@ connect = require('connect')
 express = require('express')
 http = require('http')
 path = require('path')
-{DementorConnection} = require './connectors/DementorConnector'
+{SocketConnection} = require './connectors/DementorConnector'
 {DementorController} = require './connectors/DementorConnector'
 
 app = module.exports = express()
@@ -39,7 +39,8 @@ app.configure 'test', ->
   app.set('apogee.hostname', 'apogee.madeye.io')
 
 
-dementorConnection = new DementorConnection(new DementorController())
+dementorConnection = new SocketConnection(new DementorController())
+dementorConnection.listen app.get('bchannel.port')
   
 
 http.createServer(app).listen(app.get('port'), ->

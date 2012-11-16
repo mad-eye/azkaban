@@ -1,50 +1,51 @@
 browserChannel = require('browserchannel').server
 connect = require('connect')
-{Settings} = require '../Settings'
 
 class DementorController
-  constructor: ->
+  constructor: (@callback) ->
 
-  route = (message, callback) ->
+  route : (message) ->
     switch message.action
-      when 'init' then @dementorController.init message.data, callback
-      when 'addFiles' then @dementorController.addfiles message.data, callback
-      else callback new Error("Unknown action: " + message.action)
+      when 'addFiles' then @addFiles message.data
+      when 'removeFiles' then @removeFiles message.data
+      else @callback? new Error("Unknown action: " + message.action)
 
-  addFiles = (data, callback) ->
+  addFiles : (data) ->
     console.log "Called addFiles with ", data
-    callback(null, null)
+    @callback? null, data
 
-  removeFiles = (data, callback) ->
+  removeFiles : (data) ->
     console.log "Called removeFiles with ", data
-    callback(null, null)
+    @callback? null, data
 
 exports.DementorController = DementorController
 
-class DementorConnection
-  constructor: (@dementorController) ->
+class SocketConnection
+  constructor: (@controller) ->
 
-  initialize: (bcPort) ->
+  startup: (@socket) ->
+    console.log "New socket: #{socket.id} from #{socket.address} with cookies #{socket.headers.cookie}"
+
+    socket.on 'message', (message) =>
+      console.log "#{socket.id} sent #{JSON.stringify message}"
+      @controller.route message, (err, result) ->
+        if err
+          socket.send {error: err.message}
+        else
+          socket.send result
+
+      socket.send message
+
+    socket.on 'close', (reason) =>
+      console.log "Socket #{socket.id} disconnected (#{reason})"
+
+  listen: (bcPort) ->
     @server = connect(
       browserChannel (socket) =>
-        @socket = socket
-        console.log "New socket: #{socket.id} from #{socket.address} with cookies #{socket.headers.cookie}"
-
-        socket.on 'message', (message) =>
-          console.log "#{socket.id} sent #{JSON.stringify message}"
-          @dementorController.route message, (err, result) ->
-            if err
-              socket.send {error: err.message}
-            else
-              socket.send result
-
-          socket.send message
-
-        socket.on 'close', (reason) =>
-          console.log "Socket #{socket.id} disconnected (#{reason})"
-
+        console.log "Found socket", socket
+        @startup(socket)
     ).listen(bcPort)
 
     console.log 'Echo server listening on localhost:' + bcPort
 
-exports.DementorConnection = DementorConnection
+exports.SocketConnection = SocketConnection
