@@ -8,7 +8,7 @@ ServiceKeeper =
   mongoConnector: null
 
   mongoInstance: ->
-    @mongoConnector ?= MongoConnector.instance(app.get("mongo.hostname"), app.get("mongo.port"))
+    @mongoConnector ?= MongoConnector.instance(Settings.mongoHost, Settings.mongoPort)
     return @mongoConnector
 
 
