@@ -13,7 +13,7 @@ class SocketConnection
       uuid: uuid.v4()
     @socket.send confirmationMsg
 
-  startup: (@socket) ->
+  connect: (@socket) ->
     console.log "New socket: #{socket.id} from #{socket.address}"
 
     socket.on 'message', (message) =>
@@ -32,7 +32,7 @@ class SocketConnection
     @server = connect(
       browserChannel (socket) =>
         console.log "Found socket", socket
-        @startup(socket)
+        @connect(socket)
     ).listen(bcPort)
 
     console.log 'Echo server listening on localhost:' + bcPort

@@ -33,7 +33,7 @@ describe "SocketConnection", ->
           ]
 
       dementorConnection = new SocketConnection(new DementorChannel())
-      dementorConnection.startup socket
+      dementorConnection.connect socket
       socket.receive message
 
 

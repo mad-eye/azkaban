@@ -1,9 +1,12 @@
 _ = require 'underscore'
+uuid = require 'uuid'
 
 #Initialize with callbacks 'onopen', 'onmessage', etc
 #also have 'onsend', which is called on send.
 class MockSocket
   constructor: (callbacks) ->
+    @id = uuid.v4()
+    @address = "192.168.0.0"
     @setState @CONNECTING
     _.extend(this, callbacks)
     @options = {}
