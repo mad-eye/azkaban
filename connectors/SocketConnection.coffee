@@ -5,7 +5,7 @@ uuid = require 'node-uuid'
 class SocketConnection
   constructor: (@controller) ->
     @liveSockets = {} # {projectId: socket}, to look sockets up for apogee-dementor communication
-    @sidPidMap = {} # {socketId:projectId}, to look up entries in liveSockets for deletion
+    @projectIdMap = {} # {socketId:projectId}, to look up entries in liveSockets for deletion
 
   listen: (bcPort) ->
     @server = connect(
@@ -43,13 +43,13 @@ class SocketConnection
       console.log "Socket #{socket.id} disconnected (#{reason})"
 
   attachSocket: (socket, projectId) ->
-    @sidPidMap[socket.id] = projectId
+    @projectIdMap[socket.id] = projectId
     @liveSockets[projectId] = socket
 
   detachSocket: (socket) ->
-    projectId = @sidPidMap[socket.id]
+    projectId = @projectIdMap[socket.id]
     delete @liveSockets[projectId] if projectId
-    delete @sidPidMap[socket.id]
+    delete @projectIdMap[socket.id]
 
   
 exports.SocketConnection = SocketConnection
