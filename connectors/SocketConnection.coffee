@@ -1,7 +1,6 @@
 browserChannel = require('browserchannel').server
 connect = require('connect')
 uuid = require 'node-uuid'
-{BiMap} = require '../util/BiMap'
 
 class SocketConnection
   constructor: (@controller) ->
@@ -30,6 +29,7 @@ class SocketConnection
     socket.on 'message', (message) =>
       if message.action == 'handshake'
         @attachSocket socket, message.projectId
+        return
       @controller.route message, (err, result) ->
         if err
           socket.send {error: err.message}
@@ -42,13 +42,14 @@ class SocketConnection
       @detachSocket socket
       console.log "Socket #{socket.id} disconnected (#{reason})"
 
-  @attachSocket: (socket, projectId) ->
+  attachSocket: (socket, projectId) ->
     @sidPidMap[socket.id] = projectId
     @liveSockets[projectId] = socket
 
-  @detachSocket: (socket) ->
+  detachSocket: (socket) ->
     projectId = @sidPidMap[socket.id]
     delete @liveSockets[projectId] if projectId
     delete @sidPidMap[socket.id]
 
+  
 exports.SocketConnection = SocketConnection
