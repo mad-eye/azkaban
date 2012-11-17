@@ -1,6 +1,6 @@
 mongo = require 'mongodb'
 
-DB_NAME = 'apogee'
+DB_NAME = 'meteor'
 PROJECT_COLLECTION = 'projects'
 FILES_COLLECTION = 'files'
 
