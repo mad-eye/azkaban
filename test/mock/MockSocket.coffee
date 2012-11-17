@@ -1,5 +1,5 @@
 _ = require 'underscore'
-uuid = require 'uuid'
+uuid = require 'node-uuid'
 
 #Initialize with callbacks 'onopen', 'onmessage', etc
 #also have 'onsend', which is called on send.
