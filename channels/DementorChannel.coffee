@@ -13,10 +13,10 @@ class DementorChannel
     mongoConnection.addFiles message.data.files, message.projectId, (err, results) ->
       if err
         console.error "Error in addFiles:", err
-        callback(err)
+        callback(err) if callback
       else
         console.log "Results from addFile:", results
-        #callback(null, results)
+        #callback(null, results) if callback
 
   removeFiles : (message, callback) ->
     console.log "Called removeFiles with ", data
