@@ -46,6 +46,16 @@ class MockDb
       @collections[name] = new MockCollection(name, @crudError)
     callback(null, @collections[name])
 
+  #For test classes
+  getCollection: (name, crudError) ->
+    if @collections[name]
+      return @collections[name]
+    else
+      @collections[name] = new MockCollection(name, crudError)
+
+  #For test classes to set up data
+  load: (collectionName, document) ->
+    @getCollection('collectionName').load(document)
 
 #@crudError: Error to be thrown on CRUD operation
 class MockCollection
@@ -65,5 +75,8 @@ class MockCollection
       
     callback(null, docs)
 
+  #For test classes to use
+  load: (doc) ->
+    @documents[doc._id] = doc
 
 exports.MockDb = MockDb

@@ -6,6 +6,8 @@ class SocketConnection
   constructor: (@controller) ->
     @liveSockets = {} # {projectId: socket}, to look sockets up for apogee-dementor communication
     @projectIdMap = {} # {socketId:projectId}, to look up entries in liveSockets for deletion
+    @sentMessages = []
+    @registeredCallbacks = {}
 
   listen: (bcPort) ->
     @server = connect(
@@ -24,19 +26,31 @@ class SocketConnection
 
   connect: (@socket) ->
     console.log "New socket: #{socket.id} from #{socket.address}"
-    @liveSockets[socket.id] = socket
 
     socket.on 'message', (message) =>
       if message.action == 'handshake'
         @attachSocket socket, message.projectId
         return
+      else if message.action == 'confirm'
+        delete @sentMessages[message.receivedId]
+        return
+      #Check for any callbacks waiting for a response.
+      if message.replyTo?
+        callback = @registeredCallbacks[message.replyTo]
+        if callback
+          if message.error
+            callback {error: message.error}
+          else
+            callback null, message
+        return
+        #TODO: Should this be the end of the message?  Do we ever need to route replies?
       @controller.route message, (err, result) ->
         if err
-          socket.send {error: err.message}
+          @send socket, {error: err.message}
         else
-          socket.send result
+          @send socket, result
 
-      socket.send @confirmationMessage message
+      @send socket, @confirmationMessage message
 
     socket.on 'close', (reason) =>
       @detachSocket socket
@@ -51,5 +65,22 @@ class SocketConnection
     delete @liveSockets[projectId] if projectId
     delete @projectIdMap[socket.id]
 
+  send: (socket, message, carefully=false) ->
+    message.uuid = uuid.v4()
+    message.timestamp = new Date().getTime()
+    socket.send message
+    if carefully
+      @sentMsgs[message.uuid] = message
+    return message.uuid
+
+    
+  #callback = (err, data) ->, 
+  tell: (projectId, message, callback) ->
+    socket = @liveSockets[projectId]
+    unless socket
+      callback({error: 'The project has been closed.'})
+      return
+    messageId = @send socket, message
+    @registeredCallbacks[messageId] = callback
   
 exports.SocketConnection = SocketConnection

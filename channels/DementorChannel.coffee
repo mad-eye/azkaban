@@ -16,9 +16,15 @@ class DementorChannel
         callback(err) if callback
       else
         console.log "Results from addFile:", results
-        #callback(null, results) if callback
+        callback(null, results) if callback
 
   removeFiles : (message, callback) ->
     console.log "Called removeFiles with ", data
+
+  fileRequestMessage : (fileId) ->
+    {
+      action: 'requestFile',
+      fileId: fileId
+    }
 
 exports.DementorChannel = DementorChannel
