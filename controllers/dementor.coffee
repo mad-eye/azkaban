@@ -1,5 +1,5 @@
 {ServiceKeeper} = require '../ServiceKeeper'
-{Settings} = require '../Settings'
+{Settings} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
   #console.log "Sending error ", err
@@ -8,6 +8,7 @@ sendErrorResponse = (res, err) ->
 
 exports.init = (req, res, app) ->
   mongoConnector = ServiceKeeper.mongoInstance()
+  console.log "MongoConnector has mockDb:", mongoConnector.db.isMock
   mongoConnector.createProject (err, projects) ->
     if err
       sendErrorResponse(res, err)

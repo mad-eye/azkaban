@@ -5,12 +5,13 @@ http = require('http')
 path = require('path')
 {SocketConnection} = require './connectors/SocketConnection'
 {DementorChannel} = require './channels/DementorChannel'
-{Settings}  = require './Settings'
+{Settings} = require 'madeye-common'
 
 app = module.exports = express()
 
 require('./routes')(app)
 
+console.log "App.env:", app.get('env')
 app.configure ->
   app.set('port', Settings.httpPort || 4004)
   app.use(express.favicon())
@@ -24,7 +25,7 @@ app.configure 'development', ->
   app.use(express.errorHandler())
 
 app.configure 'test', ->
-  app.set('port', 4001)
+  app.set('port', 4005)
   app.use(express.errorHandler())
 
 

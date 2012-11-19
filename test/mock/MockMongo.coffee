@@ -4,6 +4,9 @@ uuid = require 'node-uuid'
 #@collectionError: Error to be thrown on collection
 #@crudError: Error to be thrown on CRUD operation
 class MockDb
+  #Marker for mock object
+  @isMock: true,
+
   constructor: (@name, @server) ->
     @collections = {}
 
@@ -59,6 +62,9 @@ class MockDb
 
 #@crudError: Error to be thrown on CRUD operation
 class MockCollection
+  #Marker for mock object
+  @isMock: true,
+
   constructor: (@name, @crudError) ->
     @documents = {}
 

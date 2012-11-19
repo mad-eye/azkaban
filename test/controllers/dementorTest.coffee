@@ -5,7 +5,7 @@ app = require '../../app'
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnector} = require '../../connectors/MongoConnector'
 {MockDb} = require '../mock/MockMongo'
-{Settings} = require "../../Settings"
+{Settings} = require 'madeye-common'
 
 sendInitRequest = (mockDb, objects, done) ->
   if mockDb?
@@ -18,6 +18,7 @@ sendInitRequest = (mockDb, objects, done) ->
   options =
     method: "POST"
     uri: "http://localhost:#{app.get('port')}/init"
+  console.log "Sending request to", options.uri
   request options, (err, _res, _body) ->
     #console.log "Found body ", _body
     objects.bodyStr = _body
@@ -68,7 +69,7 @@ describe "controllers/dementor", ->
       assert.ok u.hostname
       assert.equal u.hostname, Settings.apogeeHost
 
-  describe "init with error in opening", ->
+  describe "init with error in opening db", ->
     objects = {}
     errMsg = null
     before (done) ->
@@ -87,7 +88,7 @@ describe "controllers/dementor", ->
       #console.log "Found error:", objects.body.error
       assert.equal errMsg, objects.body.error
 
-  describe "init with error in opening", ->
+  describe "init with error in opening collection", ->
     objects = {}
     errMsg = null
     before (done) ->

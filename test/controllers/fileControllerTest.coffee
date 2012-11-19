@@ -2,10 +2,12 @@ assert = require 'assert'
 request = require 'request'
 uuid = require 'node-uuid'
 
+{Settings} = require 'madeye-common'
+
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnector} = require '../../connectors/MongoConnector'
 {MockDb} = require '../mock/MockMongo'
-{Settings} = require "../../Settings"
+app = require '../../app'
 
 describe 'fileController', ->
   describe 'on get info', ->
@@ -30,7 +32,9 @@ describe 'fileController', ->
       objects = {}
       options =
         method: "GET"
-        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
+
+      console.log "Sending request to", options.uri
       request options, (err, _res, _body) ->
         #console.log "Found body ", _body
         objects.bodyStr = _body

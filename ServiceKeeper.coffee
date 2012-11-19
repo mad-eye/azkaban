@@ -1,4 +1,4 @@
-{Settings} = require "./Settings"
+{Settings} = require 'madeye-common'
 {MongoConnector} = require './connectors/MongoConnector'
 
 #Set the connection ivars to override the defaults.

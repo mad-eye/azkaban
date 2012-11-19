@@ -1,7 +1,7 @@
 {ServiceKeeper} = require '../ServiceKeeper'
 {SocketConnection} = require '../connectors/SocketConnection'
 {DementorChannel} = require '../connectors/DementorChannel'
-{Settings} = require '../Settings'
+{Settings} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
   #console.log "Sending error ", err
