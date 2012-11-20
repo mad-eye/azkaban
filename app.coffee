@@ -19,13 +19,11 @@ app.configure ->
   app.use(express.bodyParser())
   app.use(express.methodOverride())
   app.use(app.router)
-  app.use(express.static(path.join(__dirname, 'public')))
 
 app.configure 'development', ->
   app.use(express.errorHandler())
 
 app.configure 'test', ->
-  app.set('port', 4005)
   app.use(express.errorHandler())
 
 
