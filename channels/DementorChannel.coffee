@@ -21,7 +21,7 @@ class DementorChannel
   removeFiles : (message, callback) ->
     console.log "Called removeFiles with ", data
 
-  fileRequestMessage : (fileId) ->
+  @fileRequestMessage : (fileId) ->
     {
       action: 'requestFile',
       fileId: fileId

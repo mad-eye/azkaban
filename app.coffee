@@ -6,12 +6,12 @@ path = require('path')
 {SocketConnection} = require './connectors/SocketConnection'
 {DementorChannel} = require './channels/DementorChannel'
 {Settings} = require 'madeye-common'
+{ServiceKeeper} = require './ServiceKeeper'
 
 app = module.exports = express()
 
 require('./routes')(app)
 
-console.log "App.env:", app.get('env')
 app.configure ->
   app.set('port', Settings.httpPort || 4004)
   app.use(express.favicon())
@@ -27,8 +27,8 @@ app.configure 'test', ->
   app.use(express.errorHandler())
 
 
-dementorConnection = new SocketConnection(new DementorChannel())
-dementorConnection.listen Settings.bcPort
+socketServer = ServiceKeeper.getSocketServer()
+socketServer.listen Settings.bcPort
 
 
 http.createServer(app).listen(app.get('port'), ->

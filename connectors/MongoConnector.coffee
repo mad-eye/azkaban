@@ -51,6 +51,33 @@ class MongoConnector
       file.projectId = projectId
     @insert files, FILES_COLLECTION, callback
 
+  
+  getFile: (fileId, callback) ->
+    console.log "Calling getFile with id #{fileId}"
+    @getObject fileId, FILES_COLLECTION, callback
+
+  getObject: (objectId, collectionName, callback) ->
+    helper = new MongoHelper(@db, callback)
+
+    console.log "Opening db."
+    @db.open (err, db) ->
+      console.log "Opened db."
+      if err
+        helper.handleError err
+      else
+        db.collection collectionName, (err, collection) ->
+          if err
+            helper.handleError err
+          else
+            cursor = collection.find {_id:objectId}
+            cursor.nextObject (err, result) ->
+              if err
+                helper.handleError err
+              else
+                console.log "Found result from getObject #{objectId}:", result
+                helper.handleResult result
+
+
 MongoConnector.instance = (hostname, port) ->
   server = new mongo.Server(hostname, port, {auto_reconnect: true})
   db = new mongo.Db(DB_NAME, server, {safe:true})

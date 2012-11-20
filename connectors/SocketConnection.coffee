@@ -36,6 +36,7 @@ class SocketConnection
         return
       #Check for any callbacks waiting for a response.
       if message.replyTo?
+        #console.log "Invoking registered callback to #{message.replyTo}"
         callback = @registeredCallbacks[message.replyTo]
         if callback
           if message.error
@@ -76,11 +77,13 @@ class SocketConnection
     
   #callback = (err, data) ->, 
   tell: (projectId, message, callback) ->
+    #console.log "Sending message to #{projectId}:", message
     socket = @liveSockets[projectId]
     unless socket
-      callback({error: 'The project has been closed.'})
+      callback({error: 'The project has been closed.'}) if callback
       return
     messageId = @send socket, message
     @registeredCallbacks[messageId] = callback
+
   
 exports.SocketConnection = SocketConnection
