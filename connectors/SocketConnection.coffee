@@ -1,6 +1,7 @@
 browserChannel = require('browserchannel').server
 connect = require('connect')
 uuid = require 'node-uuid'
+{ChannelMessage} = require 'madeye-common'
 
 class SocketConnection
   constructor: (@controller) ->
@@ -17,41 +18,37 @@ class SocketConnection
     ).listen(bcPort)
     console.log 'Echo server listening on localhost:' + bcPort
 
-  confirmationMessage: (message) ->
-    confirmationMsg =
-      action: 'confirm',
-      receivedId:message.uuid,
-      timestamp: new Date().getTime(),
-      uuid: uuid.v4()
-
   connect: (@socket) ->
     console.log "New socket: #{socket.id} from #{socket.address}"
 
     socket.on 'message', (message) =>
-      if message.action == 'handshake'
+      console.log "Received message", message
+      if message.action == ChannelMessage.HANDSHAKE
         @attachSocket socket, message.projectId
         return
-      else if message.action == 'confirm'
+      else if message.action == ChannelMessage.CONFIRM
         delete @sentMessages[message.receivedId]
         return
       #Check for any callbacks waiting for a response.
       if message.replyTo?
-        #console.log "Invoking registered callback to #{message.replyTo}"
+        #console.log "Checking registered callback to #{message.replyTo}"
         callback = @registeredCallbacks[message.replyTo]
         if callback
+          #console.log "Invoking registered callback to #{message.replyTo}", callback
           if message.error
             callback {error: message.error}
           else
             callback null, message
         return
         #TODO: Should this be the end of the message?  Do we ever need to route replies?
-      @controller.route message, (err, result) ->
+      @controller.route message, (err, replyMessage) ->
         if err
-          @send socket, {error: err.message}
+          @send socket, ChannelMessage.errorMessage err.message
         else
-          @send socket, result
+          @send socket, replyMessage
 
-      @send socket, @confirmationMessage message
+      if message.important
+        @send socket, ChannelMessage.confirmationMessage message
 
     socket.on 'close', (reason) =>
       @detachSocket socket
@@ -67,23 +64,20 @@ class SocketConnection
     delete @projectIdMap[socket.id]
 
   send: (socket, message, carefully=false) ->
-    message.uuid = uuid.v4()
-    message.timestamp = new Date().getTime()
     socket.send message
     if carefully
       @sentMsgs[message.uuid] = message
-    return message.uuid
 
     
   #callback = (err, data) ->, 
   tell: (projectId, message, callback) ->
-    #console.log "Sending message to #{projectId}:", message
+    console.log "Sending message to #{projectId}:", message
     socket = @liveSockets[projectId]
     unless socket
       callback({error: 'The project has been closed.'}) if callback
       return
-    messageId = @send socket, message
-    @registeredCallbacks[messageId] = callback
+    @send socket, message
+    @registeredCallbacks[message.id] = callback
 
   
 exports.SocketConnection = SocketConnection
