@@ -2,6 +2,7 @@ assert = require 'assert'
 uuid = require 'node-uuid'
 {SocketConnection} = require '../../connectors/SocketConnection'
 {MockSocket} = require '../mock/MockSocket'
+{ChannelMessage} = require 'madeye-common'
 
 describe 'SocketConnection', ->
   describe 'confirmationMessage', ->
@@ -11,13 +12,13 @@ describe 'SocketConnection', ->
       origMessage = {
         uuid : uuid.v4(),
       }
-      confMessage = socketConnection.confirmationMessage origMessage
+      confMessage =  ChannelMessage.confirmationMessage origMessage
     it 'should not be null', ->
       assert.ok confMessage
     it 'should have action "confirm"', ->
       assert.equal confMessage.action, 'confirm'
     it 'should have receivedId equal to send messages id', ->
-      assert.equal confMessage.receivedId, origMessage.uuid
+      assert.equal confMessage.receivedId, origMessage.id
 
   describe 'attachSocket', ->
     socketConnection = socket = projectId = null
