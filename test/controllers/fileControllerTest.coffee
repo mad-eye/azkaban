@@ -8,7 +8,7 @@ uuid = require 'node-uuid'
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnector} = require '../../connectors/MongoConnector'
 {MockDb} = require '../mock/MockMongo'
-{MockSocket} = require '../mock/MockSocket'
+{MockSocket} = require 'madeye-common'
 
 app = require '../../app'
 

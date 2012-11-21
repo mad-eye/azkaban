@@ -1,6 +1,6 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
-{MockSocket} = require '../mock/MockSocket'
+{MockSocket} = require 'madeye-common'
 {SocketConnection} = require '../../connectors/SocketConnection'
 {DementorChannel} = require '../../channels/DementorChannel'
 

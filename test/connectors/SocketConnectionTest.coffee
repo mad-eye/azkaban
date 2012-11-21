@@ -1,8 +1,8 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 {SocketConnection} = require '../../connectors/SocketConnection'
-{MockSocket} = require '../mock/MockSocket'
 {ChannelMessage} = require 'madeye-common'
+{MockSocket} = require 'madeye-common'
 
 describe 'SocketConnection', ->
   describe 'confirmationMessage', ->
