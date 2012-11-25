@@ -1,10 +1,5 @@
-browserChannel = require('browserchannel').server
-connect = require('connect')
 express = require('express')
 http = require('http')
-path = require('path')
-{SocketConnection} = require './connectors/SocketConnection'
-{DementorChannel} = require './channels/DementorChannel'
 {Settings} = require 'madeye-common'
 {ServiceKeeper} = require './ServiceKeeper'
 
@@ -26,10 +21,8 @@ app.configure 'development', ->
 app.configure 'test', ->
   app.use(express.errorHandler())
 
-
 socketServer = ServiceKeeper.getSocketServer()
 socketServer.listen Settings.bcPort
-
 
 http.createServer(app).listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))
