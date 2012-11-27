@@ -1,4 +1,5 @@
 mongo = require 'mongodb'
+uuid = require 'node-uuid'
 
 DB_NAME = 'meteor'
 PROJECT_COLLECTION = 'projects'
@@ -40,18 +41,19 @@ class MongoConnector
                 helper.handleResult result
 
   createProject: (callback) ->
-    projects = [{created:new Date().getTime()}]
+    projects = [{_id: uuid.v4(), created:new Date().getTime()}]
     @insert projects, PROJECT_COLLECTION, callback
-    
+
   addFile: (file, projectId, callback) ->
     @addFiles([file], projectId)
 
   addFiles: (files, projectId, callback) ->
     for file in files
       file.projectId = projectId
+      file._id = uuid.v4()
     @insert files, FILES_COLLECTION, callback
 
-  
+
   getFile: (fileId, callback) ->
     console.log "Calling getFile with id #{fileId}"
     @getObject fileId, FILES_COLLECTION, callback
@@ -84,6 +86,6 @@ MongoConnector.instance = (hostname, port) ->
   return new MongoConnector(db)
 
 
-    
+
 
 exports.MongoConnector = MongoConnector
