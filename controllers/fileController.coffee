@@ -1,8 +1,6 @@
 {ServiceKeeper} = require '../ServiceKeeper'
-{SocketConnection} = require '../connectors/SocketConnection'
 {Settings} = require 'madeye-common'
-{DementorChannel} = require '../channels/DementorChannel'
-{ChannelMessage} = require 'madeye-common'
+{messageMaker} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
   #console.log "Sending error ", err
@@ -14,7 +12,7 @@ exports.getFile = (req, res) ->
   fileId = req.params['fileId']
   projectId = req.params['projectId']
   socketServer = ServiceKeeper.getSocketServer()
-  message = ChannelMessage.fileRequestMessage fileId
+  message = messageMaker.requestFileMessage fileId
   socketServer.tell projectId, message, (err, message) ->
     if err
       sendErrorResponse(res, err)

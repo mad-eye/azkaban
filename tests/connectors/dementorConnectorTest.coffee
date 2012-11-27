@@ -1,7 +1,6 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
-{MockSocket} = require 'madeye-common'
-{SocketConnection} = require '../../connectors/SocketConnection'
+{MockSocket, SocketServer, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../channels/DementorChannel'
 
 #
@@ -20,19 +19,14 @@ describe "SocketConnection", ->
         onsend: (message) ->
           sentMessages.push message
       )
-      message =
-        id: uuid.v4(),
-        timestamp: new Date().getTime(),
-        action: 'addFiles',
-        projectId: uuid.v4(),
-        data:
-          files: [
-            {path:'foo/bar/file1', isDir:false },
-            {path:'foo/bar/dir1', isDir:true },
-            {path:'foo/bar/dir1/file2', isDir:false }
-          ]
+      message = messageMaker.addFilesMessage [
+        {path:'foo/bar/file1', isDir:false },
+        {path:'foo/bar/dir1', isDir:true },
+        {path:'foo/bar/dir1/file2', isDir:false }
+      ]
 
-      dementorConnection = new SocketConnection(new DementorChannel())
+      message.projectId = uuid.v4()
+      dementorConnection = new SocketServer(new DementorChannel())
       dementorConnection.connect socket
       socket.receive message
 

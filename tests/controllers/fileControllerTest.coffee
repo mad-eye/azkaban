@@ -3,7 +3,7 @@ request = require 'request'
 uuid = require 'node-uuid'
 
 {Settings} = require 'madeye-common'
-{ChannelMessage} = require 'madeye-common'
+{messageMaker, messageAction} = require 'madeye-common'
 
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnector} = require '../../connectors/MongoConnector'
@@ -24,15 +24,13 @@ describe 'fileController', ->
       socketServer = ServiceKeeper.getSocketServer()
       socket = new MockSocket {
         onsend: (message) ->
-          return unless message.action == ChannelMessage.REQUEST_FILE
+          return unless message.action == messageAction.REQUEST_FILE
           @sentMessages ?= []
           @sentMessages.push message
-          replyMessage = new ChannelMessage ChannelMessage.REQUEST_FILE,
-            replyTo : message.id,
-            projectId : projectId,
-            data:
-              fileId: fileId,
-              body: body
+          replyMessage = messageMaker.replyMessage message,
+            fileId: fileId,
+            body: body
+          replyMessage.projectId = projectId
           setTimeout (=>
             @receive replyMessage
           ), 100
