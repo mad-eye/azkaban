@@ -9,6 +9,7 @@ sendErrorResponse = (res, err) ->
 
 #TODO: Check for permissions
 exports.getFile = (req, res) ->
+  res.header 'Access-Control-Allow-Origin', '*'
   fileId = req.params['fileId']
   projectId = req.params['projectId']
   socketServer = ServiceKeeper.getSocketServer()
@@ -19,4 +20,3 @@ exports.getFile = (req, res) ->
     else
       console.log "Sending response for body", message.data.body
       res.send JSON.stringify({projectId: projectId, fileId:fileId, body:message.data.body})
-
