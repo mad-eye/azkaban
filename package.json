@@ -14,13 +14,16 @@
     "connect": "~2.7.0",
     "underscore": "~1.4.2",
     "node-uuid": "~1.4.0",
-    "madeye-common": "git+ssh://git@github.com/jagill/madeye-common.git"
+    "madeye-common": "git+ssh://git@github.com/jagill/madeye-common.git",
+    "chai": "~1.4.0"
   },
   "devDependencies": {
     "browserchannel": "~0.4.2",
     "jade": "*",
     "mocha": "~1.7.0",
     "node-dev": "~0.2.8",
-    "request": "~2.12.0"
+    "request": "~2.12.0",
+    "sinon": "~1.5.2",
+    "chai": "~1.4.0"
   }
 }

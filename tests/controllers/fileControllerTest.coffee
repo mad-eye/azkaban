@@ -1,19 +1,79 @@
-assert = require 'assert'
-request = require 'request'
+assert = require("chai").assert
 uuid = require 'node-uuid'
+sinon = require 'sinon'
+request = require "request"
 
-{Settings} = require 'madeye-common'
-{messageMaker, messageAction} = require 'madeye-common'
-
-{ServiceKeeper} = require '../../ServiceKeeper'
-{MongoConnector} = require '../../connectors/MongoConnector'
+FileController = require '../../controllers/fileController'
+{ServiceKeeper} = require "../../ServiceKeeper.coffee"
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
+{messageMaker, messageAction} = require 'madeye-common'
 
 app = require '../../app'
 
 describe 'fileController', ->
-  fileId = projectId = body = null
+  fileController = undefined
+  beforeEach ->
+    fileController = new FileController
+
+  describe 'on save', ->   
+    FILE_CONTENTS = "a riveting text"
+
+    PROJECT_ID = 7
+    FILE_ID = 1
+
+    req =
+      params:
+        projectId: PROJECT_ID
+        fileId: FILE_ID
+
+    res =
+      header: ->
+
+
+    it "should send a save files message to the socket server", ->
+      fileController.socketServer =
+        tell: sinon.spy()
+
+      fileController.request =
+        get: (url, callback)->
+#         TODO use process.nextTick here
+          callback(null, {}, FILE_CONTENTS)
+
+      fileController.saveFile req, res
+      callValues = fileController.socketServer.tell.getCall(0).args
+      assert.equal PROJECT_ID, callValues[0]
+      message = callValues[1]
+      assert.equal message.data.files[FILE_ID], FILE_CONTENTS 
+
+    it "should return a confirmation when there are no problems", ->
+      fileController.socketServer =
+        tell: (projectId, message, callback)->
+          callback null, "W00T"
+
+      fileController.request =
+        get: (url, callback)->
+#         TODO use process.nextTick here
+          callback(null, {}, FILE_CONTENTS)
+
+      fakeResponse =
+        send: sinon.spy()
+        header: ->
+        statusCode: 200
+      fileController.saveFile req, fakeResponse
+      assert.ok fakeResponse.send.called
+      callValues = fakeResponse.send.getCall(0).args
+      message = JSON.parse callValues[0]
+      assert.equal message.projectId, PROJECT_ID
+      assert.equal message.fileId, FILE_ID
+      assert message.saved
+
+    it "should return a 500 if there is an error making the message", ->
+
+    it "should return a 500 if there is an error communicating with dementor", ->
+
+    it "should return a 500 if it cannot retrieve the file from bolide", ->
+
   describe 'on get info', ->
     fileId = uuid.v4()
     projectId = uuid.v4()
@@ -21,6 +81,7 @@ describe 'fileController', ->
       is the world real, or just imgur?'''
     objects = socket = socketServer = null
     before (done) ->
+    
       socketServer = ServiceKeeper.getSocketServer()
       socket = new MockSocket {
         onsend: (message) ->
@@ -75,7 +136,3 @@ describe 'fileController', ->
       sentMessage = socket.sentMessages[0]
       assert.equal sentMessage.action, 'requestFile'
       assert.equal sentMessage.fileId, fileId
-    
-
-
-
