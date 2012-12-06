@@ -17,7 +17,7 @@ ServiceKeeper =
 
   getSocketServer: ->
     #Need to do this here, because if we do it above, we require DementorChannel before it's been loaded.
-    {DementorChannel} = require './channels/DementorChannel'
+    {DementorChannel} = require './src/dementorChannel'
     @socketServer ?= new SocketServer(new DementorChannel())
     return @socketServer
 
