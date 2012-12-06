@@ -11,7 +11,7 @@ uuid = require 'node-uuid'
 #   timestamp: Date timestamp of sending
 #   data: JSON object, case specific data
 # }
-describe "SocketConnection", ->
+describe "DementorChannel", ->
   describe "on receiving message", ->
     it "should add data", () ->
       sentMessages = []

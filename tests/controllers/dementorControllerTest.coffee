@@ -29,7 +29,7 @@ sendInitRequest = (mockDb, objects, done) ->
     objects.response = _res
     done()
 
-describe "controllers/dementor with real db", ->
+describe "DementorController with real db", ->
 
   describe "init", ->
     objects = {}
@@ -49,7 +49,7 @@ describe "controllers/dementor with real db", ->
       assert.equal u.hostname, Settings.apogeeHost
 
 
-describe "controllers/dementor", ->
+describe "DementorController", ->
 
   describe "init", ->
     objects = {}
