@@ -38,7 +38,7 @@ class FileController
     @request.get url, (error, response, body)=>
       map = {}
       map[fileId] = body
-      message = messageMaker.saveFilesMessage map
+      message = messageMaker.saveFileMessage map
       @socketServer.tell projectId, message, (err, message) =>
         if err
           @sendErrorResponse(res, err)
