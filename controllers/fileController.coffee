@@ -4,8 +4,6 @@ class FileController
   constructor: ->
     @socketServer = require('../ServiceKeeper').ServiceKeeper.getSocketServer()
     @Settings = require('madeye-common').Settings
-    console.log "Settings #{@Settings}"
-    console.log "bolide host #{@Settings.bolideHost}"
     @request = require "request"
 
   sendErrorResponse: (res, err) ->
@@ -36,9 +34,7 @@ class FileController
     body = req.params['body']
     url = "http://#{@Settings.bolideHost}:#{@Settings.bolidePort}/doc/#{fileId}"
     @request.get url, (error, response, body)=>
-      map = {}
-      map[fileId] = body
-      message = messageMaker.saveFileMessage map
+      message = messageMaker.saveFileMessage fileId, body
       @socketServer.tell projectId, message, (err, message) =>
         if err
           @sendErrorResponse(res, err)

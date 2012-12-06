@@ -31,7 +31,7 @@ describe 'fileController', ->
       header: ->
 
 
-    it "should send a save files message to the socket server", ->
+    it "should send a save file message to the socket server", ->
       fileController.socketServer =
         tell: sinon.spy()
 
@@ -44,7 +44,9 @@ describe 'fileController', ->
       callValues = fileController.socketServer.tell.getCall(0).args
       assert.equal PROJECT_ID, callValues[0]
       message = callValues[1]
-      assert.equal message.data.files[FILE_ID], FILE_CONTENTS 
+      console.log message
+      assert.equal message.data.fileId, FILE_ID
+      assert.equal message.data.contents, FILE_CONTENTS 
 
     it "should return a confirmation when there are no problems", ->
       fileController.socketServer =
