@@ -16,7 +16,7 @@ describe 'fileController', ->
   beforeEach ->
     fileController = new FileController
 
-  describe 'on save', ->   
+  describe 'on save', ->
     FILE_CONTENTS = "a riveting text"
 
     PROJECT_ID = 7
@@ -26,6 +26,7 @@ describe 'fileController', ->
       params:
         projectId: PROJECT_ID
         fileId: FILE_ID
+        contents: FILE_CONTENTS
 
     res =
       header: ->
@@ -35,18 +36,13 @@ describe 'fileController', ->
       fileController.socketServer =
         tell: sinon.spy()
 
-      fileController.request =
-        get: (url, callback)->
-#         TODO use process.nextTick here
-          callback(null, {}, FILE_CONTENTS)
-
       fileController.saveFile req, res
       callValues = fileController.socketServer.tell.getCall(0).args
       assert.equal PROJECT_ID, callValues[0]
       message = callValues[1]
       console.log message
       assert.equal message.data.fileId, FILE_ID
-      assert.equal message.data.contents, FILE_CONTENTS 
+      assert.equal message.data.contents, FILE_CONTENTS
 
     it "should return a confirmation when there are no problems", ->
       fileController.socketServer =
@@ -76,6 +72,67 @@ describe 'fileController', ->
 
     it "should return a 500 if it cannot retrieve the file from bolide", ->
 
+  describe 'on save contents', ->
+    fileId = uuid.v4()
+    projectId = uuid.v4()
+    contents = '''If, in the morning, a kitten
+    scampers up and boops your nose, are you dreaming?'''
+    objects = socket = socketServer = null
+    before (done) ->
+
+      socketServer = ServiceKeeper.getSocketServer()
+      socket = new MockSocket {
+        onsend: (message) ->
+          return unless message.action == messageAction.SAVE_FILE
+          @sentMessages ?= []
+          @sentMessages.push message
+          replyMessage = messageMaker.replyMessage message
+          replyMessage.projectId = projectId
+          @receivedSaveMessage = true
+          setTimeout (=>
+            @receive replyMessage
+          ), 10
+      }
+      socketServer.connect socket
+      socketServer.attachSocket socket, projectId
+
+      objects = {}
+      options =
+        method: "PUT"
+        uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
+        form:
+          contents: contents
+
+      console.log "Sending PUT request to", options.uri
+      request options, (err, _res, _body) ->
+        #console.log "Found body ", _body
+        objects.bodyStr = _body
+        try
+          objects.body = JSON.parse _body
+        catch error
+          console.log "Unable to parse", _body
+          "Let the test catch this."
+        objects.response = _res
+        done()
+
+    it "returns a 200", ->
+      assert.ok objects.response.statusCode == 200
+    it "returns valid JSON", ->
+      assert.doesNotThrow ->
+        JSON.parse(objects.bodyStr)
+    it 'should return a non-empty body', ->
+      assert.ok objects.body
+      console.log "Returned request body", objects.body
+    it 'should return a fileId in response body', ->
+      assert.equal objects.body.fileId, fileId
+    it 'should return a projectId in response body', ->
+      assert.equal objects.body.projectId, projectId
+    it 'should return a saved=true in response body', ->
+      assert.ok objects.body.saved
+    it 'should have sent the message to the socket', ->
+      assert.ok socket.receivedSaveMessage
+
+
   describe 'on get info', ->
     fileId = uuid.v4()
     projectId = uuid.v4()
@@ -83,7 +140,7 @@ describe 'fileController', ->
       is the world real, or just imgur?'''
     objects = socket = socketServer = null
     before (done) ->
-    
+
       socketServer = ServiceKeeper.getSocketServer()
       socket = new MockSocket {
         onsend: (message) ->

@@ -31,14 +31,12 @@ class FileController
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
-    body = req.params['body']
-    url = "http://#{@Settings.bolideHost}:#{@Settings.bolidePort}/doc/#{fileId}"
-    @request.get url, (error, response, body)=>
-      message = messageMaker.saveFileMessage fileId, body
-      @socketServer.tell projectId, message, (err, message) =>
-        if err
-          @sendErrorResponse(res, err)
-        else
-          res.send JSON.stringify {projectId: projectId, fileId:fileId, saved:true}
+    contents = req.params['contents']
+    message = messageMaker.saveFileMessage fileId, contents
+    @socketServer.tell projectId, message, (err, msg) =>
+      if err
+        @sendErrorResponse(res, err)
+      else
+        res.send JSON.stringify {projectId: projectId, fileId:fileId, saved:true}
 
 module.exports = FileController
