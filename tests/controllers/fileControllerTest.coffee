@@ -132,6 +132,8 @@ describe 'fileController', ->
     it 'should have sent the message to the socket', ->
       assert.ok socket.receivedSaveMessage
 
+    it 'should handle a shut-down dementor gracefully'
+    it 'should return an error on a null contents'
 
   describe 'on get info', ->
     fileId = uuid.v4()

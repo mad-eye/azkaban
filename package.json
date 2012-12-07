@@ -11,7 +11,6 @@
     "express": "3.0.0rc4",
     "mongodb": "~1.1.11",
     "browserchannel": "~0.4.2",
-    "connect": "~2.7.0",
     "underscore": "~1.4.2",
     "node-uuid": "~1.4.0",
     "madeye-common": "git+ssh://git@github.com/jagill/madeye-common.git",

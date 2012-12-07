@@ -7,7 +7,7 @@ class FileController
     @request = require "request"
 
   sendErrorResponse: (res, err) ->
-    #console.log "Sending error ", err
+    console.log "Sending error ", err
     resObject = {error:err.message}
     res.statusCode = 500
     res.send JSON.stringify(resObject)
@@ -31,7 +31,7 @@ class FileController
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
-    contents = req.params['contents']
+    contents = req.body.contents
     message = messageMaker.saveFileMessage fileId, contents
     @socketServer.tell projectId, message, (err, msg) =>
       if err

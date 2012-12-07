@@ -2,10 +2,9 @@ express = require('express')
 http = require('http')
 {Settings} = require 'madeye-common'
 {ServiceKeeper} = require './ServiceKeeper'
+cors = require './cors'
 
 app = module.exports = express()
-
-require('./routes')(app)
 
 app.configure ->
   app.set('port', Settings.httpPort || 4004)
@@ -13,6 +12,7 @@ app.configure ->
   app.use(express.logger('dev'))
   app.use(express.bodyParser())
   app.use(express.methodOverride())
+  app.use(cors())
   app.use(app.router)
 
 app.configure 'development', ->
@@ -21,8 +21,11 @@ app.configure 'development', ->
 app.configure 'test', ->
   app.use(express.errorHandler())
 
+require('./routes')(app)
+
 socketServer = ServiceKeeper.getSocketServer()
 socketServer.listen Settings.bcPort
 
 http.createServer(app).listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))
+

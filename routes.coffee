@@ -8,7 +8,7 @@ routes = (app) ->
   app.get '/project/:projectId/file/:fileId', (req, res)->
     fileController.getFile(req, res)
 
-  app.put '/project/:projectId/file/:fileId', (req, res)->
+  app.post '/project/:projectId/file/:fileId', (req, res)->
     fileController.saveFile(req, res)
 
 module.exports = routes
