@@ -26,6 +26,7 @@ describe 'fileController', ->
       params:
         projectId: PROJECT_ID
         fileId: FILE_ID
+      body:
         contents: FILE_CONTENTS
 
     res =
@@ -100,26 +101,18 @@ describe 'fileController', ->
       options =
         method: "PUT"
         uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
-        form:
+        json:
           contents: contents
 
       console.log "Sending PUT request to", options.uri
       request options, (err, _res, _body) ->
-        #console.log "Found body ", _body
-        objects.bodyStr = _body
-        try
-          objects.body = JSON.parse _body
-        catch error
-          console.log "Unable to parse", _body
-          "Let the test catch this."
+        console.log "Found body ", typeof _body
+        objects.body = _body
         objects.response = _res
         done()
 
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
-    it "returns valid JSON", ->
-      assert.doesNotThrow ->
-        JSON.parse(objects.bodyStr)
     it 'should return a non-empty body', ->
       assert.ok objects.body
       console.log "Returned request body", objects.body
