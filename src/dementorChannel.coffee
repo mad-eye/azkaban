@@ -18,7 +18,7 @@ class DementorChannel
         console.error "Error in addFiles:", err
         callback? err
       else
-        console.log "Results from addFile:", results
+        #console.log "Results from addFile:", results
         replyMessage = messageMaker.replyMessage message, files: results
         callback? null, replyMessage
 
