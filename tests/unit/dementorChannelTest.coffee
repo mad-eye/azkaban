@@ -1,7 +1,7 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket, SocketServer, messageMaker} = require 'madeye-common'
-{DementorChannel} = require '../../src/DementorChannel'
+{DementorChannel} = require '../../src/dementorChannel'
 
 #
 # Messages are of the form:
