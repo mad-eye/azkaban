@@ -13,8 +13,7 @@
     "browserchannel": "~0.4.2",
     "underscore": "~1.4.2",
     "node-uuid": "~1.4.0",
-    "madeye-common": "git+ssh://git@github.com/jagill/madeye-common.git",
-    "chai": "~1.4.0"
+    "madeye-common": "git+ssh://git@github.com/jagill/madeye-common.git"
   },
   "devDependencies": {
     "browserchannel": "~0.4.2",
