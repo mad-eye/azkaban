@@ -1,5 +1,5 @@
 {Settings} = require 'madeye-common'
-{MongoConnector} = require './connectors/MongoConnector'
+{MongoConnector} = require './src/mongoConnector'
 {SocketServer} = require 'madeye-common'
 
 #TODO: Should have app set ServiceKeeper's services?

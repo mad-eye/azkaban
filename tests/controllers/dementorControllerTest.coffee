@@ -3,7 +3,7 @@ request = require 'request'
 url = require 'url'
 app = require '../../app'
 {ServiceKeeper} = require '../../ServiceKeeper'
-{MongoConnector} = require '../../connectors/MongoConnector'
+{MongoConnector} = require '../../src/mongoConnector'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
 
