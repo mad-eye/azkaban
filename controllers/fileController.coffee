@@ -8,7 +8,7 @@ class FileController
 
   sendErrorResponse: (res, err) ->
     console.log "Sending error ", err
-    resObject = {error:err.message}
+    resObject = {error:err}
     res.statusCode = 500
     res.send JSON.stringify(resObject)
 
