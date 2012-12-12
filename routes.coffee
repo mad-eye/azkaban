@@ -2,7 +2,7 @@ FileController = require('./controllers/fileController')
 
 routes = (app) ->
   fileController = new FileController
-  app.post '/init', (req, res)->
+  app.post '/init/:projectName', (req, res)->
     require('./controllers/dementorController').init(req, res, app)
 
   app.get '/project/:projectId/file/:fileId', (req, res)->

@@ -40,8 +40,8 @@ class MongoConnector
               else
                 helper.handleResult result
 
-  createProject: (callback) ->
-    projects = [{_id: uuid.v4(), created:new Date().getTime()}]
+  createProject: (projectName, callback) ->
+    projects = [{_id: uuid.v4(), name: projectName, created:new Date().getTime()}]
     @insert projects, PROJECT_COLLECTION, callback
 
   addFile: (file, projectId, callback) ->

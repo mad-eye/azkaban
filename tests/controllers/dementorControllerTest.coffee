@@ -7,7 +7,7 @@ app = require '../../app'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
 
-sendInitRequest = (mockDb, objects, done) ->
+sendInitRequest = (mockDb, projectName, objects, done) ->
   if mockDb?
     mongoConnector = new MongoConnector(mockDb)
     ServiceKeeper.mongoConnector = mongoConnector
@@ -17,7 +17,7 @@ sendInitRequest = (mockDb, objects, done) ->
   objects ?= {}
   options =
     method: "POST"
-    uri: "http://localhost:#{app.get('port')}/init"
+    uri: "http://localhost:#{app.get('port')}/init/#{projectName}"
   console.log "Sending request to", options.uri
   request options, (err, _res, _body) ->
     #console.log "Found body ", _body
@@ -32,14 +32,19 @@ sendInitRequest = (mockDb, objects, done) ->
 describe "DementorController with real db", ->
 
   describe "init", ->
+    projectName = 'cleesh'
     objects = {}
     before (done) ->
-      sendInitRequest(null, objects, done)
+      sendInitRequest(null, projectName, objects, done)
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
     it "returns valid JSON", ->
       assert.doesNotThrow ->
         JSON.parse(objects.bodyStr)
+    it "returns the correct projectName", ->
+      assert.equal objects.body.name, projectName
+    it "returns an id", ->
+      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
     it "returns a url", ->
       assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
     it "returns a url with the correct hostname", ->
@@ -52,15 +57,20 @@ describe "DementorController with real db", ->
 describe "DementorController", ->
 
   describe "init", ->
+    projectName = 'golmac'
     objects = {}
     before (done) ->
       mockDb = new MockDb()
-      sendInitRequest(mockDb, objects, done)
+      sendInitRequest(mockDb, projectName, objects, done)
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
     it "returns valid JSON", ->
       assert.doesNotThrow ->
         JSON.parse(objects.bodyStr)
+    it "returns the correct projectName", ->
+      assert.equal objects.body.name, projectName
+    it "returns an id", ->
+      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
     it "returns a url", ->
       assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
     it "returns a url with the correct hostname", ->
@@ -76,7 +86,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot open connection to MongoDb."
       mockDb.openError = new Error(errMsg)
-      sendInitRequest(mockDb, objects, done)
+      sendInitRequest(mockDb, 'exex', objects, done)
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
     it "returns valid JSON", ->
@@ -95,7 +105,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot open collection."
       mockDb.collectionError = new Error(errMsg)
-      sendInitRequest(mockDb, objects, done)
+      sendInitRequest(mockDb, 'exex', objects, done)
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
     it "returns valid JSON", ->
@@ -114,7 +124,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot insert document."
       mockDb.crudError = new Error(errMsg)
-      sendInitRequest(mockDb, objects, done)
+      sendInitRequest(mockDb, 'exex', objects, done)
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
     it "returns valid JSON", ->
