@@ -1,5 +1,6 @@
 mongo = require 'mongodb'
 uuid = require 'node-uuid'
+{errors, errorType} = require 'madeye-common'
 
 DB_NAME = 'meteor'
 PROJECT_COLLECTION = 'projects'
@@ -9,10 +10,10 @@ class MongoHelper
   constructor: (@db, @callback) ->
 
   handleError: (err) ->
-    @error = err
+    @error = errors.new errorType.DATABASE_ERROR, err
     console.error "Found error:", err
     @db.close()
-    @callback(err, null)
+    @callback(@error, null)
 
   handleResult: (result) ->
     @result = result

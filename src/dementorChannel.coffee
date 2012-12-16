@@ -1,5 +1,6 @@
 {ServiceKeeper} = require '../ServiceKeeper'
 {messageMaker, messageAction} = require 'madeye-common'
+{errors, errorType} = require 'madeye-common'
 
 class DementorChannel
   constructor: () ->
@@ -9,7 +10,7 @@ class DementorChannel
       when messageAction.ADD_FILES then @addFiles message, callback
       when messageAction.REMOVE_FILES  then @removeFiles message, callback
       when messageAction.REPLY then "registered callback should have handled this."
-      else callback? new Error("Unknown action: " + message.action)
+      else callback? errors.new errorType.UNKNOWN_ACTION, {action: message.action}
 
   addFiles : (message, callback) ->
     mongoConnection = ServiceKeeper.mongoInstance()

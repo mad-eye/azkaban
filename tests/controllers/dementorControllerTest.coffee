@@ -6,6 +6,8 @@ app = require '../../app'
 {MongoConnector} = require '../../src/mongoConnector'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
+{messageMaker, messageAction} = require 'madeye-common'
+{errors, errorType} = require 'madeye-common'
 
 sendInitRequest = (mockDb, projectName, objects, done) ->
   if mockDb?
@@ -81,7 +83,6 @@ describe "DementorController", ->
 
   describe "init with error in opening db", ->
     objects = {}
-    errMsg = null
     before (done) ->
       mockDb = new MockDb()
       errMsg = "Cannot open connection to MongoDb."
@@ -93,18 +94,17 @@ describe "DementorController", ->
       assert.doesNotThrow ->
         JSON.parse(objects.bodyStr)
     it "returns an error", ->
-      assert.ok objects.body.error, "Body #{objects.bodyStr} doesn't have error property."
+      assert.ok objects?.body?.error, "Body #{objects.bodyStr} doesn't have error property."
     it "returns an error with the correct message", ->
       #console.log "Found error:", objects.body.error
-      assert.equal errMsg, objects.body.error
+      assert.equal objects.body.error.type, errorType.DATABASE_ERROR
 
   describe "init with error in opening collection", ->
     objects = {}
-    errMsg = null
     before (done) ->
       mockDb = new MockDb()
       errMsg = "Cannot open collection."
-      mockDb.collectionError = new Error(errMsg)
+      mockDb.collectionError = new Error errMsg
       sendInitRequest(mockDb, 'exex', objects, done)
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
@@ -114,8 +114,7 @@ describe "DementorController", ->
     it "returns an error", ->
       assert.ok objects.body.error, "Body #{objects.bodyStr} doesn't have error property."
     it "returns an error with the correct message", ->
-      #console.log "Found error:", objects.body.error
-      assert.equal errMsg, objects.body.error
+      assert.equal objects.body.error.type, errorType.DATABASE_ERROR
 
   describe "init with error in insert", ->
     objects = {}
@@ -134,6 +133,6 @@ describe "DementorController", ->
       assert.ok objects.body.error, "Body #{objects.bodyStr} doesn't have error property."
     it "returns an error with the correct message", ->
       #console.log "Found error:", objects.body.error
-      assert.equal errMsg, objects.body.error
+      assert.equal objects.body.error.type, errorType.DATABASE_ERROR
 
 

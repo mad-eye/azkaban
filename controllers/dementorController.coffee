@@ -3,7 +3,7 @@
 
 sendErrorResponse = (res, err) ->
   #console.log "Sending error ", err
-  resObject = {error:err.message}
+  resObject = {error:err}
   res.send JSON.stringify(resObject)
 
 exports.init = (req, res, app) ->
