@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "coffee-script": "~1.4.0",
-    "express": "3.0.0rc4",
+    "express": "~3.0.0",
     "mongodb": "~1.1.11",
     "browserchannel": "~0.4.2",
     "underscore": "~1.4.2",
