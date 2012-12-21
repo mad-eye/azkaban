@@ -45,7 +45,7 @@ class MongoConnector
         err = errors.new(errorType.MISSING_OBJECT, objectId: projectId)
       if err then callback err; return
       @deleteProjectFiles projectId, (err, results) =>
-        if err then helper.handleError err; return
+        if err then callback err; return
         callback null, project
 
   #callback: (err, results) ->
@@ -78,6 +78,7 @@ class MongoConnector
 
   #callback: (err, results) ->
   getObject: (objectId, collectionName, callback) ->
+    console.log "Getting object #{objectId} from #{collectionName}"
     helper = new MongoHelper(@db, callback)
 
     @db.open (err, db) ->

@@ -142,7 +142,7 @@ describe "DementorController", ->
         name: projectName
       sendRefreshRequest(mockDb, projectId, objects, done)
     assertResponseOk objects
-    it "returns an id fweep", ->
+    it "returns an id", ->
       assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
     it "returns the correct projectId", ->
       assert.equal objects.body.id, projectId
@@ -162,4 +162,40 @@ describe "DementorController", ->
       mockDb = new MockDb()
       sendRefreshRequest(mockDb, projectId, objects, done)
     assertResponseOk objects, true, errorType.MISSING_OBJECT
+
+  describe "refresh with db open error", ->
+    projectName = 'umboz'
+    projectId = uuid.v4()
+    objects = {}
+    before (done) ->
+      mockDb = new MockDb()
+      errMsg = "Cannot open connection to MongoDb."
+      mockDb.openError = new Error(errMsg)
+      sendRefreshRequest(mockDb, projectId, objects, done)
+    assertResponseOk objects, true, errorType.DATABASE_ERROR
+
+  describe "refresh with db collection error", ->
+    projectName = 'umboz'
+    projectId = uuid.v4()
+    objects = {}
+    before (done) ->
+      mockDb = new MockDb()
+      errMsg = "Cannot open collection."
+      mockDb.collectionError = new Error errMsg
+      sendRefreshRequest(mockDb, projectId, objects, done)
+    assertResponseOk objects, true, errorType.DATABASE_ERROR
+
+  describe "refresh with db crud error fweep", ->
+    projectName = 'umboz'
+    projectId = uuid.v4()
+    objects = {}
+    before (done) ->
+      mockDb = new MockDb()
+      mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
+        _id: projectId
+        name: projectName
+      errMsg = "Cannot remove document."
+      mockDb.crudError = new Error(errMsg)
+      sendRefreshRequest(mockDb, projectId, objects, done)
+    assertResponseOk objects, true, errorType.DATABASE_ERROR
 
