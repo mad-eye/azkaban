@@ -10,6 +10,18 @@ app = require '../../app'
 {errors, errorType} = require 'madeye-common'
 
 sendInitRequest = (mockDb, projectName, objects, done) ->
+  options =
+    method: "POST"
+    uri: "http://localhost:#{app.get('port')}/project/#{projectName}"
+  sendRequest mockDb, options, objects, done
+
+sendRefreshRequest = (mockDb, projectId, objects, done) ->
+  options =
+    method: "PUT"
+    uri: "http://localhost:#{app.get('port')}/project/#{projectId}"
+  sendRequest mockDb, options, objects, done
+
+sendRequest = (mockDb, options, objects, done) ->
   if mockDb?
     mongoConnector = new MongoConnector(mockDb)
     ServiceKeeper.mongoConnector = mongoConnector
@@ -17,9 +29,6 @@ sendInitRequest = (mockDb, projectName, objects, done) ->
     ServiceKeeper.reset()
 
   objects ?= {}
-  options =
-    method: "POST"
-    uri: "http://localhost:#{app.get('port')}/init/#{projectName}"
   console.log "Sending request to", options.uri
   request options, (err, _res, _body) ->
     #console.log "Found body ", _body
