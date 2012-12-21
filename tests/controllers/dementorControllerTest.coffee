@@ -174,6 +174,8 @@ describe "DementorController", ->
       assert.ok u.hostname
       assert.equal u.hostname, Settings.apogeeHost
 
+    it "deletes existing files in db for project"
+
   describe "refresh with missing project", ->
     projectName = 'gloth'
     projectId = uuid.v4()
