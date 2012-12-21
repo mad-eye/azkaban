@@ -1,8 +1,10 @@
 uuid = require 'node-uuid'
+_ = require 'underscore'
 
 #@openError: Error to be thrown on open.
 #@collectionError: Error to be thrown on collection
 #@crudError: Error to be thrown on CRUD operation
+#TODO: Change this name to MockMongo for consistency with filename.
 class MockDb
   #Marker for mock object
   @isMock: true,
@@ -58,7 +60,7 @@ class MockDb
 
   #For test classes to set up data
   load: (collectionName, document) ->
-    @getCollection('collectionName').load(document)
+    @getCollection(collectionName).load(document)
 
 #@crudError: Error to be thrown on CRUD operation
 class MockCollection
@@ -66,10 +68,10 @@ class MockCollection
   @isMock: true,
 
   constructor: (@name, @crudError) ->
-    @documents = {}
+    @documents = []
 
   insert: (docs, options, callback) ->
-    unless callback?
+    if typeof options == 'function'
       callback = options
       options = {}
     if @crudError
@@ -84,10 +86,26 @@ class MockCollection
   find: (query, fields, options) ->
     return new MockCursor(query, this)
     
+  #callback: (err, result) ->
+  remove: (selector, options, callback) ->
+    if typeof options == 'function'
+      callback = options
+      options = {}
+    if @crudError
+      callback @crudError
+      return
+    @documents = _.reject @documents, (doc) ->
+      match = true
+      for k, v of selector
+        match = false unless doc[k] == v
+        break unless match
+      return match
+    callback null, {}
+
 
   #For test classes to use
   load: (doc) ->
-    @documents[doc._id] = doc
+    @documents.push doc
 
 CursorINIT = 0
 CursorOPEN = 1
@@ -105,11 +123,11 @@ class MockCursor
     @index = 0
     @state = CursorINIT
 
-  @_findItems: (query, collection) ->
-    @items = _.filter(collection, (item) ->
+  _findItems: (query, collection) ->
+    @items = _.filter(collection.documents, (item) ->
       ok = true
       for fieldName, fieldValue of query
-        ok = false if query.fieldName != fieldValue
+        ok = false if item[fieldName] != fieldValue
         break unless ok
       return ok
     )
@@ -127,7 +145,7 @@ class MockCursor
     return this
 
   nextObject: (callback) =>
-    return callback new Error('Cursor is closed') if @state = CursorCLOSED
+    return callback new Error('Cursor is closed') if @state == CursorCLOSED
     if @state = CursorINIT
       @state = CursorOPEN
     if @index >= @items.length

@@ -1,6 +1,7 @@
 assert = require 'assert'
 request = require 'request'
 url = require 'url'
+uuid = require 'node-uuid'
 app = require '../../app'
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnector} = require '../../src/mongoConnector'
@@ -29,7 +30,6 @@ sendRequest = (mockDb, options, objects, done) ->
     ServiceKeeper.reset()
 
   objects ?= {}
-  console.log "Sending request to", options.uri
   request options, (err, _res, _body) ->
     #console.log "Found body ", _body
     objects.bodyStr = _body
@@ -130,4 +130,36 @@ describe "DementorController", ->
       sendInitRequest(mockDb, 'exex', objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
+
+  describe "refresh", ->
+    projectName = 'gloth'
+    projectId = uuid.v4()
+    objects = {}
+    before (done) ->
+      mockDb = new MockDb()
+      mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
+        _id: projectId
+        name: projectName
+      sendRefreshRequest(mockDb, projectId, objects, done)
+    assertResponseOk objects
+    it "returns an id fweep", ->
+      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
+    it "returns the correct projectId", ->
+      assert.equal objects.body.id, projectId
+    it "returns a url", ->
+      assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
+    it "returns a url with the correct hostname", ->
+      #console.log "Found url:", objects.body.url
+      u = url.parse(objects.body.url)
+      assert.ok u.hostname
+      assert.equal u.hostname, Settings.apogeeHost
+
+  describe "refresh with missing project", ->
+    projectName = 'gloth'
+    projectId = uuid.v4()
+    objects = {}
+    before (done) ->
+      mockDb = new MockDb()
+      sendRefreshRequest(mockDb, projectId, objects, done)
+    assertResponseOk objects, true, errorType.MISSING_OBJECT
 
