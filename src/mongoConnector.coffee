@@ -52,8 +52,9 @@ class MongoConnector
   deleteProjectFiles: (selector, callback) ->
     helper = new MongoHelper(@db, callback)
 
-    @db.open (err, db) ->
+    @db.open (err, db) =>
       if err then helper.handleError err; return
+      console.log "Opening collection #{@FILES_COLLECTION}"
       db.collection @FILES_COLLECTION, (err, collection) ->
         if err then helper.handleError err; return
         collection.remove selector, {safe:true}, (err, result) ->

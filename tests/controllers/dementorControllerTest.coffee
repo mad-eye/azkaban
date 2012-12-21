@@ -63,11 +63,31 @@ describe "DementorController with real db", ->
     objects = {}
     before (done) ->
       sendInitRequest(null, projectName, objects, done)
-    it "returns a 200", ->
-      assert.ok objects.response.statusCode == 200
-    it "returns valid JSON", ->
-      assert.doesNotThrow ->
-        JSON.parse(objects.bodyStr)
+    assertResponseOk objects
+    it "returns the correct projectName", ->
+      assert.equal objects.body.name, projectName
+    it "returns an id", ->
+      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
+    it "returns a url", ->
+      assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
+    it "returns a url with the correct hostname", ->
+      #console.log "Found url:", objects.body.url
+      u = url.parse(objects.body.url)
+      assert.ok u.hostname
+      assert.equal u.hostname, Settings.apogeeHost
+
+  describe "refresh fweep", ->
+    projectName = 'yimfil'
+    projectId = null
+    objects = {}
+    before (done) ->
+      mongo = ServiceKeeper.mongoInstance()
+      mongo.createProject projectName, (err, projects) ->
+        assert.equal err, null
+        projectId = projects[0]._id
+        sendRefreshRequest(null, projectId, objects, done)
+
+    assertResponseOk objects
     it "returns the correct projectName", ->
       assert.equal objects.body.name, projectName
     it "returns an id", ->
@@ -130,7 +150,7 @@ describe "DementorController", ->
       sendInitRequest(mockDb, 'exex', objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
-
+  #TODO: Refactor out repeated code.
   describe "refresh", ->
     projectName = 'gloth'
     projectId = uuid.v4()
@@ -185,7 +205,7 @@ describe "DementorController", ->
       sendRefreshRequest(mockDb, projectId, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
-  describe "refresh with db crud error fweep", ->
+  describe "refresh with db crud error", ->
     projectName = 'umboz'
     projectId = uuid.v4()
     objects = {}
