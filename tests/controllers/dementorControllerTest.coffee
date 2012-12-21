@@ -40,6 +40,22 @@ sendRequest = (mockDb, options, objects, done) ->
     objects.response = _res
     done()
 
+assertResponseOk = (objects, isError=false, errorType=null) ->
+  it "returns a 200", ->
+    assert.ok objects.response.statusCode == 200
+  it "returns valid JSON", ->
+    assert.doesNotThrow ->
+      JSON.parse(objects.bodyStr)
+  if isError
+    it "returns an error", ->
+      assert.ok objects?.body?.error, "Body #{objects.bodyStr} doesn't have error property."
+    it "returns an error with the correct type", ->
+      assert.equal objects.body.error.type, errorType
+  else
+    it "does not return an error", ->
+      assert.equal objects.body.error, null, "Body #{objects.bodyStr} should not have an error."
+
+
 describe "DementorController with real db", ->
 
   describe "init", ->
@@ -73,11 +89,7 @@ describe "DementorController", ->
     before (done) ->
       mockDb = new MockDb()
       sendInitRequest(mockDb, projectName, objects, done)
-    it "returns a 200", ->
-      assert.ok objects.response.statusCode == 200
-    it "returns valid JSON", ->
-      assert.doesNotThrow ->
-        JSON.parse(objects.bodyStr)
+    assertResponseOk objects
     it "returns the correct projectName", ->
       assert.equal objects.body.name, projectName
     it "returns an id", ->
@@ -97,16 +109,7 @@ describe "DementorController", ->
       errMsg = "Cannot open connection to MongoDb."
       mockDb.openError = new Error(errMsg)
       sendInitRequest(mockDb, 'exex', objects, done)
-    it "returns a 200", ->
-      assert.ok objects.response.statusCode == 200
-    it "returns valid JSON", ->
-      assert.doesNotThrow ->
-        JSON.parse(objects.bodyStr)
-    it "returns an error", ->
-      assert.ok objects?.body?.error, "Body #{objects.bodyStr} doesn't have error property."
-    it "returns an error with the correct message", ->
-      #console.log "Found error:", objects.body.error
-      assert.equal objects.body.error.type, errorType.DATABASE_ERROR
+    assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "init with error in opening collection", ->
     objects = {}
@@ -115,15 +118,7 @@ describe "DementorController", ->
       errMsg = "Cannot open collection."
       mockDb.collectionError = new Error errMsg
       sendInitRequest(mockDb, 'exex', objects, done)
-    it "returns a 200", ->
-      assert.ok objects.response.statusCode == 200
-    it "returns valid JSON", ->
-      assert.doesNotThrow ->
-        JSON.parse(objects.bodyStr)
-    it "returns an error", ->
-      assert.ok objects.body.error, "Body #{objects.bodyStr} doesn't have error property."
-    it "returns an error with the correct message", ->
-      assert.equal objects.body.error.type, errorType.DATABASE_ERROR
+    assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "init with error in insert", ->
     objects = {}
@@ -133,15 +128,6 @@ describe "DementorController", ->
       errMsg = "Cannot insert document."
       mockDb.crudError = new Error(errMsg)
       sendInitRequest(mockDb, 'exex', objects, done)
-    it "returns a 200", ->
-      assert.ok objects.response.statusCode == 200
-    it "returns valid JSON", ->
-      assert.doesNotThrow ->
-        JSON.parse(objects.bodyStr)
-    it "returns an error", ->
-      assert.ok objects.body.error, "Body #{objects.bodyStr} doesn't have error property."
-    it "returns an error with the correct message", ->
-      #console.log "Found error:", objects.body.error
-      assert.equal objects.body.error.type, errorType.DATABASE_ERROR
+    assertResponseOk objects, true, errorType.DATABASE_ERROR
 
 
