@@ -48,7 +48,6 @@ describe "DementorChannel", ->
 
     it "should add _id field", (done) ->
       channel.route message, (err, replyMsg) ->
-        console.log "Found replyMsg:", replyMsg
         assert.equal null, err
         assert.ok replyMsg?.data?.files
         assert.ok file._id, "File should have been given _id" for file in replyMsg.data.files
@@ -57,7 +56,6 @@ describe "DementorChannel", ->
     it "should callback error if Mongo returns an error", (done) ->
       mockDb.openError = new Error "Cannot open DB"
       channel.route message, (err, replyMsg) ->
-        console.log "Found err:", err
         assert.equal null, replyMsg
         assert.ok err
         assert.equal err.type, errorType.DATABASE_ERROR

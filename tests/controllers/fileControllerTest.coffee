@@ -41,7 +41,7 @@ describe 'fileController', ->
       callValues = fileController.socketServer.tell.getCall(0).args
       assert.equal PROJECT_ID, callValues[0]
       message = callValues[1]
-      console.log message
+      #console.log message
       assert.equal message.data.fileId, FILE_ID
       assert.equal message.data.contents, FILE_CONTENTS
 
@@ -104,9 +104,7 @@ describe 'fileController', ->
         json:
           contents: contents
 
-      console.log "Sending PUT request to", options.uri
       request options, (err, _res, _body) ->
-        console.log "Found body ", typeof _body
         objects.body = _body
         objects.response = _res
         done()
@@ -115,7 +113,6 @@ describe 'fileController', ->
       assert.ok objects.response.statusCode == 200
     it 'should return a non-empty body', ->
       assert.ok objects.body
-      console.log "Returned request body", objects.body
     it 'should return a fileId in response body', ->
       assert.equal objects.body.fileId, fileId
     it 'should return a projectId in response body', ->
@@ -158,9 +155,7 @@ describe 'fileController', ->
         method: "GET"
         uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
 
-      console.log "Sending request to", options.uri
       request options, (err, _res, _body) ->
-        #console.log "Found body ", _body
         objects.bodyStr = _body
         try
           objects.body = JSON.parse _body
@@ -177,7 +172,6 @@ describe 'fileController', ->
         JSON.parse(objects.bodyStr)
     it 'should return a non-empty body', ->
       assert.ok objects.body
-      console.log "Returned file body", objects.body
     it 'should return a fileId in response body', ->
       assert.equal objects.body.fileId, fileId
     it 'should return file body from dementor', ->

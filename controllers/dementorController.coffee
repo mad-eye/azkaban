@@ -8,7 +8,6 @@ sendErrorResponse = (res, err) ->
 
 exports.init = (req, res, app) ->
   mongoConnector = ServiceKeeper.mongoInstance()
-  console.log "MongoConnector has mockDb:", mongoConnector.db.isMock
   mongoConnector.createProject req.params['projectName'], (err, projects) ->
     if err
       sendErrorResponse(res, err)
@@ -19,3 +18,16 @@ exports.init = (req, res, app) ->
         url: url
         id: id
         name: projects[0].name
+
+exports.refresh = (req, res, app) ->
+  mongoConnector = ServiceKeeper.mongoInstance()
+  mongoConnector.refreshProject req.params['projectId'], (err, project) ->
+    if err
+      sendErrorResponse(res, err)
+    else
+      id = project._id
+      url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
+      res.send JSON.stringify
+        url: url
+        id: id
+        name: project.name
