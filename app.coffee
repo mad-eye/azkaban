@@ -37,7 +37,6 @@ shutdownGracefully = ->
   return if SHUTTING_DOWN
   SHUTTING_DOWN = true
   console.log "Shutting down gracefully."
-  #XXX: Need to use callback and parallel processes?
   flow.exec ->
     socketServer.destroy this.MULTI(),
     httpServer.close this.MULTI()
@@ -51,7 +50,7 @@ shutdownGracefully = ->
   , 30*1000
 
 process.on 'SIGINT', ->
-  process.exit(1) if SHUTTING_DOWN
+  process.exit(1) if SHUTTING_DOWN #Multiple ^C will allow exit in haste
   console.log 'Received SIGINT.'
   shutdownGracefully()
 
@@ -59,4 +58,4 @@ process.on 'SIGTERM', ->
   process.exit(1) if SHUTTING_DOWN
   console.log "Received kill signal (SIGTERM)"
   shutdownGracefully()
-  
+ 
