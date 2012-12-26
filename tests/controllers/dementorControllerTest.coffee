@@ -76,7 +76,7 @@ describe "DementorController with real db", ->
       assert.ok u.hostname
       assert.equal u.hostname, Settings.apogeeHost
 
-  describe "refresh fweep", ->
+  describe "refresh", ->
     projectName = 'yimfil'
     projectId = null
     objects = {}
