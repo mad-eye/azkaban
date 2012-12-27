@@ -1,0 +1,271 @@
+{
+  "name": "azkaban",
+  "version": "0.0.1",
+  "dependencies": {
+    "coffee-script": {
+      "version": "1.4.0"
+    },
+    "express": {
+      "version": "3.0.5",
+      "dependencies": {
+        "connect": {
+          "version": "2.7.1",
+          "dependencies": {
+            "qs": {
+              "version": "0.5.1"
+            },
+            "formidable": {
+              "version": "1.0.11"
+            },
+            "crc": {
+              "version": "0.2.0"
+            },
+            "bytes": {
+              "version": "0.1.0"
+            },
+            "pause": {
+              "version": "0.0.1"
+            }
+          }
+        },
+        "commander": {
+          "version": "0.6.1"
+        },
+        "range-parser": {
+          "version": "0.0.4"
+        },
+        "mkdirp": {
+          "version": "0.3.3"
+        },
+        "cookie": {
+          "version": "0.0.5"
+        },
+        "buffer-crc32": {
+          "version": "0.1.1"
+        },
+        "fresh": {
+          "version": "0.1.0"
+        },
+        "methods": {
+          "version": "0.0.1"
+        },
+        "send": {
+          "version": "0.1.0",
+          "dependencies": {
+            "mime": {
+              "version": "1.2.6"
+            }
+          }
+        },
+        "cookie-signature": {
+          "version": "0.0.1"
+        },
+        "debug": {
+          "version": "0.7.0"
+        }
+      }
+    },
+    "mongodb": {
+      "version": "1.1.11",
+      "dependencies": {
+        "bson": {
+          "version": "0.1.5"
+        }
+      }
+    },
+    "underscore": {
+      "version": "1.4.3"
+    },
+    "node-uuid": {
+      "version": "1.4.0"
+    },
+    "madeye-common": {
+      "version": "0.0.1",
+      "dependencies": {
+        "coffee-script": {
+          "version": "1.4.0"
+        },
+        "underscore": {
+          "version": "1.4.3"
+        },
+        "node-uuid": {
+          "version": "1.4.0"
+        },
+        "browserchannel": {
+          "version": "1.0.0",
+          "dependencies": {
+            "hat": {
+              "version": "0.0.3"
+            },
+            "timerstub": {
+              "version": "1.0.0"
+            },
+            "request": {
+              "version": "2.12.0",
+              "dependencies": {
+                "form-data": {
+                  "version": "0.0.3",
+                  "dependencies": {
+                    "combined-stream": {
+                      "version": "0.0.3",
+                      "dependencies": {
+                        "delayed-stream": {
+                          "version": "0.0.5"
+                        }
+                      }
+                    },
+                    "async": {
+                      "version": "0.1.9"
+                    }
+                  }
+                },
+                "mime": {
+                  "version": "1.2.7"
+                }
+              }
+            }
+          }
+        },
+        "connect": {
+          "version": "2.7.1",
+          "dependencies": {
+            "qs": {
+              "version": "0.5.1"
+            },
+            "formidable": {
+              "version": "1.0.11"
+            },
+            "cookie-signature": {
+              "version": "0.0.1"
+            },
+            "crc": {
+              "version": "0.2.0"
+            },
+            "cookie": {
+              "version": "0.0.5"
+            },
+            "bytes": {
+              "version": "0.1.0"
+            },
+            "send": {
+              "version": "0.1.0",
+              "dependencies": {
+                "mime": {
+                  "version": "1.2.6"
+                },
+                "range-parser": {
+                  "version": "0.0.4"
+                }
+              }
+            },
+            "fresh": {
+              "version": "0.1.0"
+            },
+            "pause": {
+              "version": "0.0.1"
+            },
+            "debug": {
+              "version": "0.7.0"
+            }
+          }
+        },
+        "flow": {
+          "version": "0.2.2"
+        }
+      }
+    },
+    "flow": {
+      "version": "0.2.2"
+    },
+    "chai": {
+      "version": "1.4.2"
+    },
+    "jade": {
+      "version": "0.27.7",
+      "dependencies": {
+        "commander": {
+          "version": "0.6.1"
+        },
+        "mkdirp": {
+          "version": "0.3.4"
+        }
+      }
+    },
+    "node-dev": {
+      "version": "0.2.9",
+      "dependencies": {
+        "growl": {
+          "version": "1.6.1"
+        }
+      }
+    },
+    "mocha": {
+      "version": "1.7.4",
+      "dependencies": {
+        "commander": {
+          "version": "0.6.1"
+        },
+        "growl": {
+          "version": "1.6.1"
+        },
+        "jade": {
+          "version": "0.26.3",
+          "dependencies": {
+            "mkdirp": {
+              "version": "0.3.0"
+            }
+          }
+        },
+        "diff": {
+          "version": "1.0.2"
+        },
+        "debug": {
+          "version": "0.7.0"
+        },
+        "mkdirp": {
+          "version": "0.3.3"
+        },
+        "ms": {
+          "version": "0.3.0"
+        }
+      }
+    },
+    "sinon": {
+      "version": "1.5.2",
+      "dependencies": {
+        "buster-format": {
+          "version": "0.5.5",
+          "dependencies": {
+            "buster-core": {
+              "version": "0.6.4"
+            }
+          }
+        }
+      }
+    },
+    "request": {
+      "version": "2.12.0",
+      "dependencies": {
+        "form-data": {
+          "version": "0.0.3",
+          "dependencies": {
+            "combined-stream": {
+              "version": "0.0.3",
+              "dependencies": {
+                "delayed-stream": {
+                  "version": "0.0.5"
+                }
+              }
+            },
+            "async": {
+              "version": "0.1.9"
+            }
+          }
+        },
+        "mime": {
+          "version": "1.2.7"
+        }
+      }
+    }
+  }
+}
