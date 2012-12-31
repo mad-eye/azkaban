@@ -26,4 +26,11 @@ class DementorChannel
   removeFiles : (message, callback) ->
     console.log "Called removeFiles with ", message
 
+  closeProject : (projectId) ->
+    mongoConnection = ServiceKeeper.mongoInstance()
+    mongoConnection.closeProject projectId, (err) ->
+      if err
+        console.error "Error in closing project #{projectId}:", err
+
+
 exports.DementorChannel = DementorChannel
