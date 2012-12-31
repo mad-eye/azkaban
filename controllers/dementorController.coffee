@@ -2,7 +2,7 @@
 {Settings} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
-  #console.log "Sending error ", err
+  console.log "Sending error ", err
   resObject = {error:err}
   res.send JSON.stringify(resObject)
 
