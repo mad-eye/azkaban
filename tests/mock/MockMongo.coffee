@@ -130,22 +130,39 @@ class MockCollection
       callback null, oldObject
 
   update: (selector, modifier, options, callback) ->
-    throw Error "MockCollection.update is not yet implemented"
     throw Error 'MockMongo only supports safe:true' unless options.safe
     throw Error "MockMongo doesn't support multi yet" if options.multi
     throw Error "MockMongo doesn't support raw yet" if options.raw
     callback @crudError if @crudError
 
     cursor = @find selector
-    cursor.nextObject (object) ->
+    object = null
+    cursor.nextObject (obj) ->
+      object = obj
+    
+    count = 0
+    if object
       if modifier['$set']
         _.extend object, modifier['$set']
       else
         object = _.extend modifier, _id: object._id
-    #TODO: Finish this.  Remember to replace object in collection.documents for non-$set case
+      #TODO: Replace object in collection.documents for non-$set case
+      count = 1
+    else if options.upsert
+      if modifier['$set']
+        object = modifier['$set']
+      else
+        object = modifier
+      object._id = uuid.v4()
+      @documents.push object
+      count = 1
 
+    callback null, count
     
-    
+  #For test classes to use
+  get: (objectId) ->
+    for doc in @documents
+      return doc if doc._id == objectId
 
   #For test classes to use
   load: (doc) ->

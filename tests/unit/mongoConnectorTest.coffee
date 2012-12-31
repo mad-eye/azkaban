@@ -10,10 +10,30 @@ describe 'MongoConnector', ->
     mockDb = null
 
     describe 'close project', ->
+      projectId = project = null
+      mongoConnector = null
 
-      it 'should set open to false'
+      before ->
+        projectId = uuid.v4()
+        project =
+          _id: projectId
+          name: 'nerzo'
+          opened: false
+        mockDb = new MockDb
+        mockDb.load MongoConnector.PROJECT_COLLECTION, project
+        mongoConnector = new MongoConnector(mockDb)
 
-      it 'should not throw an error if project does not exist'
+      it 'should set project.opened=false', (done) ->
+        mongoConnector.closeProject projectId, (err) ->
+          assert.equal err, null
+          dbProj = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get projectId
+          assert.equal dbProj.opened, false
+          done()
+
+      it 'should not throw an error if project does not exist', (done) ->
+        mongoConnector.closeProject uuid.v4(), (err) ->
+          assert.equal err, null
+          done()
 
     describe 'refreshProject', ->
       projectId = project = null
@@ -54,6 +74,8 @@ describe 'MongoConnector', ->
         mongoConnector.refreshProject projectId, (err, proj) ->
           assert.ok proj.opened
           assert.equal proj.opened, true
+          dbProj = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get projectId
+          assert.ok dbProj.opened
           done()
 
       it 'should delete all files for project', (done) ->

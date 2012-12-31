@@ -61,6 +61,11 @@ class MongoConnector
           if err then helper.handleError err; return
           helper.handleResult result
 
+  #callback: (err) ->
+  closeProject: (projectId, callback) ->
+    @updateObject projectId, @PROJECT_COLLECTION, {opened:false}, (err, count) ->
+      callback err
+
   addFile: (file, projectId, callback) ->
     @addFiles([file], projectId)
 
