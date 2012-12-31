@@ -1,5 +1,6 @@
 mongo = require 'mongodb'
 uuid = require 'node-uuid'
+flow = require 'flow'
 {errors, errorType} = require 'madeye-common'
 
 DB_NAME = 'meteor'
@@ -33,18 +34,18 @@ class MongoConnector
           if err then helper.handleError err; return
           helper.handleResult result
 
-  #callback: (err, projects) ->
+  #callback: (err, project) ->
   createProject: (projectName, callback) ->
-    projects = [{_id: uuid.v4(), name: projectName, created:new Date().getTime()}]
+    projects = [{_id: uuid.v4(), name: projectName, opened:true, created:new Date().getTime()}]
     @insert projects, @PROJECT_COLLECTION, callback
 
-  #callback: (err, projects) ->
+  #callback: (err, project) ->
   refreshProject: (projectId, callback) ->
-    @getProject projectId, (err, project) =>
+    @findUpdateObject projectId, @PROJECT_COLLECTION, {opened:true}, (err, project) =>
       unless err? or project?
         err = errors.new(errorType.MISSING_OBJECT, objectId: projectId)
       if err then callback err; return
-      @deleteProjectFiles projectId, (err, results) =>
+      @deleteProjectFiles projectId, (err, results) ->
         if err then callback err; return
         callback null, project
 
@@ -90,6 +91,37 @@ class MongoConnector
           if err then helper.handleError err; return
           helper.handleResult result
 
+  findUpdateObject: (objectId, collectionName, modifier, overwrite, callback) ->
+    if typeof overwrite == 'function'
+      callback = overwrite
+      overwrite = false
+
+    helper = new MongoHelper(@db, callback)
+
+    @db.open (err, db) ->
+      if err then helper.handleError err; return
+      db.collection collectionName, (err, collection) ->
+        if err then helper.handleError err; return
+        modifier = {$set: modifier} unless overwrite
+        collection.findAndModify {_id:objectId}, {}, modifier, {safe:true, new:true}, (err, result) ->
+          if err then helper.handleError err; return
+          helper.handleResult result
+
+  updateObject: (objectId, collectionName, modifier, overwrite, callback) ->
+    if typeof overwrite == 'function'
+      callback = overwrite
+      overwrite = false
+
+    helper = new MongoHelper(@db, callback)
+
+    @db.open (err, db) ->
+      if err then helper.handleError err; return
+      db.collection collectionName, (err, collection) ->
+        if err then helper.handleError err; return
+        modifier = {$set: modifier} unless overwrite
+        collection.update {_id:objectId}, modifier, {safe:true}, (err, result) ->
+          if err then helper.handleError err; return
+          helper.handleResult result
 
 MongoConnector.instance = (hostname, port) ->
   server = new mongo.Server(hostname, port, {auto_reconnect: true})

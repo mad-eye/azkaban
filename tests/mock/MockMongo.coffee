@@ -36,6 +36,7 @@ class MockDb
         @collections[name] = new MockCollection(name, @crudError)
     callback(null, @collections[name])
 
+  #For test classes
   createCollection: (name, options, callback) ->
     unless callback?
       callback = options
@@ -102,6 +103,49 @@ class MockCollection
       return match
     callback null, {}
 
+  findAndModify: (selector, sort, modifier, options, callback) ->
+    if @crudError then callback @crudError; return
+    #TODO: Accept sort
+    throw Error "MockCollection.findAndModify does not support remove yet" if options.remove
+    object = oldObject = _.find @documents, (item) ->
+      objectMatchesSelector item, selector
+
+    if object
+      if modifier['$set']
+        _.extend object, modifier['$set']
+      else
+        object = _.extend modifier, _id: object._id
+        #FIXME: Save this back into documents
+    else if options.upsert
+      if modifier['$set']
+        object = modifier['$set']
+      else
+        object = modifier
+      object._id = uuid.v4()
+      @documents.push object
+
+    if options.new
+      callback null, object
+    else
+      callback null, oldObject
+
+  update: (selector, modifier, options, callback) ->
+    throw Error "MockCollection.update is not yet implemented"
+    throw Error 'MockMongo only supports safe:true' unless options.safe
+    throw Error "MockMongo doesn't support multi yet" if options.multi
+    throw Error "MockMongo doesn't support raw yet" if options.raw
+    callback @crudError if @crudError
+
+    cursor = @find selector
+    cursor.nextObject (object) ->
+      if modifier['$set']
+        _.extend object, modifier['$set']
+      else
+        object = _.extend modifier, _id: object._id
+    #TODO: Finish this.  Remember to replace object in collection.documents for non-$set case
+
+    
+    
 
   #For test classes to use
   load: (doc) ->
@@ -124,13 +168,8 @@ class MockCursor
     @state = CursorINIT
 
   _findItems: (query, collection) ->
-    @items = _.filter(collection.documents, (item) ->
-      ok = true
-      for fieldName, fieldValue of query
-        ok = false if item[fieldName] != fieldValue
-        break unless ok
-      return ok
-    )
+    @items = _.filter collection.documents, (item) ->
+      objectMatchesSelector item, query
 
   sort: (fields) =>
     throw Error 'Not yet implemented in MockCursor.'
@@ -183,5 +222,12 @@ class MockCursor
   count: =>
     return @items.length
 
+
+objectMatchesSelector = (object, selector) ->
+  ok = true
+  for fieldName, fieldValue of selector
+    ok = false if object[fieldName] != fieldValue
+    break unless ok
+  return ok
 
 exports.MockDb = MockDb
