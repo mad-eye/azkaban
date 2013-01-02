@@ -110,12 +110,38 @@ describe 'MongoConnector', ->
           done()
 
     describe 'createProject', ->
+      mongoConnector = mockDb = null
+      projectName = 'kwin'
+      returnedProject = null
+
+      before (done) ->
+        mockDb = new MockDb
+        mongoConnector = new MongoConnector(mockDb)
+        mongoConnector.createProject projectName, (err, projects) ->
+          assert.equal err, null
+          assert.ok projects
+          returnedProject = projects[0]
+          done()
       
-      it 'should create the project'
+      it 'should create the project', ->
+        projects = mockDb.collections[MongoConnector.PROJECT_COLLECTION].documents
+        console.log "mockDb.projets has documents", projects
+        assert.ok _.any projects, (proj) ->
+          console.log "Checking #{proj} for name #{projectName}"
+          proj.name == projectName
 
-      it 'should return the project'
 
-      it 'should set project.opened=true'
+      it 'should return the project', ->
+        assert.ok returnedProject
+        assert.equal returnedProject.name, projectName
+
+      it 'should set a projectId', ->
+        assert.ok returnedProject._id
+
+      it 'should set project.opened=true', ->
+        project = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get returnedProject._id
+        assert.equal project.opened, true
+
 
 
   describe 'with real db', ->

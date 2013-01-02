@@ -80,7 +80,7 @@ class MockCollection
       return
     for doc in docs
       doc._id = uuid.v4()
-      @documents[doc._id] = doc
+      @documents.push doc
       
     callback(null, docs)
 

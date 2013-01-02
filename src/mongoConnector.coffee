@@ -34,7 +34,7 @@ class MongoConnector
           if err then helper.handleError err; return
           helper.handleResult result
 
-  #callback: (err, project) ->
+  #callback: (err, projects) ->
   createProject: (projectName, callback) ->
     projects = [{_id: uuid.v4(), name: projectName, opened:true, created:new Date().getTime()}]
     @insert projects, @PROJECT_COLLECTION, callback
