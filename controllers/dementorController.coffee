@@ -1,3 +1,4 @@
+flow = require 'flow'
 {ServiceKeeper} = require '../ServiceKeeper'
 {Settings} = require 'madeye-common'
 
@@ -8,7 +9,9 @@ sendErrorResponse = (res, err) ->
 
 exports.init = (req, res, app) ->
   mongoConnector = ServiceKeeper.mongoInstance()
-  mongoConnector.createProject req.params['projectName'], (err, projects) ->
+  flow.exec ->
+    mongoConnector.createProject req.params['projectName'], this
+  , (err, projects) ->
     if err
       sendErrorResponse(res, err)
     else
@@ -21,7 +24,9 @@ exports.init = (req, res, app) ->
 
 exports.refresh = (req, res, app) ->
   mongoConnector = ServiceKeeper.mongoInstance()
-  mongoConnector.refreshProject req.params['projectId'], (err, project) ->
+  flow.exec ->
+    mongoConnector.refreshProject req.params['projectId'], this
+  , (err, project) ->
     if err
       sendErrorResponse(res, err)
     else
