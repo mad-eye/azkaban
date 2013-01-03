@@ -17,4 +17,7 @@ do
     shift
 done
 
+export MADEYE_BC_PORT=4322
+export MADEYE_HTTP_PORT=4005
+
 find tests -name '*Test.coffee' -print0 | xargs -0 bin/mochac $WATCH $GREP 
