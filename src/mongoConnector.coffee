@@ -70,6 +70,7 @@ class MongoConnector
     @addFiles([file], projectId)
 
   addFiles: (files, projectId, callback) ->
+
     for file in files
       file.projectId = projectId
       file._id = uuid.v4()
@@ -81,6 +82,19 @@ class MongoConnector
 
   getProject: (projectId, callback) ->
     @getObject projectId, @PROJECT_COLLECTION, callback
+
+  #callback: (err, results) ->
+  getFilesForProject: (projectId, callback) ->
+    helper = new MongoHelper(@db, callback)
+
+    @db.open (err, db) =>
+      if err then helper.handleError err; return
+      db.collection @FILES_COLLECTION, (err, collection) ->
+        if err then helper.handleError err; return
+        cursor = collection.find {projectId:projectId}
+        cursor.toArray (err, results) ->
+          if err then helper.handleError err; return
+          helper.handleResult results
 
   #callback: (err, results) ->
   getObject: (objectId, collectionName, callback) ->

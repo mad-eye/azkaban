@@ -36,7 +36,6 @@ class MockDb
         @collections[name] = new MockCollection(name, @crudError)
     callback(null, @collections[name])
 
-  #For test classes
   createCollection: (name, options, callback) ->
     unless callback?
       callback = options
@@ -54,10 +53,9 @@ class MockDb
 
   #For test classes
   getCollection: (name, crudError) ->
-    if @collections[name]
-      return @collections[name]
-    else
+    unless @collections[name]
       @collections[name] = new MockCollection(name, crudError)
+    return @collections[name]
 
   #For test classes to set up data
   load: (collectionName, document) ->

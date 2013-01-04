@@ -142,6 +142,80 @@ describe 'MongoConnector', ->
         project = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get returnedProject._id
         assert.equal project.opened, true
 
+    describe 'addfiles', ->
+      mongoConnector = mockDb = null
+
+      before ->
+        mockDb = new MockDb
+        mongoConnector = new MongoConnector(mockDb)
+
+      it 'should add new files to the db', (done) ->
+        projectId = uuid.v4()
+        files = [
+          {isDir: false, path:'file1'},
+          {isDir: true, path:'dir1'},
+          {isDir: false, path:'dir1/file2'}
+        ]
+        mongoConnector.addFiles files, projectId, (err, result) ->
+          assert.equal err, null
+          assert.ok result
+          assert.equal result.length, files.length
+          for file in result
+            assert.ok file._id?
+            assert.ok file.isDir?
+            assert.ok file.path?
+          done()
+
+      it 'should not duplicate existing files to the db', (done) ->
+        projectId = uuid.v4()
+        file1Id = uuid.v4()
+        file1 = {_id:file1Id, isDir: false, path:'file1'}
+        mockDb.load MongoConnector.PROJECT_COLLECTION, file1
+        files = [
+          {isDir: false, path:'file1'},
+          {isDir: true, path:'dir1'},
+          {isDir: false, path:'dir1/file2'}
+        ]
+        mongoConnector.addFiles files, projectId, (err, result) ->
+          assert.equal err, null
+          assert.ok result
+          assert.equal result.length, files.length
+          for file in result
+            assert.ok file._id?
+            assert.ok file.isDir?
+            assert.ok file.path?
+            if file.path == 'file1'
+              assert.equal file._id, file1Id
+          done()
+
+    describe "getFilesForProject", ->
+      projectId = files = mongoConnector = null
+      before ->
+        mockDb = new MockDb
+        mongoConnector = new MongoConnector(mockDb)
+        projectId = uuid.v4()
+        files = [
+          {_id:uuid.v4(), projectId:projectId, isDir: false, path:'file1'},
+          {_id:uuid.v4(), projectId:projectId, isDir: true, path:'dir1'},
+          {_id:uuid.v4(), projectId:projectId, isDir: false, path:'dir1/file2'}
+        ]
+        for file in files
+          mockDb.load MongoConnector.FILES_COLLECTION, file
+        console.log "Loaded mockDb.files:", mockDb.collections['files'].documents
+
+      it "should get all the files for a project fweep", (done) ->
+        mongoConnector.getFilesForProject projectId, (err, results) ->
+          assert.equal err, null
+          assert.ok results
+          assert.equal results.length, files.length
+          done()
+
+      it "should not get files of another project", (done) ->
+        mongoConnector.getFilesForProject uuid.v4(), (err, results) ->
+          assert.equal err, null
+          assert.ok results
+          assert.equal results.length, 0
+          done()
 
 
   describe 'with real db', ->

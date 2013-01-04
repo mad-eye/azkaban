@@ -10,16 +10,18 @@ app = require '../../app'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
-sendInitRequest = (mockDb, projectName, objects, done) ->
+sendInitRequest = (mockDb, projectName, files, objects, done) ->
   options =
     method: "POST"
     uri: "http://localhost:#{app.get('port')}/project/#{projectName}"
+    json: {files:files}
   sendRequest mockDb, options, objects, done
 
-sendRefreshRequest = (mockDb, projectId, objects, done) ->
+sendRefreshRequest = (mockDb, projectId, files, objects, done) ->
   options =
     method: "PUT"
     uri: "http://localhost:#{app.get('port')}/project/#{projectId}"
+    json: {files:files}
   sendRequest mockDb, options, objects, done
 
 sendRequest = (mockDb, options, objects, done) ->
@@ -31,21 +33,22 @@ sendRequest = (mockDb, options, objects, done) ->
 
   objects ?= {}
   request options, (err, _res, _body) ->
-    #console.log "Found body ", _body
-    objects.bodyStr = _body
-    try
-      objects.body = JSON.parse _body
-    catch error
-      "Let the test catch this."
+    console.log "Found body ", _body
+    console.log "Body type", typeof _body
+    if typeof _body == 'string'
+      objects.bodyStr = _body
+      try
+        objects.body = JSON.parse _body
+      catch error
+        "Let the test catch this."
+    else
+      objects.body = _body
     objects.response = _res
     done()
 
 assertResponseOk = (objects, isError=false, errorType=null) ->
   it "returns a 200", ->
     assert.ok objects.response.statusCode == 200
-  it "returns valid JSON", ->
-    assert.doesNotThrow ->
-      JSON.parse(objects.bodyStr)
   if isError
     it "returns an error", ->
       assert.ok objects?.body?.error, "Body #{objects.bodyStr} doesn't have error property."
@@ -57,12 +60,17 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
 
 
 describe "DementorController with real db", ->
+  files = [
+    {isDir: false, path:'file1'},
+          {isDir: true, path:'dir1'},
+          {isDir: false, path:'dir1/file2'}
+  ]
 
   describe "init", ->
     projectName = 'cleesh'
     objects = {}
     before (done) ->
-      sendInitRequest(null, projectName, objects, done)
+      sendInitRequest(null, projectName, files, objects, done)
     assertResponseOk objects
     it "returns the correct projectName", ->
       assert.equal objects.body.name, projectName
@@ -85,7 +93,7 @@ describe "DementorController with real db", ->
       mongo.createProject projectName, (err, projects) ->
         assert.equal err, null
         projectId = projects[0]._id
-        sendRefreshRequest(null, projectId, objects, done)
+        sendRefreshRequest(null, projectId, files, objects, done)
 
     assertResponseOk objects
     it "returns the correct projectName", ->
@@ -102,13 +110,18 @@ describe "DementorController with real db", ->
 
 
 describe "DementorController", ->
+  files = [
+    {isDir: false, path:'file1'},
+          {isDir: true, path:'dir1'},
+          {isDir: false, path:'dir1/file2'}
+  ]
 
   describe "init", ->
     projectName = 'golmac'
     objects = {}
     before (done) ->
       mockDb = new MockDb()
-      sendInitRequest(mockDb, projectName, objects, done)
+      sendInitRequest(mockDb, projectName, files, objects, done)
     assertResponseOk objects
     it "returns the correct projectName", ->
       assert.equal objects.body.name, projectName
@@ -128,7 +141,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot open connection to MongoDb."
       mockDb.openError = new Error(errMsg)
-      sendInitRequest(mockDb, 'exex', objects, done)
+      sendInitRequest(mockDb, 'exex', files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "init with error in opening collection", ->
@@ -137,7 +150,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot open collection."
       mockDb.collectionError = new Error errMsg
-      sendInitRequest(mockDb, 'exex', objects, done)
+      sendInitRequest(mockDb, 'exex', files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "init with error in insert", ->
@@ -147,7 +160,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot insert document."
       mockDb.crudError = new Error(errMsg)
-      sendInitRequest(mockDb, 'exex', objects, done)
+      sendInitRequest(mockDb, 'exex', files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   #TODO: Refactor out repeated code.
@@ -160,7 +173,7 @@ describe "DementorController", ->
       mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
         _id: projectId
         name: projectName
-      sendRefreshRequest(mockDb, projectId, objects, done)
+      sendRefreshRequest(mockDb, projectId, files, objects, done)
     assertResponseOk objects
     it "returns an id", ->
       assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
@@ -182,7 +195,7 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
-      sendRefreshRequest(mockDb, projectId, objects, done)
+      sendRefreshRequest(mockDb, projectId, files, objects, done)
     assertResponseOk objects, true, errorType.MISSING_OBJECT
 
   describe "refresh with db open error", ->
@@ -193,7 +206,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot open connection to MongoDb."
       mockDb.openError = new Error(errMsg)
-      sendRefreshRequest(mockDb, projectId, objects, done)
+      sendRefreshRequest(mockDb, projectId, files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "refresh with db collection error", ->
@@ -204,7 +217,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot open collection."
       mockDb.collectionError = new Error errMsg
-      sendRefreshRequest(mockDb, projectId, objects, done)
+      sendRefreshRequest(mockDb, projectId, files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "refresh with db crud error", ->
@@ -218,6 +231,6 @@ describe "DementorController", ->
         name: projectName
       errMsg = "Cannot remove document."
       mockDb.crudError = new Error(errMsg)
-      sendRefreshRequest(mockDb, projectId, objects, done)
+      sendRefreshRequest(mockDb, projectId, files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
