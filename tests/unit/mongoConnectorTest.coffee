@@ -180,49 +180,33 @@ describe 'MongoConnector', ->
 
 
     describe 'addfiles', ->
-      mongoConnector = mockDb = null
+      mongoConnector = mockDb = projectId = null
 
       before ->
         mockDb = new MockDb
         mongoConnector = new MongoConnector(mockDb)
 
-      it 'should add new files to the db', (done) ->
+      beforeEach ->
         projectId = uuid.v4()
-        files = [
-          {isDir: false, path:'file1'},
-          {isDir: true, path:'dir1'},
-          {isDir: false, path:'dir1/file2'}
-        ]
-        mongoConnector.addFiles files, projectId, (err, result) ->
+
+      it 'should add new files to the db', (done) ->
+        mongoConnector.addFiles newFiles, projectId, (err, result) ->
           assert.equal err, null
           assert.ok result
-          assert.equal result.length, files.length
-          for file in result
-            assert.ok file._id?
-            assert.ok file.isDir?
-            assert.ok file.path?
+          assertFilesCorrect result, newFiles
           done()
 
       it 'should not duplicate existing files to the db', (done) ->
-        projectId = uuid.v4()
         file1Id = uuid.v4()
-        file1 = {_id:file1Id, isDir: false, path:'file1'}
-        mockDb.load MongoConnector.PROJECT_COLLECTION, file1
-        files = [
-          {isDir: false, path:'file1'},
-          {isDir: true, path:'dir1'},
-          {isDir: false, path:'dir1/file2'}
-        ]
-        mongoConnector.addFiles files, projectId, (err, result) ->
+        file1 = {_id:file1Id, projectId:projectId, isDir: false, path:'file1'}
+        mockDb.load MongoConnector.FILES_COLLECTION, file1
+        mongoConnector.addFiles newFiles, projectId, (err, result) ->
           assert.equal err, null
           assert.ok result
-          assert.equal result.length, files.length
-          for file in result
-            assert.ok file._id?
-            assert.ok file.isDir?
-            assert.ok file.path?
-            if file.path == 'file1'
-              assert.equal file._id, file1Id
+          files = _.reject newFiles, (file) ->
+            file.path = file1.path
+          files.push file1
+          assertFilesCorrect result, files
           done()
 
     describe "getFilesForProject", ->
