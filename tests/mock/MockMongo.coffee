@@ -1,5 +1,6 @@
 uuid = require 'node-uuid'
 _ = require 'underscore'
+{MongoConnector} = require '../../src/mongoConnector'
 
 #@openError: Error to be thrown on open.
 #@collectionError: Error to be thrown on collection
@@ -61,6 +62,17 @@ class MockDb
   load: (collectionName, document) ->
     @getCollection(collectionName).load(document)
 
+  #For test classes to set up data
+  cleanProjectFiles: (projectId) ->
+    @getCollection(@FILES_COLLECTION).remove projectId:projectId
+
+  getProjectFiles: (projectId) ->
+    documents = @getCollection(MongoConnector.FILES_COLLECTION).documents
+    files = _.filter documents, (doc) ->
+      doc.projectId == projectId
+
+
+
 #@crudError: Error to be thrown on CRUD operation
 class MockCollection
   #Marker for mock object
@@ -91,22 +103,19 @@ class MockCollection
       callback = options
       options = {}
     if @crudError
-      callback @crudError
+      callback? @crudError
       return
     @documents = _.reject @documents, (doc) ->
-      match = true
-      for k, v of selector
-        match = false unless doc[k] == v
-        break unless match
-      return match
-    callback null, {}
+      objectMatchesSelector doc, selector
+    callback? null, {}
 
   findAndModify: (selector, sort, modifier, options, callback) ->
     if @crudError then callback @crudError; return
     #TODO: Accept sort
     throw Error "MockCollection.findAndModify does not support remove yet" if options.remove
-    object = oldObject = _.find @documents, (item) ->
+    object = _.find @documents, (item) ->
       objectMatchesSelector item, selector
+    oldObject = _.clone object
 
     if object
       if modifier['$set']
@@ -121,6 +130,8 @@ class MockCollection
         object = modifier
       object._id = uuid.v4()
       @documents.push object
+    else
+      #XXX: do we need to throw an error if there is no object?
 
     if options.new
       callback null, object
@@ -239,10 +250,16 @@ class MockCursor
 
 
 objectMatchesSelector = (object, selector) ->
-  ok = true
-  for fieldName, fieldValue of selector
-    ok = false if object[fieldName] != fieldValue
-    break unless ok
-  return ok
+  if typeof selector == 'string'
+    selector = [selector]
+  if selector instanceof Array
+    return object._id in selector
+  else
+    ok = true
+    for fieldName, fieldValue of selector
+      if object[fieldName] != fieldValue
+        ok = false
+        break
+    return ok
 
 exports.MockDb = MockDb

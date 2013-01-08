@@ -58,7 +58,6 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
     it "does not return an error", ->
       assert.equal objects.body.error, null, "Body #{objects.bodyStr} should not have an error."
 
-
 describe "DementorController with real db", ->
   files = [
     {isDir: false, path:'file1'},
@@ -66,14 +65,7 @@ describe "DementorController with real db", ->
           {isDir: false, path:'dir1/file2'}
   ]
 
-  describe "init", ->
-    projectName = 'cleesh'
-    objects = {}
-    before (done) ->
-      sendInitRequest(null, projectName, files, objects, done)
-    assertResponseOk objects
-    it "returns the correct projectName", ->
-      assert.equal objects.body.name, projectName
+  assertValidResponseBody = (objects, projectName) ->
     it "returns an id", ->
       assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
     it "returns a url", ->
@@ -83,6 +75,26 @@ describe "DementorController with real db", ->
       u = url.parse(objects.body.url)
       assert.ok u.hostname
       assert.equal u.hostname, Settings.apogeeHost
+    it "returns a project with valid info", ->
+      project = objects.body.project
+      assert.ok project
+      assert.ok project._id
+      assert.equal project._id, objects.body.id
+      assert.equal project.name, projectName
+    it "returns files correctly", ->
+      returnedFiles = objects.body.files
+      assert.ok returnedFiles
+      assert.equal returnedFiles.length, files.length
+      assert.ok file._id for file in returnedFiles
+
+
+  describe "init", ->
+    projectName = 'cleesh'
+    objects = {}
+    before (done) ->
+      sendInitRequest(null, projectName, files, objects, done)
+    assertResponseOk objects
+    assertValidResponseBody objects, projectName
 
   describe "refresh", ->
     projectName = 'yimfil'
@@ -90,23 +102,16 @@ describe "DementorController with real db", ->
     objects = {}
     before (done) ->
       mongo = ServiceKeeper.mongoInstance()
-      mongo.createProject projectName, (err, projects) ->
+      mongo.createProject projectName, files, (err, results) ->
         assert.equal err, null
-        projectId = projects[0]._id
+        projectId = results.project._id
+        console.log "Created project with id #{projectId}"
         sendRefreshRequest(null, projectId, files, objects, done)
 
     assertResponseOk objects
-    it "returns the correct projectName", ->
-      assert.equal objects.body.name, projectName
-    it "returns an id", ->
-      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
-    it "returns a url", ->
-      assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
-    it "returns a url with the correct hostname", ->
-      #console.log "Found url:", objects.body.url
-      u = url.parse(objects.body.url)
-      assert.ok u.hostname
-      assert.equal u.hostname, Settings.apogeeHost
+    assertValidResponseBody objects, projectName
+    it "should keep the right project id", ->
+      assert.equal objects.body.id, projectId
 
 
 describe "DementorController", ->
@@ -187,7 +192,7 @@ describe "DementorController", ->
       assert.ok u.hostname
       assert.equal u.hostname, Settings.apogeeHost
 
-    it "deletes existing files in db for project"
+    it "updates existing files in db for project"
 
   describe "refresh with missing project", ->
     projectName = 'gloth'

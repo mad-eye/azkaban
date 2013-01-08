@@ -5,11 +5,14 @@ flow = require 'flow'
 
 DB_NAME = 'meteor'
 
+wrapError = (err) ->
+  errors.new errorType.DATABASE_ERROR, err
+
 class MongoHelper
   constructor: (@db, @callback) ->
 
   handleError: (err) ->
-    @error = errors.new errorType.DATABASE_ERROR, err
+    @error = wrapError err
     console.error "Found error:", err
     @db.close()
     @callback(@error, null)
@@ -34,32 +37,64 @@ class MongoConnector
           if err then helper.handleError err; return
           helper.handleResult result
 
-  #callback: (err, projects) ->
-  createProject: (projectName, callback) ->
+  #callback: (err, {project:, files:}) ->
+  createProject: (projectName, files, callback) ->
     projects = [{_id: uuid.v4(), name: projectName, opened:true, created:new Date().getTime()}]
-    @insert projects, @PROJECT_COLLECTION, callback
+    @insert projects, @PROJECT_COLLECTION, (err, projs) =>
+      if err then callback wrapError err; return
+      project = projs[0]
+      @addFiles files, project._id, (err, files) =>
+        if err then callback wrapError err; return
+        callback null,
+          project: project
+          files: files
 
-  #callback: (err, project) ->
-  refreshProject: (projectId, callback) ->
+  #callback: (err, {project:, files:}) ->
+  refreshProject: (projectId, files, callback) ->
     @findUpdateObject projectId, @PROJECT_COLLECTION, {opened:true}, (err, project) =>
       unless err? or project?
         err = errors.new(errorType.MISSING_OBJECT, objectId: projectId)
-      if err then callback err; return
-      @deleteProjectFiles projectId, (err, results) ->
-        if err then callback err; return
-        callback null, project
+      if err then callback wrapError err; return
+      @updateProjectFiles projectId, files, (err, results) =>
+        if err then callback wrapError err; return
+        callback null,
+          project: project
+          files: results
 
+  #FIXME: This structure is painful.
   #callback: (err, results) ->
-  deleteProjectFiles: (projectId, callback) ->
-    helper = new MongoHelper(@db, callback)
+  updateProjectFiles: (projectId, files, callback) ->
+    @getFilesForProject projectId, (err, existingFiles) =>
+      if err then callback wrapError err; return
+      #XXX: Is there a cleaner way to do this in JS?
+      #We want to find which files we already have, and which files don't exist anymore.
+      existingFilesMap = {}
+      existingFilesMap[file.path] = file for file in existingFiles
+      filesToAdd = []
+      filesToReturn = []
+      for file in files
+        if existingFile = existingFilesMap[file.path]
+          delete existingFilesMap[file.path]
+          filesToReturn.push existingFile
+        else
+          file.projectId = projectId
+          file._id = uuid.v4()
+          filesToAdd.push file
 
-    @db.open (err, db) =>
-      if err then helper.handleError err; return
-      db.collection @FILES_COLLECTION, (err, collection) ->
+      @db.open (err, db) =>
+        helper = new MongoHelper(db, callback)
         if err then helper.handleError err; return
-        collection.remove {projectId:projectId}, {safe:true}, (err, result) ->
+        db.collection @FILES_COLLECTION, (err, collection) ->
           if err then helper.handleError err; return
-          helper.handleResult result
+          collection.insert filesToAdd, {safe:true}, (err, result) ->
+            #Find some way to handle these orphaned errors
+            if err then helper.handleError err; return
+            filesToReturn = filesToReturn.concat result
+            callback null, filesToReturn
+          removeIds = (file._id for fake, file of existingFilesMap)
+          collection.remove removeIds
+          #When do we close the db?
+          #db.close()
 
   #callback: (err) ->
   closeProject: (projectId, callback) ->
@@ -67,10 +102,9 @@ class MongoConnector
       callback err
 
   addFile: (file, projectId, callback) ->
-    @addFiles([file], projectId)
+    @addFiles([file], projectId, callback)
 
   addFiles: (files, projectId, callback) ->
-
     for file in files
       file.projectId = projectId
       file._id = uuid.v4()
