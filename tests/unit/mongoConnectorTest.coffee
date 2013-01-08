@@ -201,10 +201,11 @@ describe 'MongoConnector', ->
         file1 = {_id:file1Id, projectId:projectId, isDir: false, path:'file1'}
         mockDb.load MongoConnector.FILES_COLLECTION, file1
         mongoConnector.addFiles newFiles, projectId, (err, result) ->
+          console.log "AddFiles result", result
           assert.equal err, null
           assert.ok result
           files = _.reject newFiles, (file) ->
-            file.path = file1.path
+            file.path == file1.path
           files.push file1
           assertFilesCorrect result, files
           done()

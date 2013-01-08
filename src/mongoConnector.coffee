@@ -62,8 +62,12 @@ class MongoConnector
           files: results
 
   #FIXME: This structure is painful.
-  #callback: (err, results) ->
-  updateProjectFiles: (projectId, files, callback) ->
+  #callback: (err, {project:, files:}) ->
+  #options: noclobber: bool -- if true, don't delete entries in db not in files
+  updateProjectFiles: (projectId, files, options = {}, callback) ->
+    if typeof options == 'function'
+      callback = options
+      options = {}
     @getFilesForProject projectId, (err, existingFiles) =>
       if err then callback wrapError err; return
       #XXX: Is there a cleaner way to do this in JS?
@@ -91,8 +95,9 @@ class MongoConnector
             if err then helper.handleError err; return
             filesToReturn = filesToReturn.concat result
             callback null, filesToReturn
-          removeIds = (file._id for fake, file of existingFilesMap)
-          collection.remove removeIds
+          unless options.noclobber
+            removeIds = (file._id for fake, file of existingFilesMap)
+            collection.remove removeIds
           #When do we close the db?
           #db.close()
 
@@ -105,10 +110,7 @@ class MongoConnector
     @addFiles([file], projectId, callback)
 
   addFiles: (files, projectId, callback) ->
-    for file in files
-      file.projectId = projectId
-      file._id = uuid.v4()
-    @insert files, @FILES_COLLECTION, callback
+    @updateProjectFiles projectId, files, noclobber:true, callback
 
 
   getFile: (fileId, callback) ->
