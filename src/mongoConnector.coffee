@@ -105,11 +105,6 @@ class MongoConnector
           #When do we close the db?
           #db.close()
 
-  #callback: (err) ->
-  closeProject: (projectId, callback) ->
-    @updateObject projectId, @PROJECT_COLLECTION, {opened:false}, (err, count) ->
-      callback err
-
   addFile: (file, projectId, callback) ->
     @addFiles([file], projectId, callback)
 

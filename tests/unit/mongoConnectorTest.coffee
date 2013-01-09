@@ -2,7 +2,6 @@ assert = require 'assert'
 uuid = require 'node-uuid'
 _ = require 'underscore'
 {MockDb} = require '../mock/MockMongo'
-{MongoConnector} = require '../../src/mongoConnector'
 {MongoConnection} = require '../../src/mongoConnection'
 {DataCenter} = require '../../src/dataCenter'
 {errorType} = require 'madeye-common'
@@ -19,7 +18,7 @@ assertFilesCorrect = (files, targetFiles, projectId) ->
     assert.equal file.isDir, targetFile.isDir
 
 
-describe 'MongoConnector', ->
+describe 'DataCenter', ->
   describe 'with mockDb', ->
     MongoConnection.instance = (errorHandler) ->
       self = this
@@ -35,7 +34,7 @@ describe 'MongoConnector', ->
 
     describe 'close project', ->
       projectId = project = null
-      mongoConnector = null
+      dataCenter = null
       mockDb = null
 
       before ->
@@ -45,24 +44,25 @@ describe 'MongoConnector', ->
           name: 'nerzo'
           opened: false
         mockDb = new MockDb
-        mockDb.load MongoConnector.PROJECT_COLLECTION, project
-        mongoConnector = new MongoConnector(mockDb)
+        MongoConnection.mockDb = mockDb
+        dataCenter = new DataCenter
+        mockDb.load DataCenter.PROJECT_COLLECTION, project
 
       it 'should set project.opened=false', (done) ->
-        mongoConnector.closeProject projectId, (err) ->
+        dataCenter.closeProject projectId, (err) ->
           assert.equal err, null
-          dbProj = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get projectId
+          dbProj = mockDb.collections[DataCenter.PROJECT_COLLECTION].get projectId
           assert.equal dbProj.opened, false
           done()
 
       it 'should not throw an error if project does not exist', (done) ->
-        mongoConnector.closeProject uuid.v4(), (err) ->
+        dataCenter.closeProject uuid.v4(), (err) ->
           assert.equal err, null
           done()
 
     describe 'refreshProject', ->
       projectId = project = returnedProject = null
-      mongoConnector = null
+      dataCenter = null
       file1Id = otherProjectId = null
       mockDb = null
 
@@ -75,17 +75,18 @@ describe 'MongoConnector', ->
           name: 'nerzo'
           opened: false
         mockDb = new MockDb
-        mockDb.load MongoConnector.PROJECT_COLLECTION, project
+        mockDb.load DataCenter.PROJECT_COLLECTION, project
         #Load with extraneous file
-        mockDb.load MongoConnector.FILES_COLLECTION,
+        mockDb.load DataCenter.FILES_COLLECTION,
           _id: uuid.v4()
           projectId: otherProjectId
-        mongoConnector = new MongoConnector(mockDb)
+        MongoConnection.mockDb = mockDb
+        dataCenter = new DataCenter
 
       describe "should return project", ->
         before (done) ->
           project.opened = false
-          mongoConnector.refreshProject projectId, [], (err, result) ->
+          dataCenter.refreshProject projectId, [], (err, result) ->
             assert.equal err, null, "There should be no error, but got #{JSON.stringify err}"
             returnedProject = result.project
             done()
@@ -97,7 +98,7 @@ describe 'MongoConnector', ->
         it 'and should set project.opened=true', ->
           assert.ok returnedProject.opened
           assert.equal returnedProject.opened, true
-          dbProj = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get projectId
+          dbProj = mockDb.collections[DataCenter.PROJECT_COLLECTION].get projectId
           assert.ok dbProj.opened
 
       describe 'should update files and', ->
@@ -114,9 +115,9 @@ describe 'MongoConnector', ->
             { _id: uuid.v4(), path:'dirA/file2', isDir:false, projectId: projectId }
           ]
           for file in oldFiles
-            mockDb.load MongoConnector.FILES_COLLECTION, file
+            mockDb.load DataCenter.FILES_COLLECTION, file
 
-          mongoConnector.refreshProject projectId, newFiles, (err, proj) ->
+          dataCenter.refreshProject projectId, newFiles, (err, proj) ->
             returnedFiles = proj.files
             done()
 
@@ -141,25 +142,25 @@ describe 'MongoConnector', ->
 
 
       it 'should callback an error on crudError', (done) ->
-        mockDb.collections[MongoConnector.PROJECT_COLLECTION].crudError = new Error 'Cannot open collection'
+        mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError = new Error 'Cannot open collection'
         project.opened = false
-        mongoConnector.refreshProject projectId, newFiles, (err, proj) ->
+        dataCenter.refreshProject projectId, newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.DATABASE_ERROR
           assert.equal proj, null
           #FIXME: Terrible hack.  We should move it to afterEach or something
-          delete mockDb.collections[MongoConnector.PROJECT_COLLECTION].crudError
+          delete mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError
           done()
 
       it 'should throw an error if the project does not exist', (done) ->
         project.opened = false
-        mongoConnector.refreshProject uuid.v4(), newFiles, (err, proj) ->
+        dataCenter.refreshProject uuid.v4(), newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.MISSING_OBJECT
           assert.equal proj, null
           done()
 
-    describe 'createProject fweep', ->
+    describe 'createProject', ->
       mockDb = null
       projectName = 'kwin'
       result = null
@@ -182,25 +183,27 @@ describe 'MongoConnector', ->
 
       it 'should create the project', ->
         projectId = result.project._id
-        dbProject = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get projectId
+        dbProject = mockDb.collections[DataCenter.PROJECT_COLLECTION].get projectId
         assert.deepEqual dbProject, result.project
 
       it 'should return the correct files', ->
         assertFilesCorrect result.files, newFiles, result.project._id
 
 
-    describe 'addfiles', ->
-      mongoConnector = mockDb = projectId = null
+    describe 'addFiles', ->
+      mockDb = projectId = null
+      dataCenter = null
 
       before ->
         mockDb = new MockDb
-        mongoConnector = new MongoConnector(mockDb)
+        MongoConnection.mockDb = mockDb
+        dataCenter = new DataCenter
 
       beforeEach ->
         projectId = uuid.v4()
 
       it 'should add new files to the db', (done) ->
-        mongoConnector.addFiles newFiles, projectId, (err, result) ->
+        dataCenter.addFiles newFiles, projectId, (err, result) ->
           assert.equal err, null
           assert.ok result
           assertFilesCorrect result, newFiles
@@ -209,8 +212,8 @@ describe 'MongoConnector', ->
       it 'should not duplicate existing files to the db', (done) ->
         file1Id = uuid.v4()
         file1 = {_id:file1Id, projectId:projectId, isDir: false, path:'file1'}
-        mockDb.load MongoConnector.FILES_COLLECTION, file1
-        mongoConnector.addFiles newFiles, projectId, (err, result) ->
+        mockDb.load DataCenter.FILES_COLLECTION, file1
+        dataCenter.addFiles newFiles, projectId, (err, result) ->
           console.log "AddFiles result", result
           assert.equal err, null
           assert.ok result
@@ -219,39 +222,5 @@ describe 'MongoConnector', ->
           files.push file1
           assertFilesCorrect result, files
           done()
-
-    describe "getFilesForProject", ->
-      projectId = files = mongoConnector = null
-      before ->
-        mockDb = new MockDb
-        mongoConnector = new MongoConnector(mockDb)
-        projectId = uuid.v4()
-        files = [
-          {_id:uuid.v4(), projectId:projectId, isDir: false, path:'file1'},
-          {_id:uuid.v4(), projectId:projectId, isDir: true, path:'dir1'},
-          {_id:uuid.v4(), projectId:projectId, isDir: false, path:'dir1/file2'}
-        ]
-
-        for file in files
-          mockDb.load MongoConnector.FILES_COLLECTION, file
-        #Load extraneous file
-        mockDb.load MongoConnector.FILES_COLLECTION,
-          {_id:uuid.v4(), projectId:uuid.v4(), isDir: false, path:'dir1/file2'}
-
-      it "should get all the files for a project", (done) ->
-        mongoConnector.getFilesForProject projectId, (err, results) ->
-          assert.equal err, null
-          assert.ok results
-          assertFilesCorrect
-          assert.equal results.length, files.length
-          done()
-
-      it "should not get files of another project", (done) ->
-        mongoConnector.getFilesForProject uuid.v4(), (err, results) ->
-          assert.equal err, null
-          assert.ok results
-          assert.equal results.length, 0
-          done()
-
 
   describe 'with real db', ->

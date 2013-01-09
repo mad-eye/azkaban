@@ -1,5 +1,6 @@
-{MongoConnection} = require './mongoConnection'
 uuid = require 'node-uuid'
+{MongoConnection} = require './mongoConnection'
+{errors, errorType} = require 'madeye-common'
 
 class DataCenter
   constructor: ->
@@ -19,6 +20,28 @@ class DataCenter
           callback null,
             project: project
             files: files
+          db.close()
+
+  #callback: (err) ->
+  closeProject: (projectId, callback) ->
+    db = @getConnection callback
+    db.connect =>
+      db.updateObject projectId, @PROJECT_COLLECTION, {opened:false}, (count) ->
+        callback()
+        db.close()
+
+  #callback: (err, {project:, files:}) ->
+  refreshProject: (projectId, files, callback) ->
+    db = @getConnection callback
+    db.connect =>
+      db.findAndModifyObject projectId, @PROJECT_COLLECTION, {opened:true}, (project) =>
+        unless project?
+          callback errors.new(errorType.MISSING_OBJECT, objectId: projectId)
+          return
+        @updateProjectFiles db, projectId, files, (results) =>
+          callback null,
+            project: project
+            files: results
           db.close()
 
   #callback: (files) ->
@@ -56,15 +79,12 @@ class DataCenter
         if removeIds.length > 0
           db.remove removeIds, @FILES_COLLECTION
 
-  #callback: (results) ->
-  getFilesForProject: (db, projectId, callback) ->
-      db.collection @FILES_COLLECTION, (err, collection) ->
-        if err then helper.handleError err; return
-        cursor = collection.find {projectId:projectId}
-        cursor.toArray (err, results) ->
-          if err then helper.handleError err; return
-          helper.handleResult results
-
+  addFiles: (files, projectId, callback) ->
+    db = @getConnection callback
+    db.connect =>
+      @updateProjectFiles db, projectId, files, noclobber:true, (files) ->
+        callback null, files
+        db.close()
 
 
 

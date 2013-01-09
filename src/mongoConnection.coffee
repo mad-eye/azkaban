@@ -61,6 +61,18 @@ class MongoConnection
         if err then @handleError err; return
         callback result
 
+  #callback: (object) ->
+  findAndModifyObject: (objectId, collectionName, modifier, overwrite, callback) ->
+    if typeof overwrite == 'function'
+      callback = overwrite
+      overwrite = false
+
+    @getCollection collectionName, (collection) =>
+      modifier = {$set: modifier} unless overwrite
+      collection.findAndModify {_id:objectId}, {}, modifier, {safe:true, new:true}, (err, result) =>
+        if err then @handleError err; return
+        callback result
+
   #callback: (documents) ->
   findAll: (collectionName, selector, callback) ->
     return unless @check collectionName, callback
