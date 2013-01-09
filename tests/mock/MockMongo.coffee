@@ -88,6 +88,8 @@ class MockCollection
     if @crudError
       callback(@crudError)
       return
+    unless docs? and docs.length > 0
+      callback new Error "MongoError: Message contains no documents"
     for doc in docs
       doc._id = uuid.v4()
       @documents.push doc

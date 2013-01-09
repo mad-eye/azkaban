@@ -9,27 +9,26 @@ wrapError = (err) ->
   errors.new errorType.DATABASE_ERROR, err
 
 class MongoHelper
-  constructor: (@db, @callback) ->
+  constructor: (@Db, @callback) ->
 
   handleError: (err) ->
     @error = wrapError err
     console.error "Found error:", err
-    @db.close()
+    @Db.close()
     @callback(@error, null)
 
   handleResult: (result) ->
     @result = result
-    @db.close()
+    @Db.close()
     @callback(null, result)
 
 class MongoConnector
-  constructor: (@db) ->
+  constructor: (@Db) ->
 
   #callback = (err, objects) ->
   insert: (objects, collectionName, callback) ->
-    helper = new MongoHelper(@db, callback)
-
-    @db.open (err, db) ->
+    @Db.open (err, db) ->
+      helper = new MongoHelper(db, callback)
       if err then helper.handleError err; return
       db.collection collectionName, (err, collection) ->
         if err then helper.handleError err; return
@@ -43,6 +42,7 @@ class MongoConnector
     @insert projects, @PROJECT_COLLECTION, (err, projs) =>
       if err then callback wrapError err; return
       project = projs[0]
+      console.log "Inserted project", project
       @addFiles files, project._id, (err, files) =>
         if err then callback wrapError err; return
         callback null,
@@ -64,7 +64,7 @@ class MongoConnector
   #FIXME: This structure is painful.
   #callback: (err, {project:, files:}) ->
   #options: noclobber: bool -- if true, don't delete entries in db not in files
-  updateProjectFiles: (projectId, files, options = {}, callback) ->
+  updateProjectFiles: (projectId, files=[], options = {}, callback) ->
     if typeof options == 'function'
       callback = options
       options = {}
@@ -85,19 +85,23 @@ class MongoConnector
           file._id = uuid.v4()
           filesToAdd.push file
 
-      @db.open (err, db) =>
+      @Db.open (err, db) =>
         helper = new MongoHelper(db, callback)
         if err then helper.handleError err; return
         db.collection @FILES_COLLECTION, (err, collection) ->
           if err then helper.handleError err; return
-          collection.insert filesToAdd, {safe:true}, (err, result) ->
-            #Find some way to handle these orphaned errors
-            if err then helper.handleError err; return
-            filesToReturn = filesToReturn.concat result
+          if filesToAdd.length > 0
+            collection.insert filesToAdd, {safe:true}, (err, result) ->
+              #Find some way to handle these orphaned errors
+              if err then helper.handleError err; return
+              filesToReturn = filesToReturn.concat result
+              callback null, filesToReturn
+          else
             callback null, filesToReturn
           unless options.noclobber
             removeIds = (file._id for fake, file of existingFilesMap)
-            collection.remove removeIds
+            if removeIds.length > 0
+              collection.remove removeIds, safe:false
           #When do we close the db?
           #db.close()
 
@@ -121,9 +125,8 @@ class MongoConnector
 
   #callback: (err, results) ->
   getFilesForProject: (projectId, callback) ->
-    helper = new MongoHelper(@db, callback)
-
-    @db.open (err, db) =>
+    @Db.open (err, db) =>
+      helper = new MongoHelper(db, callback)
       if err then helper.handleError err; return
       db.collection @FILES_COLLECTION, (err, collection) ->
         if err then helper.handleError err; return
@@ -135,9 +138,8 @@ class MongoConnector
   #callback: (err, results) ->
   getObject: (objectId, collectionName, callback) ->
     console.log "Getting object #{objectId} from #{collectionName}"
-    helper = new MongoHelper(@db, callback)
-
-    @db.open (err, db) ->
+    @Db.open (err, db) ->
+      helper = new MongoHelper(db, callback)
       if err then helper.handleError err; return
       db.collection collectionName, (err, collection) ->
         if err then helper.handleError err; return
@@ -151,9 +153,8 @@ class MongoConnector
       callback = overwrite
       overwrite = false
 
-    helper = new MongoHelper(@db, callback)
-
-    @db.open (err, db) ->
+    @Db.open (err, db) ->
+      helper = new MongoHelper(db, callback)
       if err then helper.handleError err; return
       db.collection collectionName, (err, collection) ->
         if err then helper.handleError err; return
@@ -167,9 +168,8 @@ class MongoConnector
       callback = overwrite
       overwrite = false
 
-    helper = new MongoHelper(@db, callback)
-
-    @db.open (err, db) ->
+    @Db.open (err, db) ->
+      helper = new MongoHelper(db, callback)
       if err then helper.handleError err; return
       db.collection collectionName, (err, collection) ->
         if err then helper.handleError err; return
@@ -180,8 +180,8 @@ class MongoConnector
 
 MongoConnector.instance = (hostname, port) ->
   server = new mongo.Server(hostname, port, {auto_reconnect: true})
-  db = new mongo.Db(DB_NAME, server, {safe:true})
-  return new MongoConnector(db)
+  Db = new mongo.Db(DB_NAME, server, {safe:true})
+  return new MongoConnector(Db)
 
 
 MongoConnector.prototype['PROJECT_COLLECTION'] = MongoConnector['PROJECT_COLLECTION'] = MongoConnector.PROJECT_COLLECTION = 'projects'

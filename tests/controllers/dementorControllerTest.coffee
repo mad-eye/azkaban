@@ -96,7 +96,7 @@ describe "DementorController with real db", ->
     assertResponseOk objects
     assertValidResponseBody objects, projectName
 
-  describe "refresh", ->
+  describe "refresh fweep", ->
     projectName = 'yimfil'
     projectId = null
     objects = {}

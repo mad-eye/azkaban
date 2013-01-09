@@ -3,6 +3,8 @@ uuid = require 'node-uuid'
 _ = require 'underscore'
 {MockDb} = require '../mock/MockMongo'
 {MongoConnector} = require '../../src/mongoConnector'
+{MongoConnection} = require '../../src/mongoConnection'
+{DataCenter} = require '../../src/dataCenter'
 {errorType} = require 'madeye-common'
 
 assertFilesCorrect = (files, targetFiles, projectId) ->
@@ -19,7 +21,12 @@ assertFilesCorrect = (files, targetFiles, projectId) ->
 
 describe 'MongoConnector', ->
   describe 'with mockDb', ->
-    mockDb = null
+    MongoConnection.instance = (errorHandler) ->
+      self = this
+      connector = new MongoConnection errorHandler
+      connector.Db = this.mockDb
+      return connector
+
     newFiles = [
       { path:'file1', isDir:false },
       { path:'dir1', isDir:true },
@@ -29,6 +36,7 @@ describe 'MongoConnector', ->
     describe 'close project', ->
       projectId = project = null
       mongoConnector = null
+      mockDb = null
 
       before ->
         projectId = uuid.v4()
@@ -56,6 +64,7 @@ describe 'MongoConnector', ->
       projectId = project = returnedProject = null
       mongoConnector = null
       file1Id = otherProjectId = null
+      mockDb = null
 
 
       before ->
@@ -91,7 +100,7 @@ describe 'MongoConnector', ->
           dbProj = mockDb.collections[MongoConnector.PROJECT_COLLECTION].get projectId
           assert.ok dbProj.opened
 
-      describe 'should update files and fweep', ->
+      describe 'should update files and', ->
         returnedFiles = null
 
         before (done) ->
@@ -150,15 +159,16 @@ describe 'MongoConnector', ->
           assert.equal proj, null
           done()
 
-    describe 'createProject', ->
-      mongoConnector = mockDb = null
+    describe 'createProject fweep', ->
+      mockDb = null
       projectName = 'kwin'
       result = null
 
       before (done) ->
         mockDb = new MockDb
-        mongoConnector = new MongoConnector(mockDb)
-        mongoConnector.createProject projectName, newFiles, (err, theResult) ->
+        MongoConnection.mockDb = mockDb
+        dataCenter = new DataCenter
+        dataCenter.createProject projectName, newFiles, (err, theResult) ->
           assert.equal err, null
           assert.ok theResult
           result = theResult
