@@ -1,10 +1,39 @@
+_ = require 'underscore'
+mongo = require 'mongodb'
 {Settings} = require 'madeye-common'
 {MongoConnector} = require './src/mongoConnector'
 {SocketServer} = require 'madeye-common'
 
+#TODO: Put this in settings?
+DB_NAME = 'meteor'
+
 #TODO: Should have app set ServiceKeeper's services?
-#Right now we have a require loop which causes issues.
-ServiceKeeper =
+class exports.ServiceKeeper
+  _instance = undefined
+  _vars = undefined
+
+  @init: (vars={}) ->
+    _vars = vars
+
+  @instance: ->
+    unless _instance
+      _instance = new ServiceKeeperInner
+      _.extend _instance, _vars
+    _instance
+
+  @reset: ->
+    _vars = undefined
+    _instance = undefined
+
+#XXX: Right now we have a require loop which causes issues.
+class ServiceKeeperInner
+  constructor: ->
+
+  makeDbConnection: ->
+    server = new mongo.Server(Settings.mongoHost, Settings.mongoPort, {auto_reconnect: true})
+    return new mongo.Db(DB_NAME, server, {safe:true})
+
+
   #Set the connection ivars to override the defaults.
   #The defaults are appropriate for the live setting;
   #override for testing or development.
@@ -21,4 +50,3 @@ ServiceKeeper =
     @socketServer ?= new SocketServer(new DementorChannel())
     return @socketServer
 
-exports.ServiceKeeper = ServiceKeeper

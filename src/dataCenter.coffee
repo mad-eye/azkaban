@@ -12,6 +12,7 @@ class DataCenter
   createProject: (projectName, files, callback) ->
     projects = [{_id: uuid.v4(), name: projectName, opened:true, created:new Date().getTime()}]
     db = @getConnection callback
+    console.log "Init db is mock: #{db.Db.isMock}"
     db.connect =>
       db.insert projects, @PROJECT_COLLECTION, (projs) =>
         project = projs[0]
@@ -45,13 +46,13 @@ class DataCenter
           db.close()
 
   #callback: (files) ->
-  #options: noclobber: bool -- if true, don't delete entries in db not in files
+  #options: noclobber (bool) -- if true, don't delete entries in db not in files
   updateProjectFiles: (db, projectId, files=[], options = {}, callback) ->
     if typeof options == 'function'
       callback = options
       options = {}
 
-    db.findAll @FILES_COLLECTION, {projectId: projectId}, (existingFiles) =>
+    db.findAll {projectId: projectId}, @FILES_COLLECTION, (existingFiles) =>
       #XXX: Is there a cleaner way to do this in JS?
       #We want to find which files we already have, and which files don't exist anymore.
       existingFilesMap = {}

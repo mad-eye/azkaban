@@ -2,7 +2,7 @@ messageMaker = require("madeye-common").messageMaker
 
 class FileController
   constructor: ->
-    @socketServer = require('../ServiceKeeper').ServiceKeeper.getSocketServer()
+    @socketServer = require('../ServiceKeeper').ServiceKeeper.instance().getSocketServer()
     @Settings = require('madeye-common').Settings
     @request = require "request"
 

@@ -3,6 +3,8 @@ uuid = require 'node-uuid'
 _ = require 'underscore'
 {MongoConnection} = require '../../src/mongoConnection'
 {MockDb} = require '../mock/MockMongo'
+{ServiceKeeper} = require '../../ServiceKeeper'
+{DataCenter} = require '../../src/dataCenter'
 {errorType} = require 'madeye-common'
 
 assertFilesCorrect = (files, targetFiles, projectId) ->
@@ -19,11 +21,10 @@ assertFilesCorrect = (files, targetFiles, projectId) ->
 
 describe 'DataCenter', ->
   describe 'with mockDb', ->
-    {DataCenter} = require '../../src/dataCenter'
-    DataCenter.getConnection = (errorHandler) ->
-      connector = new MongoConnection errorHandler
-      connector.Db = this.mockDb
-      return connector
+    mockDb = null
+    ServiceKeeper.reset()
+    ServiceKeeper.init makeDbConnection: ->
+      mockDb # Return the mockDb we set in the test
 
     newFiles = [
       { path:'file1', isDir:false },
@@ -42,9 +43,8 @@ describe 'DataCenter', ->
           _id: projectId
           name: 'nerzo'
           opened: false
-        mockDb = new MockDb
         dataCenter = new DataCenter
-        dataCenter.mockDb = mockDb
+        mockDb = new MockDb
         mockDb.load DataCenter.PROJECT_COLLECTION, project
 
       it 'should set project.opened=false', (done) ->
@@ -65,6 +65,7 @@ describe 'DataCenter', ->
       file1Id = otherProjectId = null
       mockDb = null
 
+      #FIXME: This is hacky
       refreshDb = ->
         project.opened = false
         mockDb = new MockDb
@@ -74,12 +75,6 @@ describe 'DataCenter', ->
           _id: uuid.v4()
           projectId: otherProjectId
         dataCenter = new DataCenter
-        dataCenter.mockDb = mockDb
-        dataCenter.getConnection = (errorHandler) ->
-          connector = new MongoConnection errorHandler
-          connector.Db = this.mockDb
-          return connector
-      
 
       before ->
         projectId = uuid.v4()
@@ -143,7 +138,7 @@ describe 'DataCenter', ->
           assert.ok otherFiles
           assert.equal otherFiles.length, 1
 
-      it 'should callback an error on crudError fweep', (done) ->
+      it 'should callback an error on crudError', (done) ->
         refreshDb()
         mockDb.load DataCenter.PROJECT_COLLECTION, project
         mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError = new Error 'Cannot open collection'
@@ -171,11 +166,6 @@ describe 'DataCenter', ->
       before (done) ->
         mockDb = new MockDb
         dataCenter = new DataCenter
-        dataCenter.mockDb = mockDb
-        dataCenter.getConnection = (errorHandler) ->
-          connector = new MongoConnection errorHandler
-          connector.Db = this.mockDb
-          return connector
         dataCenter.createProject projectName, newFiles, (err, theResult) ->
           assert.equal err, null
           assert.ok theResult

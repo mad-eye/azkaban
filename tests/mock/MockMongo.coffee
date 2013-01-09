@@ -8,7 +8,8 @@ _ = require 'underscore'
 #TODO: Change this name to MockMongo for consistency with filename.
 class MockDb
   #Marker for mock object
-  @isMock: true,
+  isMock: ->
+    true
 
   constructor: (@name, @server) ->
     @collections = {}

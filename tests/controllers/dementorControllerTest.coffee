@@ -4,10 +4,16 @@ url = require 'url'
 uuid = require 'node-uuid'
 app = require '../../app'
 {DataCenter} = require '../../src/dataCenter'
+{ServiceKeeper} = require '../../ServiceKeeper'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
+testUtils = require '../util/testUtils'
+
+###
+# Request helper methods
+###
 
 sendInitRequest = (projectName, files, objects, done) ->
   options =
@@ -26,8 +32,8 @@ sendRefreshRequest = (projectId, files, objects, done) ->
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    console.log "Found body ", _body
-    console.log "Body type", typeof _body
+    #console.log "Found body ", _body
+    #console.log "Body type", typeof _body
     if typeof _body == 'string'
       objects.bodyStr = _body
       try
@@ -50,6 +56,10 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
   else
     it "does not return an error", ->
       assert.equal objects.body.error, null, "Body #{objects.bodyStr} should not have an error."
+
+###
+# Real DB tests
+###
 
 describe "DementorController with real db", ->
   files = [
@@ -106,15 +116,15 @@ describe "DementorController with real db", ->
     it "should keep the right project id", ->
       assert.equal objects.body.id, projectId
 
+###
+# Mock DB Tests
+###
+
+setMongoConnection: (mockDb) ->
 
 describe "DementorController", ->
-  #Refresh in case of a mocked MongoConnection. A little hacky; feel free to fix.
-  {MongoConnection} = require '../../src/mongoConnection'
-  MongoConnection.instance = (errorHandler) ->
-    self = this
-    connector = new MongoConnection errorHandler
-    connector.Db = this.mockDb
-    return connector
+  # Mock MongoConnection
+  ServiceKeeper.mongoDbInstance = ->
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},
@@ -125,8 +135,7 @@ describe "DementorController", ->
     projectName = 'golmac'
     objects = {}
     before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
+      {mockDb} = testUtils.makeMockDbAndDataCenter()
       sendInitRequest(projectName, files, objects, done)
     assertResponseOk objects
     it "returns the correct projectName", ->
@@ -179,7 +188,7 @@ describe "DementorController", ->
     before (done) ->
       mockDb = new MockDb()
       MongoConnection.mockDb = mockDb
-      mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
+      mockDb.load DataCenter.PROJECT_COLLECTION,
         _id: projectId
         name: projectName
       sendRefreshRequest(projectId, files, objects, done)
@@ -239,7 +248,7 @@ describe "DementorController", ->
     before (done) ->
       mockDb = new MockDb()
       MongoConnection.mockDb = mockDb
-      mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
+      mockDb.load DataCenter.PROJECT_COLLECTION,
         _id: projectId
         name: projectName
       errMsg = "Cannot remove document."

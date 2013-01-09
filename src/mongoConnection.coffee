@@ -1,19 +1,18 @@
 mongo = require 'mongodb'
-{Settings, errors, errorType} = require 'madeye-common'
-
-DB_NAME = 'meteor'
+{errors, errorType} = require 'madeye-common'
+{ServiceKeeper} = require '../ServiceKeeper'
 
 wrapError = (err) ->
   errors.new errorType.DATABASE_ERROR, err
 
 class MongoConnection
   constructor: (@errorHandler) ->
-    server = new mongo.Server(Settings.mongoHost, Settings.mongoPort, {auto_reconnect: true})
-    @Db = new mongo.Db(DB_NAME, server, {safe:true})
-    
+    @Db = ServiceKeeper.instance().makeDbConnection()
+
   close: =>
     process.nextTick =>
       @db?.close()
+      @open = false
 
   handleError: (err) =>
     console.error "Handling error", err
@@ -73,7 +72,7 @@ class MongoConnection
         callback result
 
   #callback: (documents) ->
-  findAll: (collectionName, selector, callback) ->
+  findAll: (selector, collectionName, callback) ->
     return unless @check collectionName, callback
     @getCollection collectionName, (collection) ->
       collection.find(selector).toArray (err, docs) ->
