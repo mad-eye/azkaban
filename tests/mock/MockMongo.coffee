@@ -1,6 +1,6 @@
 uuid = require 'node-uuid'
 _ = require 'underscore'
-{MongoConnector} = require '../../src/mongoConnector'
+{DataCenter} = require '../../src/dataCenter'
 
 #@openError: Error to be thrown on open.
 #@collectionError: Error to be thrown on collection
@@ -67,7 +67,7 @@ class MockDb
     @getCollection(@FILES_COLLECTION).remove projectId:projectId
 
   getProjectFiles: (projectId) ->
-    documents = @getCollection(MongoConnector.FILES_COLLECTION).documents
+    documents = @getCollection(DataCenter.FILES_COLLECTION).documents
     files = _.filter documents, (doc) ->
       doc.projectId == projectId
 

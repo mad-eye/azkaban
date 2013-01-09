@@ -2,8 +2,8 @@ assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket, SocketServer, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
-{ServiceKeeper} = require '../../ServiceKeeper'
-{MongoConnector} = require '../../src/mongoConnector'
+{MongoConnection} = require '../../src/mongoConnection'
+{DataCenter} = require '../../src/datacenter'
 {MockDb} = require '../mock/MockMongo'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
@@ -32,7 +32,13 @@ describe "DementorChannel", ->
         done()
 
   describe "on receiving addFiles message", ->
+    MongoConnection.instance = (errorHandler) ->
+      self = this
+      connector = new MongoConnection errorHandler
+      connector.Db = this.mockDb
+      return connector
     message = mockDb = null
+
     before ->
       message = messageMaker.addFilesMessage [
         {path:'foo/bar/file1', isDir:false },
@@ -43,8 +49,7 @@ describe "DementorChannel", ->
 
     beforeEach ->
       mockDb = new MockDb()
-      mongoConnector = new MongoConnector(mockDb)
-      ServiceKeeper.mongoConnector = mongoConnector
+      MongoConnection.mockDb = mockDb
 
     it "should add _id field", (done) ->
       channel.route message, (err, replyMsg) ->

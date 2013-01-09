@@ -1,4 +1,5 @@
 {ServiceKeeper} = require '../ServiceKeeper'
+{DataCenter} = require './dataCenter'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
@@ -13,8 +14,8 @@ class DementorChannel
       else callback? errors.new errorType.UNKNOWN_ACTION, {action: message.action}
 
   addFiles : (message, callback) ->
-    mongoConnection = ServiceKeeper.mongoInstance()
-    mongoConnection.addFiles message.data.files, message.projectId, (err, results) ->
+    dataCenter = new DataCenter
+    dataCenter.addFiles message.data.files, message.projectId, (err, results) ->
       if err
         console.error "Error in addFiles:", err
         callback? err
@@ -27,8 +28,8 @@ class DementorChannel
     console.log "Called removeFiles with ", message
 
   closeProject : (projectId) ->
-    mongoConnection = ServiceKeeper.mongoInstance()
-    mongoConnection.closeProject projectId, (err) ->
+    dataCenter = new DataCenter
+    dataCenter.closeProject projectId, (err) ->
       if err
         console.error "Error in closing project #{projectId}:", err
 
