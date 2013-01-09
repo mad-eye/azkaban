@@ -7,22 +7,21 @@ wrapError = (err) ->
   errors.new errorType.DATABASE_ERROR, err
 
 class MongoConnection
-  @instance: (errorHandler) ->
-    return new MongoConnection errorHandler
-
   constructor: (@errorHandler) ->
     server = new mongo.Server(Settings.mongoHost, Settings.mongoPort, {auto_reconnect: true})
     @Db = new mongo.Db(DB_NAME, server, {safe:true})
     
-  close: ->
-    process.nextTick ->
+  close: =>
+    process.nextTick =>
       @db?.close()
 
-  handleError: (err) ->
+  handleError: (err) =>
     console.error "Handling error", err
     @errorHandler wrapError err
 
-  connect: (callback) ->
+  connect: (callback) =>
+    @handleError new Error "Connection aready opening" if @open
+    @open = true
     @Db.open (err, @db) =>
       if err then @handleError err; return
       callback()
@@ -92,4 +91,8 @@ class MongoConnection
       return false
     return true
 
+MongoConnection.instance = (errorHandler) ->
+    return new MongoConnection errorHandler
+
+  
 exports.MongoConnection = MongoConnection

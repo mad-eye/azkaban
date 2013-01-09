@@ -3,34 +3,27 @@ request = require 'request'
 url = require 'url'
 uuid = require 'node-uuid'
 app = require '../../app'
-{ServiceKeeper} = require '../../ServiceKeeper'
-{MongoConnector} = require '../../src/mongoConnector'
+{DataCenter} = require '../../src/dataCenter'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
-sendInitRequest = (mockDb, projectName, files, objects, done) ->
+sendInitRequest = (projectName, files, objects, done) ->
   options =
     method: "POST"
     uri: "http://localhost:#{app.get('port')}/project/#{projectName}"
     json: {files:files}
-  sendRequest mockDb, options, objects, done
+  sendRequest options, objects, done
 
-sendRefreshRequest = (mockDb, projectId, files, objects, done) ->
+sendRefreshRequest = (projectId, files, objects, done) ->
   options =
     method: "PUT"
     uri: "http://localhost:#{app.get('port')}/project/#{projectId}"
     json: {files:files}
-  sendRequest mockDb, options, objects, done
+  sendRequest options, objects, done
 
-sendRequest = (mockDb, options, objects, done) ->
-  if mockDb?
-    mongoConnector = new MongoConnector(mockDb)
-    ServiceKeeper.mongoConnector = mongoConnector
-  else
-    ServiceKeeper.reset()
-
+sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
     console.log "Found body ", _body
@@ -92,7 +85,7 @@ describe "DementorController with real db", ->
     projectName = 'cleesh'
     objects = {}
     before (done) ->
-      sendInitRequest(null, projectName, files, objects, done)
+      sendInitRequest(projectName, files, objects, done)
     assertResponseOk objects
     assertValidResponseBody objects, projectName
 
@@ -101,12 +94,12 @@ describe "DementorController with real db", ->
     projectId = null
     objects = {}
     before (done) ->
-      mongo = ServiceKeeper.mongoInstance()
-      mongo.createProject projectName, files, (err, results) ->
+      dataCenter = new DataCenter
+      dataCenter.createProject projectName, files, (err, results) ->
         assert.equal err, null
         projectId = results.project._id
         console.log "Created project with id #{projectId}"
-        sendRefreshRequest(null, projectId, files, objects, done)
+        sendRefreshRequest(projectId, files, objects, done)
 
     assertResponseOk objects
     assertValidResponseBody objects, projectName
@@ -115,6 +108,13 @@ describe "DementorController with real db", ->
 
 
 describe "DementorController", ->
+  #Refresh in case of a mocked MongoConnection. A little hacky; feel free to fix.
+  {MongoConnection} = require '../../src/mongoConnection'
+  MongoConnection.instance = (errorHandler) ->
+    self = this
+    connector = new MongoConnection errorHandler
+    connector.Db = this.mockDb
+    return connector
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},
@@ -126,7 +126,8 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
-      sendInitRequest(mockDb, projectName, files, objects, done)
+      MongoConnection.mockDb = mockDb
+      sendInitRequest(projectName, files, objects, done)
     assertResponseOk objects
     it "returns the correct projectName", ->
       assert.equal objects.body.name, projectName
@@ -144,18 +145,20 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
+      MongoConnection.mockDb = mockDb
       errMsg = "Cannot open connection to MongoDb."
       mockDb.openError = new Error(errMsg)
-      sendInitRequest(mockDb, 'exex', files, objects, done)
+      sendInitRequest('exex', files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "init with error in opening collection", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
+      MongoConnection.mockDb = mockDb
       errMsg = "Cannot open collection."
       mockDb.collectionError = new Error errMsg
-      sendInitRequest(mockDb, 'exex', files, objects, done)
+      sendInitRequest('exex', files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "init with error in insert", ->
@@ -165,7 +168,7 @@ describe "DementorController", ->
       mockDb = new MockDb()
       errMsg = "Cannot insert document."
       mockDb.crudError = new Error(errMsg)
-      sendInitRequest(mockDb, 'exex', files, objects, done)
+      sendInitRequest('exex', files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   #TODO: Refactor out repeated code.
@@ -175,10 +178,11 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
+      MongoConnection.mockDb = mockDb
       mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
         _id: projectId
         name: projectName
-      sendRefreshRequest(mockDb, projectId, files, objects, done)
+      sendRefreshRequest(projectId, files, objects, done)
     assertResponseOk objects
     it "returns an id", ->
       assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
@@ -200,7 +204,8 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
-      sendRefreshRequest(mockDb, projectId, files, objects, done)
+      MongoConnection.mockDb = mockDb
+      sendRefreshRequest(projectId, files, objects, done)
     assertResponseOk objects, true, errorType.MISSING_OBJECT
 
   describe "refresh with db open error", ->
@@ -209,9 +214,10 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
+      MongoConnection.mockDb = mockDb
       errMsg = "Cannot open connection to MongoDb."
       mockDb.openError = new Error(errMsg)
-      sendRefreshRequest(mockDb, projectId, files, objects, done)
+      sendRefreshRequest(projectId, files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "refresh with db collection error", ->
@@ -220,9 +226,10 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
+      MongoConnection.mockDb = mockDb
       errMsg = "Cannot open collection."
       mockDb.collectionError = new Error errMsg
-      sendRefreshRequest(mockDb, projectId, files, objects, done)
+      sendRefreshRequest(projectId, files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 
   describe "refresh with db crud error", ->
@@ -231,11 +238,12 @@ describe "DementorController", ->
     objects = {}
     before (done) ->
       mockDb = new MockDb()
+      MongoConnection.mockDb = mockDb
       mockDb.load MongoConnector.prototype.PROJECT_COLLECTION,
         _id: projectId
         name: projectName
       errMsg = "Cannot remove document."
       mockDb.crudError = new Error(errMsg)
-      sendRefreshRequest(mockDb, projectId, files, objects, done)
+      sendRefreshRequest(projectId, files, objects, done)
     assertResponseOk objects, true, errorType.DATABASE_ERROR
 

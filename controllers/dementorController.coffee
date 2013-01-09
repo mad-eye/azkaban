@@ -1,5 +1,5 @@
 flow = require 'flow'
-{ServiceKeeper} = require '../ServiceKeeper'
+{DataCenter} = require '../src/dataCenter'
 {Settings} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
@@ -7,18 +7,16 @@ sendErrorResponse = (res, err) ->
   res.json 500, {error:err}
 
 exports.init = (req, res, app) ->
-  mongoConnector = ServiceKeeper.mongoInstance()
-  mongoConnector.createProject req.params['projectName'], req.body['files'], (err, results) ->
+  dataCenter = new DataCenter
+  dataCenter.createProject req.params['projectName'], req.body['files'], (err, results) ->
     if err then sendErrorResponse(res, err); return
     results.id = id = results.project._id
     results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
     res.json results
 
 exports.refresh = (req, res, app) ->
-  mongoConnector = ServiceKeeper.mongoInstance()
-  flow.exec ->
-    mongoConnector.refreshProject req.params['projectId'], req.body['files'], this
-  , (err, results) ->
+  dataCenter = new DataCenter
+  dataCenter.refreshProject req.params['projectId'], req.body['files'], (err, results) ->
     if err then sendErrorResponse(res, err); return
     results.id = id = results.project._id
     results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"

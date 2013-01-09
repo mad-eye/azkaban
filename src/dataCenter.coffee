@@ -6,7 +6,7 @@ class DataCenter
   constructor: ->
 
   getConnection: (errorHandler) ->
-    MongoConnection.instance errorHandler
+    new MongoConnection errorHandler
 
   #callback: (err, {project:, files:}) ->
   createProject: (projectName, files, callback) ->

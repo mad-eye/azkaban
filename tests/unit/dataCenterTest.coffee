@@ -1,9 +1,8 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 _ = require 'underscore'
-{MockDb} = require '../mock/MockMongo'
 {MongoConnection} = require '../../src/mongoConnection'
-{DataCenter} = require '../../src/dataCenter'
+{MockDb} = require '../mock/MockMongo'
 {errorType} = require 'madeye-common'
 
 assertFilesCorrect = (files, targetFiles, projectId) ->
@@ -20,8 +19,8 @@ assertFilesCorrect = (files, targetFiles, projectId) ->
 
 describe 'DataCenter', ->
   describe 'with mockDb', ->
-    MongoConnection.instance = (errorHandler) ->
-      self = this
+    {DataCenter} = require '../../src/dataCenter'
+    DataCenter.getConnection = (errorHandler) ->
       connector = new MongoConnection errorHandler
       connector.Db = this.mockDb
       return connector
@@ -44,8 +43,8 @@ describe 'DataCenter', ->
           name: 'nerzo'
           opened: false
         mockDb = new MockDb
-        MongoConnection.mockDb = mockDb
         dataCenter = new DataCenter
+        dataCenter.mockDb = mockDb
         mockDb.load DataCenter.PROJECT_COLLECTION, project
 
       it 'should set project.opened=false', (done) ->
@@ -66,6 +65,21 @@ describe 'DataCenter', ->
       file1Id = otherProjectId = null
       mockDb = null
 
+      refreshDb = ->
+        project.opened = false
+        mockDb = new MockDb
+        mockDb.load DataCenter.PROJECT_COLLECTION, project
+        #Load with extraneous file
+        mockDb.load DataCenter.FILES_COLLECTION,
+          _id: uuid.v4()
+          projectId: otherProjectId
+        dataCenter = new DataCenter
+        dataCenter.mockDb = mockDb
+        dataCenter.getConnection = (errorHandler) ->
+          connector = new MongoConnection errorHandler
+          connector.Db = this.mockDb
+          return connector
+      
 
       before ->
         projectId = uuid.v4()
@@ -74,18 +88,10 @@ describe 'DataCenter', ->
           _id: projectId
           name: 'nerzo'
           opened: false
-        mockDb = new MockDb
-        mockDb.load DataCenter.PROJECT_COLLECTION, project
-        #Load with extraneous file
-        mockDb.load DataCenter.FILES_COLLECTION,
-          _id: uuid.v4()
-          projectId: otherProjectId
-        MongoConnection.mockDb = mockDb
-        dataCenter = new DataCenter
 
       describe "should return project", ->
         before (done) ->
-          project.opened = false
+          refreshDb()
           dataCenter.refreshProject projectId, [], (err, result) ->
             assert.equal err, null, "There should be no error, but got #{JSON.stringify err}"
             returnedProject = result.project
@@ -105,9 +111,7 @@ describe 'DataCenter', ->
         returnedFiles = null
 
         before (done) ->
-          project.opened = false
-          #clean out old project files
-          mockDb.cleanProjectFiles projectId
+          refreshDb()
           file1Id = uuid.v4()
           oldFiles = [
             { _id: file1Id, path:'file1', isDir:false, projectId: projectId },
@@ -139,11 +143,10 @@ describe 'DataCenter', ->
           assert.ok otherFiles
           assert.equal otherFiles.length, 1
 
-
-
-      it 'should callback an error on crudError', (done) ->
+      it 'should callback an error on crudError fweep', (done) ->
+        refreshDb()
+        mockDb.load DataCenter.PROJECT_COLLECTION, project
         mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError = new Error 'Cannot open collection'
-        project.opened = false
         dataCenter.refreshProject projectId, newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.DATABASE_ERROR
@@ -153,7 +156,7 @@ describe 'DataCenter', ->
           done()
 
       it 'should throw an error if the project does not exist', (done) ->
-        project.opened = false
+        refreshDb()
         dataCenter.refreshProject uuid.v4(), newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.MISSING_OBJECT
@@ -167,8 +170,12 @@ describe 'DataCenter', ->
 
       before (done) ->
         mockDb = new MockDb
-        MongoConnection.mockDb = mockDb
         dataCenter = new DataCenter
+        dataCenter.mockDb = mockDb
+        dataCenter.getConnection = (errorHandler) ->
+          connector = new MongoConnection errorHandler
+          connector.Db = this.mockDb
+          return connector
         dataCenter.createProject projectName, newFiles, (err, theResult) ->
           assert.equal err, null
           assert.ok theResult
@@ -196,8 +203,8 @@ describe 'DataCenter', ->
 
       before ->
         mockDb = new MockDb
-        MongoConnection.mockDb = mockDb
         dataCenter = new DataCenter
+        dataCenter.mockDb = mockDb
 
       beforeEach ->
         projectId = uuid.v4()
@@ -224,3 +231,4 @@ describe 'DataCenter', ->
           done()
 
   describe 'with real db', ->
+    {DataCenter} = require '../../src/dataCenter'
