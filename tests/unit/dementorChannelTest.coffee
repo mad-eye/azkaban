@@ -2,6 +2,7 @@ assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket, SocketServer, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
+{ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnection} = require '../../src/mongoConnection'
 {DataCenter} = require '../../src/dataCenter'
 {MockDb} = require '../mock/MockMongo'
@@ -31,48 +32,38 @@ describe "DementorChannel", ->
         assert.equal err.type, errorType.UNKNOWN_ACTION
         done()
 
-  describe "on receiving addFiles message", ->
-    MongoConnection.instance = (errorHandler) ->
-      self = this
-      connector = new MongoConnection errorHandler
-      connector.Db = this.mockDb
-      return connector
-    message = mockDb = null
+  describe "with mockDb", ->
+    mockDb = null
+    ServiceKeeper.reset()
+    ServiceKeeper.init makeDbConnection: ->
+      mockDb # Return the mockDb we set in the test
 
-    before ->
-      message = messageMaker.addFilesMessage [
-        {path:'foo/bar/file1', isDir:false },
-        {path:'foo/bar/dir1', isDir:true },
-        {path:'foo/bar/dir1/file2', isDir:false }
-      ]
-      message.projectId = uuid.v4()
+    describe "on receiving addFiles message", ->
+      message = null
 
-    beforeEach ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
+      before ->
+        message = messageMaker.addFilesMessage [
+          {path:'foo/bar/file1', isDir:false },
+          {path:'foo/bar/dir1', isDir:true },
+          {path:'foo/bar/dir1/file2', isDir:false }
+        ]
+        message.projectId = uuid.v4()
 
-    it "should add _id field", (done) ->
-      channel.route message, (err, replyMsg) ->
-        assert.equal null, err
-        assert.ok replyMsg?.data?.files
-        assert.ok file._id, "File should have been given _id" for file in replyMsg.data.files
-        done()
+      beforeEach ->
+        mockDb = new MockDb()
 
-    it "should callback error if Mongo returns an error", (done) ->
-      mockDb.openError = new Error "Cannot open DB"
-      channel.route message, (err, replyMsg) ->
-        assert.equal null, replyMsg
-        assert.ok err
-        assert.equal err.type, errorType.DATABASE_ERROR
-        done()
+      it "should add _id field", (done) ->
+        channel.route message, (err, replyMsg) ->
+          assert.equal null, err
+          assert.ok replyMsg?.data?.files
+          assert.ok file._id, "File should have been given _id" for file in replyMsg.data.files
+          done()
 
-
-
-
-
-
-
-
-          
-
+      it "should callback error if Mongo returns an error", (done) ->
+        mockDb.openError = new Error "Cannot open DB"
+        channel.route message, (err, replyMsg) ->
+          assert.equal null, replyMsg
+          assert.ok err
+          assert.equal err.type, errorType.DATABASE_ERROR
+          done()
 
