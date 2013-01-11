@@ -10,7 +10,9 @@ uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
 testUtils = require '../util/testUtils'
 
+# INTEGRATION TEST -- requires app and MongoDb to be running.
 require '../../app'
+
 ###
 # Request helper methods
 ###
@@ -25,14 +27,13 @@ sendInitRequest = (projectName, files, objects, done) ->
 sendRefreshRequest = (projectId, files, objects, done) ->
   options =
     method: "PUT"
-    uri: "http://localhost:#{Settings.httpPort}/project/#{projectName}"
+    uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}"
     json: {files:files}
   sendRequest options, objects, done
 
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    console.log "Found res ", _res
     console.log "Found body ", _body
     #console.log "Body type", typeof _body
     if typeof _body == 'string'
@@ -45,16 +46,6 @@ sendRequest = (options, objects, done) ->
       objects.body = _body
     objects.response = _res
     done()
-
-#TODO: Extract this to testUtils.coffee
-refreshDb = (proj, files = []) ->
-  Settings.mockDb = true
-  newMockDb = new MockDb
-  newMockDb.load DataCenter.PROJECT_COLLECTION, proj
-  for file in files
-    newMockDb.load DataCenter.FILES_COLLECTION, file
-  ServiceKeeper.instance().Db = newMockDb
-  return newMockDb
 
 assertResponseOk = (objects, isError=false, errorType=null) ->
   it "returns a 200", ->
@@ -127,139 +118,4 @@ describe "DementorController with real db", ->
     it "should keep the right project id", ->
       assert.equal objects.body.id, projectId
 
-###
-# Mock DB Tests
-###
-
-describe "DementorController", ->
-  files = [
-    {isDir: false, path:'file1'},
-          {isDir: true, path:'dir1'},
-          {isDir: false, path:'dir1/file2'}
-  ]
-
-  describe "init fweep", ->
-    projectName = 'golmac'
-    objects = {}
-    before (done) ->
-      mockDb = refreshDb()
-      sendInitRequest(projectName, files, objects, done)
-    assertResponseOk objects
-    it "returns the correct projectName", ->
-      assert.equal objects.body.name, projectName
-    it "returns an id", ->
-      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
-    it "returns a url", ->
-      assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
-    it "returns a url with the correct hostname", ->
-      #console.log "Found url:", objects.body.url
-      u = url.parse(objects.body.url)
-      assert.ok u.hostname
-      assert.equal u.hostname, Settings.apogeeHost
-
-  describe "init with error in opening db", ->
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      errMsg = "Cannot open connection to MongoDb."
-      mockDb.openError = new Error(errMsg)
-      sendInitRequest('exex', files, objects, done)
-    assertResponseOk objects, true, errorType.DATABASE_ERROR
-
-  describe "init with error in opening collection", ->
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      errMsg = "Cannot open collection."
-      mockDb.collectionError = new Error errMsg
-      sendInitRequest('exex', files, objects, done)
-    assertResponseOk objects, true, errorType.DATABASE_ERROR
-
-  describe "init with error in insert", ->
-    objects = {}
-    errMsg = null
-    before (done) ->
-      mockDb = new MockDb()
-      errMsg = "Cannot insert document."
-      mockDb.crudError = new Error(errMsg)
-      sendInitRequest('exex', files, objects, done)
-    assertResponseOk objects, true, errorType.DATABASE_ERROR
-
-  #TODO: Refactor out repeated code.
-  describe "refresh", ->
-    projectName = 'gloth'
-    projectId = uuid.v4()
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      mockDb.load DataCenter.PROJECT_COLLECTION,
-        _id: projectId
-        name: projectName
-      sendRefreshRequest(projectId, files, objects, done)
-    assertResponseOk objects
-    it "returns an id", ->
-      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
-    it "returns the correct projectId", ->
-      assert.equal objects.body.id, projectId
-    it "returns a url", ->
-      assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
-    it "returns a url with the correct hostname", ->
-      #console.log "Found url:", objects.body.url
-      u = url.parse(objects.body.url)
-      assert.ok u.hostname
-      assert.equal u.hostname, Settings.apogeeHost
-
     it "updates existing files in db for project"
-
-  describe "refresh with missing project", ->
-    projectName = 'gloth'
-    projectId = uuid.v4()
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      sendRefreshRequest(projectId, files, objects, done)
-    assertResponseOk objects, true, errorType.MISSING_OBJECT
-
-  describe "refresh with db open error", ->
-    projectName = 'umboz'
-    projectId = uuid.v4()
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      errMsg = "Cannot open connection to MongoDb."
-      mockDb.openError = new Error(errMsg)
-      sendRefreshRequest(projectId, files, objects, done)
-    assertResponseOk objects, true, errorType.DATABASE_ERROR
-
-  describe "refresh with db collection error", ->
-    projectName = 'umboz'
-    projectId = uuid.v4()
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      errMsg = "Cannot open collection."
-      mockDb.collectionError = new Error errMsg
-      sendRefreshRequest(projectId, files, objects, done)
-    assertResponseOk objects, true, errorType.DATABASE_ERROR
-
-  describe "refresh with db crud error", ->
-    projectName = 'umboz'
-    projectId = uuid.v4()
-    objects = {}
-    before (done) ->
-      mockDb = new MockDb()
-      MongoConnection.mockDb = mockDb
-      mockDb.load DataCenter.PROJECT_COLLECTION,
-        _id: projectId
-        name: projectName
-      errMsg = "Cannot remove document."
-      mockDb.crudError = new Error(errMsg)
-      sendRefreshRequest(projectId, files, objects, done)
-    assertResponseOk objects, true, errorType.DATABASE_ERROR
-

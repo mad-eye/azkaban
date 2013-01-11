@@ -6,7 +6,8 @@ sendErrorResponse = (res, err) ->
 
 class DementorController
   constructor: () ->
-    @dataCenter = require '../src/dataCenter'
+    {DataCenter} = require('../src/dataCenter')
+    @dataCenter = new DataCenter
 
   createProject: (req, res) =>
     @dataCenter.createProject req.params['projectName'], req.body['files'], (err, results) ->
