@@ -12,7 +12,7 @@ class DataCenter
   createProject: (projectName, files, callback) ->
     projects = [{_id: uuid.v4(), name: projectName, opened:true, created:new Date().getTime()}]
     db = @getConnection callback
-    console.log "Init db is mock: #{db.Db.isMock}"
+    #console.log "Init db is mock: #{db.Db.isMock}"
     db.connect =>
       db.insert projects, @PROJECT_COLLECTION, (projs) =>
         project = projs[0]

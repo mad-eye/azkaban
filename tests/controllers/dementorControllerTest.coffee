@@ -34,7 +34,7 @@ sendRefreshRequest = (projectId, files, objects, done) ->
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    console.log "Found body ", _body
+    #console.log "Found body ", _body
     #console.log "Body type", typeof _body
     if typeof _body == 'string'
       objects.bodyStr = _body
@@ -110,7 +110,6 @@ describe "DementorController with real db", ->
       dataCenter.createProject projectName, files, (err, results) ->
         assert.equal err, null
         projectId = results.project._id
-        console.log "Created project with id #{projectId}"
         sendRefreshRequest(projectId, files, objects, done)
 
     assertResponseOk objects
