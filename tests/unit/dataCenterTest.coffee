@@ -1,6 +1,7 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
 _ = require 'underscore'
+{Settings} = require 'madeye-common'
 {MongoConnection} = require '../../src/mongoConnection'
 {MockDb} = require '../mock/MockMongo'
 {ServiceKeeper} = require '../../ServiceKeeper'
@@ -21,10 +22,7 @@ assertFilesCorrect = (files, targetFiles, projectId) ->
 
 describe 'DataCenter', ->
   describe 'with mockDb', ->
-    mockDb = null
     ServiceKeeper.reset()
-    ServiceKeeper.init makeDbConnection: ->
-      mockDb # Return the mockDb we set in the test
 
     newFiles = [
       { path:'file1', isDir:false },
@@ -32,9 +30,17 @@ describe 'DataCenter', ->
       { path:'dir1/file2', isDir:false }
     ]
 
+    refreshDb = (proj, files = []) ->
+      Settings.mockDb = true
+      newMockDb = new MockDb
+      newMockDb.load DataCenter.PROJECT_COLLECTION, proj
+      for file in files
+        newMockDb.load DataCenter.FILES_COLLECTION, file
+      ServiceKeeper.instance().Db = newMockDb
+      return newMockDb
+
     describe 'close project', ->
-      projectId = project = null
-      dataCenter = null
+      projectId = null
       mockDb = null
 
       before ->
@@ -43,11 +49,10 @@ describe 'DataCenter', ->
           _id: projectId
           name: 'nerzo'
           opened: false
-        dataCenter = new DataCenter
-        mockDb = new MockDb
-        mockDb.load DataCenter.PROJECT_COLLECTION, project
+        mockDb = refreshDb project
 
       it 'should set project.opened=false', (done) ->
+        dataCenter = new DataCenter
         dataCenter.closeProject projectId, (err) ->
           assert.equal err, null
           dbProj = mockDb.collections[DataCenter.PROJECT_COLLECTION].get projectId
@@ -55,38 +60,27 @@ describe 'DataCenter', ->
           done()
 
       it 'should not throw an error if project does not exist', (done) ->
+        dataCenter = new DataCenter
         dataCenter.closeProject uuid.v4(), (err) ->
           assert.equal err, null
           done()
 
     describe 'refreshProject', ->
       projectId = project = returnedProject = null
-      dataCenter = null
       file1Id = otherProjectId = null
       mockDb = null
 
-      #FIXME: This is hacky
-      refreshDb = ->
-        project.opened = false
-        mockDb = new MockDb
-        mockDb.load DataCenter.PROJECT_COLLECTION, project
-        #Load with extraneous file
-        mockDb.load DataCenter.FILES_COLLECTION,
-          _id: uuid.v4()
-          projectId: otherProjectId
-        dataCenter = new DataCenter
-
-      before ->
-        projectId = uuid.v4()
-        otherProjectId = uuid.v4()
-        project =
-          _id: projectId
-          name: 'nerzo'
-          opened: false
+      newProject = (projId) ->
+        _id: projId
+        name: 'nerzo'
+        opened: false
 
       describe "should return project", ->
         before (done) ->
-          refreshDb()
+          projectId = uuid.v4()
+          project = newProject projectId
+          mockDb = refreshDb project
+          dataCenter = new DataCenter
           dataCenter.refreshProject projectId, [], (err, result) ->
             assert.equal err, null, "There should be no error, but got #{JSON.stringify err}"
             returnedProject = result.project
@@ -94,7 +88,10 @@ describe 'DataCenter', ->
 
         it 'correctly', ->
           assert.ok returnedProject
-          assert.deepEqual returnedProject, project
+          #To test equality, set the opened=true
+          projectCopy = _.clone project
+          projectCopy.opened = true
+          assert.deepEqual returnedProject, projectCopy
 
         it 'and should set project.opened=true', ->
           assert.ok returnedProject.opened
@@ -106,16 +103,21 @@ describe 'DataCenter', ->
         returnedFiles = null
 
         before (done) ->
-          refreshDb()
+          projectId = uuid.v4()
+          project = newProject projectId
+
           file1Id = uuid.v4()
+          otherProjectId = uuid.v4()
           oldFiles = [
             { _id: file1Id, path:'file1', isDir:false, projectId: projectId },
             { _id: uuid.v4(), path:'dirA', isDir:true, projectId: projectId },
-            { _id: uuid.v4(), path:'dirA/file2', isDir:false, projectId: projectId }
+            { _id: uuid.v4(), path:'dirA/file2', isDir:false, projectId: projectId },
+            { _id: uuid.v4(), path:'test.txt', isDir:false, projectId: otherProjectId }
           ]
-          for file in oldFiles
-            mockDb.load DataCenter.FILES_COLLECTION, file
 
+          mockDb = refreshDb project, oldFiles
+
+          dataCenter = new DataCenter
           dataCenter.refreshProject projectId, newFiles, (err, proj) ->
             returnedFiles = proj.files
             done()
@@ -138,10 +140,13 @@ describe 'DataCenter', ->
           assert.ok otherFiles
           assert.equal otherFiles.length, 1
 
+      # Test errors
       it 'should callback an error on crudError', (done) ->
-        refreshDb()
-        mockDb.load DataCenter.PROJECT_COLLECTION, project
+        projectId = uuid.v4()
+        project = newProject projectId
+        mockDb = refreshDb project
         mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError = new Error 'Cannot open collection'
+        dataCenter = new DataCenter
         dataCenter.refreshProject projectId, newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.DATABASE_ERROR
@@ -151,7 +156,10 @@ describe 'DataCenter', ->
           done()
 
       it 'should throw an error if the project does not exist', (done) ->
-        refreshDb()
+        projectId = uuid.v4()
+        project = newProject projectId
+        mockDb = refreshDb project
+        dataCenter = new DataCenter
         dataCenter.refreshProject uuid.v4(), newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.MISSING_OBJECT
@@ -164,7 +172,7 @@ describe 'DataCenter', ->
       result = null
 
       before (done) ->
-        mockDb = new MockDb
+        mockDb = refreshDb()
         dataCenter = new DataCenter
         dataCenter.createProject projectName, newFiles, (err, theResult) ->
           assert.equal err, null
@@ -189,17 +197,15 @@ describe 'DataCenter', ->
 
     describe 'addFiles', ->
       mockDb = projectId = null
-      dataCenter = null
 
       before ->
-        mockDb = new MockDb
-        dataCenter = new DataCenter
-        dataCenter.mockDb = mockDb
+        mockDb = refreshDb()
 
       beforeEach ->
         projectId = uuid.v4()
 
       it 'should add new files to the db', (done) ->
+        dataCenter = new DataCenter
         dataCenter.addFiles newFiles, projectId, (err, result) ->
           assert.equal err, null
           assert.ok result
@@ -209,9 +215,10 @@ describe 'DataCenter', ->
       it 'should not duplicate existing files to the db', (done) ->
         file1Id = uuid.v4()
         file1 = {_id:file1Id, projectId:projectId, isDir: false, path:'file1'}
-        mockDb.load DataCenter.FILES_COLLECTION, file1
+        mockDb.load 'files', file1
+        dataCenter = new DataCenter
         dataCenter.addFiles newFiles, projectId, (err, result) ->
-          console.log "AddFiles result", result
+          #console.log "AddFiles result", result
           assert.equal err, null
           assert.ok result
           files = _.reject newFiles, (file) ->
@@ -221,4 +228,5 @@ describe 'DataCenter', ->
           done()
 
   describe 'with real db', ->
-    {DataCenter} = require '../../src/dataCenter'
+    ServiceKeeper.reset()
+    Settings.mockDb = false

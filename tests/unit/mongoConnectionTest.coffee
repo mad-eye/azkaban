@@ -1,5 +1,6 @@
 {MongoConnection} = require '../../src/mongoConnection'
 {ServiceKeeper} = require '../../ServiceKeeper'
+{Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'
 assert = require 'assert'
 
@@ -42,14 +43,14 @@ describe 'MongoConnection', ->
   describe 'using the real db', ->
     before ->
       ServiceKeeper.reset()
+      Settings.mockDb = false
 
     runTests()
 
   describe 'using the MockDb', ->
     before ->
       ServiceKeeper.reset()
-      ServiceKeeper.init makeDbConnection: ->
-        return new MockDb
+      Settings.mockDb = true
 
     it 'should set the methods on serviceKeeper', ->
       serviceKeeper = ServiceKeeper.instance()

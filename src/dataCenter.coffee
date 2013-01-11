@@ -16,7 +16,6 @@ class DataCenter
     db.connect =>
       db.insert projects, @PROJECT_COLLECTION, (projs) =>
         project = projs[0]
-        console.log "Inserted project", project
         @updateProjectFiles db, project._id, files, (files) =>
           callback null,
             project: project

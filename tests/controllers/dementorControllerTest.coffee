@@ -2,7 +2,6 @@ assert = require 'assert'
 request = require 'request'
 url = require 'url'
 uuid = require 'node-uuid'
-app = require '../../app'
 {DataCenter} = require '../../src/dataCenter'
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MockDb} = require '../mock/MockMongo'
@@ -18,14 +17,14 @@ testUtils = require '../util/testUtils'
 sendInitRequest = (projectName, files, objects, done) ->
   options =
     method: "POST"
-    uri: "http://localhost:#{app.get('port')}/project/#{projectName}"
+    uri: "http://localhost:#{Settings.httpPort}/project/#{projectName}"
     json: {files:files}
   sendRequest options, objects, done
 
 sendRefreshRequest = (projectId, files, objects, done) ->
   options =
     method: "PUT"
-    uri: "http://localhost:#{app.get('port')}/project/#{projectId}"
+    uri: "http://localhost:#{Settings.httpPort}/project/#{projectName}"
     json: {files:files}
   sendRequest options, objects, done
 

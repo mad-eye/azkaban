@@ -1,6 +1,5 @@
 uuid = require 'node-uuid'
 _ = require 'underscore'
-{DataCenter} = require '../../src/dataCenter'
 
 #@openError: Error to be thrown on open.
 #@collectionError: Error to be thrown on collection
@@ -65,10 +64,10 @@ class MockDb
 
   #For test classes to set up data
   cleanProjectFiles: (projectId) ->
-    @getCollection(@FILES_COLLECTION).remove projectId:projectId
+    @getCollection('files').remove projectId:projectId
 
   getProjectFiles: (projectId) ->
-    documents = @getCollection(DataCenter.FILES_COLLECTION).documents
+    documents = @getCollection('files').documents
     files = _.filter documents, (doc) ->
       doc.projectId == projectId
 
@@ -178,6 +177,7 @@ class MockCollection
 
   #For test classes to use
   load: (doc) ->
+    return unless doc?
     @documents.push doc
 
 CursorINIT = 0

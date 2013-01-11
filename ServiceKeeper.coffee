@@ -3,6 +3,7 @@ mongo = require 'mongodb'
 {Settings} = require 'madeye-common'
 {MongoConnector} = require './src/mongoConnector'
 {SocketServer} = require 'madeye-common'
+{MockDb} = require './tests/mock/MockMongo'
 
 #TODO: Put this in settings?
 DB_NAME = 'meteor'
@@ -16,10 +17,7 @@ class exports.ServiceKeeper
     _vars = vars
 
   @instance: ->
-    unless _instance
-      _instance = new ServiceKeeperInner
-      _.extend _instance, _vars
-    _instance
+    _instance ?= new ServiceKeeperInner
 
   @reset: ->
     _vars = undefined
@@ -30,8 +28,14 @@ class ServiceKeeperInner
   constructor: ->
 
   makeDbConnection: ->
+    console.log "Settings.mockDb", Settings.mockDb
+    if Settings.mockDb
+      Db = @Db ? new MockDb
+      console.log "Returning mockDb", Db
+      return Db
     server = new mongo.Server(Settings.mongoHost, Settings.mongoPort, {auto_reconnect: true})
-    return new mongo.Db(DB_NAME, server, {safe:true})
+    return Db = new mongo.Db(DB_NAME, server, {safe:true})
+
 
 
   #Set the connection ivars to override the defaults.

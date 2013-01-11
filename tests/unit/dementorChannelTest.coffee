@@ -6,6 +6,7 @@ uuid = require 'node-uuid'
 {MongoConnection} = require '../../src/mongoConnection'
 {DataCenter} = require '../../src/dataCenter'
 {MockDb} = require '../mock/MockMongo'
+{Settings} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
@@ -33,13 +34,19 @@ describe "DementorChannel", ->
         done()
 
   describe "with mockDb", ->
-    mockDb = null
-    ServiceKeeper.reset()
-    ServiceKeeper.init makeDbConnection: ->
-      mockDb # Return the mockDb we set in the test
 
     describe "on receiving addFiles message", ->
       message = null
+      mockDb = null
+
+      refreshDb = (proj, files = []) ->
+        Settings.mockDb = true
+        newMockDb = new MockDb
+        newMockDb.load DataCenter.PROJECT_COLLECTION, proj
+        for file in files
+          newMockDb.load DataCenter.FILES_COLLECTION, file
+        ServiceKeeper.instance().Db = newMockDb
+        return newMockDb
 
       before ->
         message = messageMaker.addFilesMessage [
@@ -50,7 +57,7 @@ describe "DementorChannel", ->
         message.projectId = uuid.v4()
 
       beforeEach ->
-        mockDb = new MockDb()
+        mockDb = refreshDb()
 
       it "should add _id field", (done) ->
         channel.route message, (err, replyMsg) ->

@@ -5,11 +5,10 @@ request = require "request"
 
 FileController = require '../../controllers/fileController'
 {ServiceKeeper} = require "../../ServiceKeeper.coffee"
+{Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
-
-app = require '../../app'
 
 describe 'fileController', ->
   fileController = undefined
@@ -100,7 +99,7 @@ describe 'fileController', ->
       objects = {}
       options =
         method: "PUT"
-        uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
         json:
           contents: contents
 
@@ -153,7 +152,7 @@ describe 'fileController', ->
       objects = {}
       options =
         method: "GET"
-        uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
 
       request options, (err, _res, _body) ->
         objects.bodyStr = _body
