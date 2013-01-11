@@ -39,6 +39,7 @@ describe "DementorChannel", ->
       message = null
       mockDb = null
 
+      #TODO: Extract this to testUtils.coffee
       refreshDb = (proj, files = []) ->
         Settings.mockDb = true
         newMockDb = new MockDb

@@ -30,6 +30,7 @@ describe 'DataCenter', ->
       { path:'dir1/file2', isDir:false }
     ]
 
+    #TODO: Extract this to testUtils.coffee
     refreshDb = (proj, files = []) ->
       Settings.mockDb = true
       newMockDb = new MockDb
