@@ -28,10 +28,10 @@ class ServiceKeeperInner
   constructor: ->
 
   makeDbConnection: ->
-    console.log "Settings.mockDb", Settings.mockDb
+    #console.log "Settings.mockDb", Settings.mockDb
     if Settings.mockDb
       Db = @Db ? new MockDb
-      console.log "Returning mockDb", Db
+      #console.log "Returning mockDb", Db
       return Db
     server = new mongo.Server(Settings.mongoHost, Settings.mongoPort, {auto_reconnect: true})
     return Db = new mongo.Db(DB_NAME, server, {safe:true})

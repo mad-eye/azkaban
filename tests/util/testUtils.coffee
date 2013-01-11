@@ -1,15 +1,13 @@
-{MongoConnection} = require '../../src/mongoConnection'
-{MockDb} = require '../mock/MockMongo'
-{DataCenter} = require '../../src/dataCenter'
+assert = require 'assert'
 
-makeMockDbAndDataCenter = ->
-  mockDb = new MockDb
-  dataCenter = new DataCenter
-  dataCenter.mockDb = mockDb
-  dataCenter.getConnection = (errorHandler) ->
-    connector = new MongoConnection errorHandler
-    connector.Db = this.mockDb
-    return connector
-  return {dataCenter:dataCenter, mockDb:mockDb}
+exports.assertFilesCorrect = (files, targetFiles, projectId) ->
+  assert.equal files.length, targetFiles.length, "Number of files incorrect."
+  targetMap = {}
+  targetMap[file.path] = file for file in targetFiles
+  for file in files
+    assert.ok file._id
+    assert.equal file.projectId, projectId if projectId
+    targetFile = targetMap[file.path]
+    assert.ok targetFile
+    assert.equal file.isDir, targetFile.isDir
 
-exports.makeMockDbAndDataCenter = makeMockDbAndDataCenter

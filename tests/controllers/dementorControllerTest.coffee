@@ -10,6 +10,7 @@ uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
 testUtils = require '../util/testUtils'
 
+require '../../app'
 ###
 # Request helper methods
 ###
@@ -31,7 +32,8 @@ sendRefreshRequest = (projectId, files, objects, done) ->
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    #console.log "Found body ", _body
+    console.log "Found res ", _res
+    console.log "Found body ", _body
     #console.log "Body type", typeof _body
     if typeof _body == 'string'
       objects.bodyStr = _body
@@ -43,6 +45,16 @@ sendRequest = (options, objects, done) ->
       objects.body = _body
     objects.response = _res
     done()
+
+#TODO: Extract this to testUtils.coffee
+refreshDb = (proj, files = []) ->
+  Settings.mockDb = true
+  newMockDb = new MockDb
+  newMockDb.load DataCenter.PROJECT_COLLECTION, proj
+  for file in files
+    newMockDb.load DataCenter.FILES_COLLECTION, file
+  ServiceKeeper.instance().Db = newMockDb
+  return newMockDb
 
 assertResponseOk = (objects, isError=false, errorType=null) ->
   it "returns a 200", ->
@@ -119,22 +131,18 @@ describe "DementorController with real db", ->
 # Mock DB Tests
 ###
 
-setMongoConnection: (mockDb) ->
-
 describe "DementorController", ->
-  # Mock MongoConnection
-  ServiceKeeper.mongoDbInstance = ->
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},
           {isDir: false, path:'dir1/file2'}
   ]
 
-  describe "init", ->
+  describe "init fweep", ->
     projectName = 'golmac'
     objects = {}
     before (done) ->
-      {mockDb} = testUtils.makeMockDbAndDataCenter()
+      mockDb = refreshDb()
       sendInitRequest(projectName, files, objects, done)
     assertResponseOk objects
     it "returns the correct projectName", ->
