@@ -71,7 +71,7 @@ describe 'FileController', ->
     it 'should handle a shut-down dementor gracefully'
     it 'should return an error on a null contents'
 
-  describe 'on get info fweep', ->
+  describe 'on get info', ->
     fileId = uuid.v4()
     projectId = uuid.v4()
     body = '''without a cat one has to wonder,

@@ -29,7 +29,7 @@ describe 'fileController', ->
       header: ->
 
 
-    it "should send a save file message to the socket server fweep", ->
+    it "should send a save file message to the socket server", ->
       fileController.socketServer =
         tell: sinon.spy()
 
