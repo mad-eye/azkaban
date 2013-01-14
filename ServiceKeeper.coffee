@@ -1,7 +1,6 @@
 _ = require 'underscore'
 mongo = require 'mongodb'
 {Settings} = require 'madeye-common'
-{MongoConnector} = require './src/mongoConnector'
 {SocketServer} = require 'madeye-common'
 {MockDb} = require './tests/mock/MockMongo'
 
