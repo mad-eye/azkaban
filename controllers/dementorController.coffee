@@ -1,33 +1,27 @@
-{ServiceKeeper} = require '../ServiceKeeper'
 {Settings} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
-  #console.log "Sending error ", err
-  resObject = {error:err}
-  res.send JSON.stringify(resObject)
+  console.log "Sending error ", err
+  res.json 500, {error:err}
 
-exports.init = (req, res, app) ->
-  mongoConnector = ServiceKeeper.mongoInstance()
-  mongoConnector.createProject req.params['projectName'], (err, projects) ->
-    if err
-      sendErrorResponse(res, err)
-    else
-      id = projects[0]._id
-      url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
-      res.send JSON.stringify
-        url: url
-        id: id
-        name: projects[0].name
+class DementorController
+  constructor: () ->
+    {DataCenter} = require('../src/dataCenter')
+    @dataCenter = new DataCenter
 
-exports.refresh = (req, res, app) ->
-  mongoConnector = ServiceKeeper.mongoInstance()
-  mongoConnector.refreshProject req.params['projectId'], (err, project) ->
-    if err
-      sendErrorResponse(res, err)
-    else
-      id = project._id
-      url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
-      res.send JSON.stringify
-        url: url
-        id: id
-        name: project.name
+  createProject: (req, res) =>
+    @dataCenter.createProject req.params['projectName'], req.body['files'], (err, results) ->
+      if err then sendErrorResponse(res, err); return
+      results.id = id = results.project._id
+      results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
+      res.json results
+
+  refreshProject: (req, res) =>
+    @dataCenter.refreshProject req.params['projectId'], req.body['files'], (err, results) ->
+      if err then sendErrorResponse(res, err); return
+      results.id = id = results.project._id
+      results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
+      res.json results
+      
+
+module.exports = DementorController

@@ -24,7 +24,7 @@ app.configure 'test', ->
 
 require('./routes')(app)
 
-socketServer = ServiceKeeper.getSocketServer()
+socketServer = ServiceKeeper.instance().getSocketServer()
 socketServer.listen Settings.bcPort
 
 httpServer = http.createServer(app).listen(app.get('port'), ->

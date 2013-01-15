@@ -1,12 +1,15 @@
 FileController = require('./controllers/fileController')
+DementorController = require('./controllers/dementorController')
 
 routes = (app) ->
   fileController = new FileController
+  dementorController = new DementorController
+
   app.post '/project/:projectName', (req, res)->
-    require('./controllers/dementorController').init(req, res, app)
+    dementorController.createProject(req, res)
 
   app.put '/project/:projectId', (req, res)->
-    require('./controllers/dementorController').refresh(req, res, app)
+    dementorController.refreshProject(req, res)
 
   app.get '/project/:projectId/file/:fileId', (req, res)->
     fileController.getFile(req, res)
