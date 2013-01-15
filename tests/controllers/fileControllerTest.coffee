@@ -5,83 +5,29 @@ request = require "request"
 
 FileController = require '../../controllers/fileController'
 {ServiceKeeper} = require "../../ServiceKeeper.coffee"
+{Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
 
-app = require '../../app'
 
-describe 'fileController', ->
+describe 'FileController', ->
+  # Acceptance tests -- need app, but need to set SocketServer first.
+  socketServer = ServiceKeeper.instance().getSocketServer()
+  require '../../app'
+
   fileController = undefined
   beforeEach ->
     fileController = new FileController
-
-  describe 'on save', ->
-    FILE_CONTENTS = "a riveting text"
-
-    PROJECT_ID = 7
-    FILE_ID = 1
-
-    req =
-      params:
-        projectId: PROJECT_ID
-        fileId: FILE_ID
-      body:
-        contents: FILE_CONTENTS
-
-    res =
-      header: ->
-
-
-    it "should send a save file message to the socket server", ->
-      fileController.socketServer =
-        tell: sinon.spy()
-
-      fileController.saveFile req, res
-      callValues = fileController.socketServer.tell.getCall(0).args
-      assert.equal PROJECT_ID, callValues[0]
-      message = callValues[1]
-      #console.log message
-      assert.equal message.data.fileId, FILE_ID
-      assert.equal message.data.contents, FILE_CONTENTS
-
-    it "should return a confirmation when there are no problems", ->
-      fileController.socketServer =
-        tell: (projectId, message, callback)->
-          callback null, "W00T"
-
-      fileController.request =
-        get: (url, callback)->
-#         TODO use process.nextTick here
-          callback(null, {}, FILE_CONTENTS)
-
-      fakeResponse =
-        send: sinon.spy()
-        header: ->
-        statusCode: 200
-      fileController.saveFile req, fakeResponse
-      assert.ok fakeResponse.send.called
-      callValues = fakeResponse.send.getCall(0).args
-      message = JSON.parse callValues[0]
-      assert.equal message.projectId, PROJECT_ID
-      assert.equal message.fileId, FILE_ID
-      assert message.saved
-
-    it "should return a 500 if there is an error making the message", ->
-
-    it "should return a 500 if there is an error communicating with dementor", ->
-
-    it "should return a 500 if it cannot retrieve the file from bolide", ->
 
   describe 'on save contents', ->
     fileId = uuid.v4()
     projectId = uuid.v4()
     contents = '''If, in the morning, a kitten
     scampers up and boops your nose, are you dreaming?'''
-    objects = socket = socketServer = null
+    objects = socket = null
     before (done) ->
 
-      socketServer = ServiceKeeper.getSocketServer()
       socket = new MockSocket {
         onsend: (message) ->
           return unless message.action == messageAction.SAVE_FILE
@@ -100,7 +46,7 @@ describe 'fileController', ->
       objects = {}
       options =
         method: "PUT"
-        uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
         json:
           contents: contents
 
@@ -110,7 +56,7 @@ describe 'fileController', ->
         done()
 
     it "returns a 200", ->
-      assert.ok objects.response.statusCode == 200
+      assert.equal objects.response.statusCode, 200
     it 'should return a non-empty body', ->
       assert.ok objects.body
     it 'should return a fileId in response body', ->
@@ -130,10 +76,9 @@ describe 'fileController', ->
     projectId = uuid.v4()
     body = '''without a cat one has to wonder,
       is the world real, or just imgur?'''
-    objects = socket = socketServer = null
+    objects = socket = null
     before (done) ->
 
-      socketServer = ServiceKeeper.getSocketServer()
       socket = new MockSocket {
         onsend: (message) ->
           return unless message.action == messageAction.REQUEST_FILE
@@ -153,7 +98,7 @@ describe 'fileController', ->
       objects = {}
       options =
         method: "GET"
-        uri: "http://localhost:#{app.get('port')}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
 
       request options, (err, _res, _body) ->
         objects.bodyStr = _body
@@ -184,3 +129,4 @@ describe 'fileController', ->
       sentMessage = socket.sentMessages[0]
       assert.equal sentMessage.action, 'requestFile'
       assert.equal sentMessage.fileId, fileId
+
