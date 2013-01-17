@@ -10,6 +10,7 @@ class DementorChannel
     switch message.action
       when messageAction.ADD_FILES then @addFiles message, callback
       when messageAction.REMOVE_FILES  then @removeFiles message, callback
+      when messageAction.SAVE_FILE  then @saveFile message, callback
       when messageAction.REPLY then "registered callback should have handled this."
       else callback? errors.new errorType.UNKNOWN_ACTION, {action: message.action}
 
@@ -23,6 +24,9 @@ class DementorChannel
         #console.log "Results from addFile:", results
         replyMessage = messageMaker.replyMessage message, files: results
         callback? null, replyMessage
+
+  saveFile : (message, callback) ->
+    console.log "Called saveFile with ", message
 
   removeFiles : (message, callback) ->
     console.log "Called removeFiles with ", message
