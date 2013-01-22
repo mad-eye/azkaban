@@ -2,7 +2,7 @@ messageMaker = require("madeye-common").messageMaker
 
 class FileController
   constructor: ->
-    @socketServer = require('../ServiceKeeper').ServiceKeeper.instance().getSocketServer()
+    @dementorChannel = require('../ServiceKeeper').ServiceKeeper.instance().getDementorChannel()
     @Settings = require('madeye-common').Settings
     @request = require "request"
 
@@ -17,23 +17,21 @@ class FileController
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
-    message = messageMaker.requestFileMessage fileId
-    @socketServer.tell projectId, message, (err, message) =>
+    @dementorChannel.getFileContents projectId, fileId, (err, contents) =>
       if err
         @sendErrorResponse(res, err)
       else
         url = "http://#{@Settings.bolideHost}:#{@Settings.bolidePort}/doc/#{fileId}"
         #TODO handle error cases, test, abstract this into a class that can be mocked
         @request.put url, {body: '{"type": "text"}'}, (error, response, body)->
-          res.send JSON.stringify({projectId: projectId, fileId:fileId, body:message.data.body})
+          res.send JSON.stringify projectId: projectId, fileId:fileId, body:contents
 
-  saveFile : (req, res) ->
+  saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
     contents = req.body.contents
-    message = messageMaker.saveFileMessage fileId, contents
-    @socketServer.tell projectId, message, (err, msg) =>
+    @dementorChannel.saveFile projectId, fileId, contents, (err) =>
       if err
         @sendErrorResponse(res, err)
       else
