@@ -3,7 +3,6 @@ http = require('http')
 io = require 'socket.io'
 {Settings} = require 'madeye-common'
 {ServiceKeeper} = require './ServiceKeeper'
-{DementorChannel} = require './src/dementorChannel'
 cors = require './cors'
 flow = require 'flow'
 
@@ -39,6 +38,11 @@ httpServer.listen(app.get('port'), ->
 # Shutdown section
 SHUTTING_DOWN = false
 
+shutdown = (returnVal=0) ->
+  #Multiple ^C will allow exit in haste
+  process.exit(returnVal || 1) if SHUTTING_DOWN # || not ?, because we don't want 0
+  shutdownGracefully(returnVal)
+
 shutdownGracefully = ->
   return if SHUTTING_DOWN
   SHUTTING_DOWN = true
@@ -56,12 +60,9 @@ shutdownGracefully = ->
   , 30*1000
 
 process.on 'SIGINT', ->
-  process.exit(1) if SHUTTING_DOWN #Multiple ^C will allow exit in haste
   console.log 'Received SIGINT.'
-  shutdownGracefully()
+  shutdown()
 
 process.on 'SIGTERM', ->
-  process.exit(1) if SHUTTING_DOWN
   console.log "Received kill signal (SIGTERM)"
-  shutdownGracefully()
- 
+  shutdown()

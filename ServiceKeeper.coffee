@@ -1,7 +1,6 @@
 _ = require 'underscore'
 mongo = require 'mongodb'
 {Settings} = require 'madeye-common'
-{SocketServer} = require 'madeye-common'
 {MockDb} = require './tests/mock/MockMongo'
 
 #TODO: Put this in settings?
