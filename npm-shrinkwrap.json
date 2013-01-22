@@ -6,19 +6,16 @@
       "version": "1.4.0"
     },
     "express": {
-      "version": "3.0.5",
+      "version": "3.0.6",
       "dependencies": {
         "connect": {
-          "version": "2.7.1",
+          "version": "2.7.2",
           "dependencies": {
             "qs": {
               "version": "0.5.1"
             },
             "formidable": {
               "version": "1.0.11"
-            },
-            "crc": {
-              "version": "0.2.0"
             },
             "bytes": {
               "version": "0.1.0"
@@ -97,6 +94,49 @@
             "hat": {
               "version": "0.0.3"
             },
+            "connect": {
+              "version": "2.7.2",
+              "dependencies": {
+                "qs": {
+                  "version": "0.5.1"
+                },
+                "formidable": {
+                  "version": "1.0.11"
+                },
+                "cookie-signature": {
+                  "version": "0.0.1"
+                },
+                "buffer-crc32": {
+                  "version": "0.1.1"
+                },
+                "cookie": {
+                  "version": "0.0.5"
+                },
+                "bytes": {
+                  "version": "0.1.0"
+                },
+                "send": {
+                  "version": "0.1.0",
+                  "dependencies": {
+                    "mime": {
+                      "version": "1.2.6"
+                    },
+                    "range-parser": {
+                      "version": "0.0.4"
+                    }
+                  }
+                },
+                "fresh": {
+                  "version": "0.1.0"
+                },
+                "pause": {
+                  "version": "0.0.1"
+                },
+                "debug": {
+                  "version": "0.7.0"
+                }
+              }
+            },
             "timerstub": {
               "version": "1.0.0"
             },
@@ -126,49 +166,6 @@
             }
           }
         },
-        "connect": {
-          "version": "2.7.1",
-          "dependencies": {
-            "qs": {
-              "version": "0.5.1"
-            },
-            "formidable": {
-              "version": "1.0.11"
-            },
-            "cookie-signature": {
-              "version": "0.0.1"
-            },
-            "crc": {
-              "version": "0.2.0"
-            },
-            "cookie": {
-              "version": "0.0.5"
-            },
-            "bytes": {
-              "version": "0.1.0"
-            },
-            "send": {
-              "version": "0.1.0",
-              "dependencies": {
-                "mime": {
-                  "version": "1.2.6"
-                },
-                "range-parser": {
-                  "version": "0.0.4"
-                }
-              }
-            },
-            "fresh": {
-              "version": "0.1.0"
-            },
-            "pause": {
-              "version": "0.0.1"
-            },
-            "debug": {
-              "version": "0.7.0"
-            }
-          }
-        },
         "flow": {
           "version": "0.2.2"
         }
@@ -177,25 +174,64 @@
     "flow": {
       "version": "0.2.2"
     },
+    "socket.io": {
+      "version": "0.9.13",
+      "dependencies": {
+        "socket.io-client": {
+          "version": "0.9.11",
+          "dependencies": {
+            "uglify-js": {
+              "version": "1.2.5"
+            },
+            "ws": {
+              "version": "0.4.25",
+              "dependencies": {
+                "commander": {
+                  "version": "0.6.1"
+                },
+                "tinycolor": {
+                  "version": "0.0.1"
+                },
+                "options": {
+                  "version": "0.0.3"
+                }
+              }
+            },
+            "xmlhttprequest": {
+              "version": "1.4.2"
+            },
+            "active-x-obfuscator": {
+              "version": "0.0.1",
+              "dependencies": {
+                "zeparser": {
+                  "version": "0.0.5"
+                }
+              }
+            }
+          }
+        },
+        "policyfile": {
+          "version": "0.0.4"
+        },
+        "base64id": {
+          "version": "0.1.0"
+        },
+        "redis": {
+          "version": "0.7.3"
+        }
+      }
+    },
     "chai": {
       "version": "1.4.2"
     },
     "jade": {
-      "version": "0.27.7",
+      "version": "0.28.1",
       "dependencies": {
         "commander": {
           "version": "0.6.1"
         },
         "mkdirp": {
           "version": "0.3.4"
-        }
-      }
-    },
-    "node-dev": {
-      "version": "0.2.9",
-      "dependencies": {
-        "growl": {
-          "version": "1.6.1"
         }
       }
     },

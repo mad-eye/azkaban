@@ -1,5 +1,6 @@
 express = require('express')
 http = require('http')
+io = require 'socket.io'
 {Settings} = require 'madeye-common'
 {ServiceKeeper} = require './ServiceKeeper'
 cors = require './cors'
@@ -24,21 +25,33 @@ app.configure 'test', ->
 
 require('./routes')(app)
 
-socketServer = ServiceKeeper.instance().getSocketServer()
-socketServer.listen Settings.bcPort
-
-httpServer = http.createServer(app).listen(app.get('port'), ->
+#Set up http/socket servers
+httpServer = http.createServer(app)
+socketServer = io.listen httpServer
+dementorChannel = ServiceKeeper.instance().getDementorChannel()
+socketServer.sockets.on 'connection', (socket) =>
+  dementorChannel.attach socket
+httpServer.listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))
+
+socketServer.configure ->
+  socketServer.set 'log level', 2
+  
 
 # Shutdown section
 SHUTTING_DOWN = false
+
+shutdown = (returnVal=0) ->
+  #Multiple ^C will allow exit in haste
+  process.exit(returnVal || 1) if SHUTTING_DOWN # || not ?, because we don't want 0
+  shutdownGracefully(returnVal)
 
 shutdownGracefully = ->
   return if SHUTTING_DOWN
   SHUTTING_DOWN = true
   console.log "Shutting down gracefully."
   flow.exec ->
-    socketServer.destroy this.MULTI(),
+    dementorChannel.destroy this.MULTI(),
     httpServer.close this.MULTI()
   , ->
     console.log "Closed out connections."
@@ -50,12 +63,9 @@ shutdownGracefully = ->
   , 30*1000
 
 process.on 'SIGINT', ->
-  process.exit(1) if SHUTTING_DOWN #Multiple ^C will allow exit in haste
   console.log 'Received SIGINT.'
-  shutdownGracefully()
+  shutdown()
 
 process.on 'SIGTERM', ->
-  process.exit(1) if SHUTTING_DOWN
   console.log "Received kill signal (SIGTERM)"
-  shutdownGracefully()
- 
+  shutdown()
