@@ -19,6 +19,7 @@ uuid = require 'node-uuid'
 #   timestamp: Date timestamp of sending
 #   data: JSON object, case specific data
 # }
+
 describe "DementorChannel", ->
   channel = null
   before ->

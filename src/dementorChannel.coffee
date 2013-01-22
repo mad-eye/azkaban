@@ -1,35 +1,43 @@
-{ServiceKeeper} = require '../ServiceKeeper'
 {DataCenter} = require './dataCenter'
-{messageMaker, messageAction} = require 'madeye-common'
+{messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
 class DementorChannel
   constructor: () ->
+    @liveSockets = {}
 
-  route : (message, callback) ->
-    switch message.action
-      when messageAction.ADD_FILES then @addFiles message, callback
-      when messageAction.REMOVE_FILES  then @removeFiles message, callback
-      when messageAction.SAVE_FILE  then @saveFile message, callback
-      when messageAction.REPLY then "registered callback should have handled this."
-      else callback? errors.new errorType.UNKNOWN_ACTION, {action: message.action}
+  destroy: (callback) ->
+    for projectId, socket in @liveSockets
+      socket.disconnect()
+      @closeProject projectId
+      callback?()
 
-  addFiles : (message, callback) ->
-    dataCenter = new DataCenter
-    dataCenter.addFiles message.data.files, message.projectId, (err, results) ->
-      if err
-        console.error "Error in addFiles:", err
-        callback? err
-      else
-        #console.log "Results from addFile:", results
-        replyMessage = messageMaker.replyMessage message, files: results
-        callback? null, replyMessage
+  attach: (socket) ->
+    socket.on 'disconnect', =>
+      socket.get 'projectId', (projectId) =>
+        #Don't close the project if another connection is 'active'
+        return unless projectId && @liveSockets[projectId] == socket
+        @closeProject projectId
 
-  saveFile : (message, callback) ->
-    console.log "Called saveFile with ", message
 
-  removeFiles : (message, callback) ->
-    console.log "Called removeFiles with ", message
+    #callback: (error) ->
+    socket.on messageAction.HANDSHAKE, (projectId, callback) =>
+      @liveSockets[projectId] = socket
+      socket.set 'projectId', projectId, ->
+        callback?()
+
+    #callback: (error, files) ->
+    socket.on messageAction.ADD_FILES, (projectId, files, callback) =>
+      dataCenter = new DataCenter
+      dataCenter.addFiles files, projectId, callback
+
+    #callback: (error) ->
+    socket.on messageAction.SAVE_FILE, (fileId, contents, callback) =>
+      console.log "Called saveFile for ", fileId
+
+    #callback: (error) ->
+    socket.on messageAction.REMOVE_FILES, (files, callback) =>
+      console.log "Called removeFiles with ", files
 
   closeProject : (projectId) ->
     dataCenter = new DataCenter
@@ -37,5 +45,13 @@ class DementorChannel
       if err
         console.error "Error in closing project #{projectId}:", err
 
+  # Methods for Azkaban to call to give Dementor orders
+  #callback: (err) ->
+  saveFile: (projectId, fileId, contents, callback) ->
+    socket = @liveSockets[projectId]
+    unless socket?
+      callback errors.new errorType.CONNECTION_CLOSED
+      return
+    socket.emit messageAction.SAVE_FILE, {fileId:fileId, contents:contents}, callback
 
 exports.DementorChannel = DementorChannel

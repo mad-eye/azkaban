@@ -1,7 +1,9 @@
 express = require('express')
 http = require('http')
+io = require 'socket.io'
 {Settings} = require 'madeye-common'
 {ServiceKeeper} = require './ServiceKeeper'
+{DementorChannel} = require './src/dementorChannel'
 cors = require './cors'
 flow = require 'flow'
 
@@ -24,11 +26,15 @@ app.configure 'test', ->
 
 require('./routes')(app)
 
-socketServer = ServiceKeeper.instance().getSocketServer()
-socketServer.listen Settings.bcPort
-
-httpServer = http.createServer(app).listen(app.get('port'), ->
+#Set up http/socket servers
+httpServer = http.createServer(app)
+socketServer = io.listen httpServer
+dementorChannel = ServiceKeeper.instance().getDementorChannel()
+socketServer.sockets.on 'connection', (socket) =>
+  dementorChannel.attach socket
+httpServer.listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))
+
 
 # Shutdown section
 SHUTTING_DOWN = false

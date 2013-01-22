@@ -9,11 +9,12 @@ FileController = require '../../controllers/fileController'
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
+{errors, errorType} = require 'madeye-common'
 
 
 describe 'FileController', ->
-  # Acceptance tests -- need app, but need to set SocketServer first.
-  socketServer = ServiceKeeper.instance().getSocketServer()
+  # Acceptance tests -- need app, but need to set DementorChannel first
+  dementorChannel = ServiceKeeper.instance().getDementorChannel()
   require '../../app'
 
   fileController = undefined
@@ -26,22 +27,23 @@ describe 'FileController', ->
     contents = '''If, in the morning, a kitten
     scampers up and boops your nose, are you dreaming?'''
     objects = socket = null
+    saveFileMessages = {}
     before (done) ->
 
-      socket = new MockSocket {
-        onsend: (message) ->
-          return unless message.action == messageAction.SAVE_FILE
-          @sentMessages ?= []
-          @sentMessages.push message
-          replyMessage = messageMaker.replyMessage message
-          replyMessage.projectId = projectId
-          @receivedSaveMessage = true
+      socket = new MockSocket
+      socket.onEmit = (action, data, callback) ->
+        if action == messageAction.SAVE_FILE
+          unless data.fileId && data.contents
+            callback errors.new errorType.MISSING_PARAM
+            return
+          saveFileMessages[data.fileId] = data.contents
           setTimeout (=>
-            @receive replyMessage
+            callback()
           ), 10
-      }
-      socketServer.connect socket
-      socketServer.attachSocket socket, projectId
+            
+
+      dementorChannel.attach socket
+      socket.trigger messageAction.HANDSHAKE, projectId
 
       objects = {}
       options =
@@ -66,10 +68,37 @@ describe 'FileController', ->
     it 'should return a saved=true in response body', ->
       assert.ok objects.body.saved
     it 'should have sent the message to the socket', ->
-      assert.ok socket.receivedSaveMessage
+      assert.equal saveFileMessages[fileId], contents
 
-    it 'should handle a shut-down dementor gracefully'
-    it 'should return an error on a null contents'
+    it 'should handle a shut-down dementor gracefully', (done) ->
+      fileId = uuid.v4()
+      options =
+        method: "PUT"
+        uri: "http://localhost:#{Settings.httpPort}/project/#{uuid.v4()}/file/#{fileId}"
+        json:
+          contents: contents
+
+      request options, (err, _res, _body) ->
+        assert.equal _res.statusCode, 500
+        assert.ok _body.error
+        assert.equal _body.error.type, errorType.CONNECTION_CLOSED
+        assert.equal saveFileMessages[fileId], null
+        done()
+
+    it 'should return an error on a null contents', (done) ->
+      fileId = uuid.v4()
+      options =
+        method: "PUT"
+        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
+        json:
+          contents: null
+
+      request options, (err, _res, _body) ->
+        assert.equal _res.statusCode, 500
+        assert.ok _body.error
+        assert.equal _body.error.type, errorType.MISSING_PARAM
+        assert.equal saveFileMessages[fileId], null
+        done()
 
   describe 'on get info', ->
     fileId = uuid.v4()
@@ -92,8 +121,8 @@ describe 'FileController', ->
             @receive replyMessage
           ), 100
       }
-      socketServer.connect socket
-      socketServer.attachSocket socket, projectId
+      dementorChannel.attachSocket socket
+      socket.trigger messageAction.HANDSHAKE, projectId
 
       objects = {}
       options =

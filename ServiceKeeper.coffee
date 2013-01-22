@@ -1,5 +1,6 @@
 _ = require 'underscore'
 mongo = require 'mongodb'
+{DementorChannel} = require './src/dementorChannel'
 {Settings} = require 'madeye-common'
 {SocketServer} = require 'madeye-common'
 {MockDb} = require './tests/mock/MockMongo'
@@ -39,5 +40,8 @@ class ServiceKeeperInner
       {DementorChannel} = require './src/dementorChannel'
       @socketServer = new SocketServer(new DementorChannel())
     return @socketServer
+
+  getDementorChannel: ->
+    @dementorChannel ?= new DementorChannel
 
 exports.ServiceKeeper = ServiceKeeper
