@@ -54,4 +54,12 @@ class DementorChannel
       return
     socket.emit messageAction.SAVE_FILE, {fileId:fileId, contents:contents}, callback
 
+  #callback: (err, contents) ->
+  getFileContents: (projectId, fileId, callback) ->
+    socket = @liveSockets[projectId]
+    unless socket?
+      callback errors.new errorType.CONNECTION_CLOSED
+      return
+    socket.emit messageAction.REQUEST_FILE, {fileId:fileId}, callback
+
 exports.DementorChannel = DementorChannel

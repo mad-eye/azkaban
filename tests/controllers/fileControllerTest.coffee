@@ -106,22 +106,21 @@ describe 'FileController', ->
     body = '''without a cat one has to wonder,
       is the world real, or just imgur?'''
     objects = socket = null
+    requestedFiles = {}
     before (done) ->
 
-      socket = new MockSocket {
-        onsend: (message) ->
-          return unless message.action == messageAction.REQUEST_FILE
-          @sentMessages ?= []
-          @sentMessages.push message
-          replyMessage = messageMaker.replyMessage message,
-            fileId: fileId,
-            body: body
-          replyMessage.projectId = projectId
+      socket = new MockSocket
+      socket.onEmit = (action, data, callback) ->
+        if action == messageAction.REQUEST_FILE
+          unless data.fileId
+            callback errors.new errorType.MISSING_PARAM
+            return
+          requestedFiles[data.fileId] = true
           setTimeout (=>
-            @receive replyMessage
-          ), 100
-      }
-      dementorChannel.attachSocket socket
+            callback null, body
+          ), 10
+            
+      dementorChannel.attach socket
       socket.trigger messageAction.HANDSHAKE, projectId
 
       objects = {}
@@ -152,10 +151,5 @@ describe 'FileController', ->
       assert.equal objects.body.body, body
 
     it 'should send request message to dementor', ->
-      assert.ok socket.sentMessages
-      assert.equal socket.sentMessages.length, 1
-    it 'should send message with correct action and fileId', ->
-      sentMessage = socket.sentMessages[0]
-      assert.equal sentMessage.action, 'requestFile'
-      assert.equal sentMessage.fileId, fileId
+      assert.ok requestedFiles[fileId]
 
