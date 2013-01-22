@@ -2,8 +2,6 @@
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
-console.log "dataCenter require is", require './dataCenter'
-
 class DementorChannel
   constructor: () ->
     @liveSockets = {}
