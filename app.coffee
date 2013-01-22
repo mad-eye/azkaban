@@ -34,6 +34,9 @@ socketServer.sockets.on 'connection', (socket) =>
 httpServer.listen(app.get('port'), ->
   console.log("Express server listening on port " + app.get('port')))
 
+socketServer.configure ->
+  socketServer.set 'log level', 2
+  
 
 # Shutdown section
 SHUTTING_DOWN = false

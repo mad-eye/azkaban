@@ -19,7 +19,6 @@
   "devDependencies": {
     "jade": "*",
     "mocha": "~1.7.0",
-    "node-dev": "~0.2.8",
     "request": "~2.12.0",
     "sinon": "~1.5.2",
     "chai": "~1.4.0"
