@@ -1,6 +1,6 @@
 assert = require 'assert'
 uuid = require 'node-uuid'
-{MockSocket, SocketServer, messageMaker} = require 'madeye-common'
+{MockSocket, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MongoConnection} = require '../../src/mongoConnection'
@@ -25,54 +25,55 @@ describe "DementorChannel", ->
   before ->
     channel = new DementorChannel()
 
-  describe "on receiving message with unknown action", ->
-    it "should respond with appropriate error", (done) ->
-      message = messageMaker.requestFileMessage uuid.v4()
-      channel.route message, (err, replyMsg) ->
-        assert.equal null, replyMsg
-        assert.ok err
-        assert.equal err.type, errorType.UNKNOWN_ACTION
-        done()
-
   describe "with mockDb", ->
 
     describe "on receiving addFiles message", ->
-      message = null
-      mockDb = null
+      data = null
+      mockDb = mockSocket = null
 
       #TODO: Extract this to testUtils.coffee
       refreshDb = (proj, files = []) ->
         Settings.mockDb = true
         newMockDb = new MockDb
-        newMockDb.load DataCenter.PROJECT_COLLECTION, proj
+        newMockDb.load 'projects', proj
         for file in files
-          newMockDb.load DataCenter.FILES_COLLECTION, file
+          newMockDb.load 'files', file
         ServiceKeeper.instance().Db = newMockDb
         return newMockDb
 
-      before ->
-        message = messageMaker.addFilesMessage [
-          {path:'foo/bar/file1', isDir:false },
-          {path:'foo/bar/dir1', isDir:true },
-          {path:'foo/bar/dir1/file2', isDir:false }
-        ]
-        message.projectId = uuid.v4()
-
       beforeEach ->
+        projectId = uuid.v4()
+        mockSocket = new MockSocket
+        channel.attach mockSocket
+        mockSocket.trigger messageAction.HANDSHAKE, projectId
         mockDb = refreshDb()
+        data =
+          projectId: projectId
+          files: [
+            {path:'foo/bar/file1', isDir:false },
+            {path:'foo/bar/dir1', isDir:true },
+            {path:'foo/bar/dir1/file2', isDir:false }
+          ]
 
       it "should add _id field", (done) ->
-        channel.route message, (err, replyMsg) ->
+        mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
           assert.equal null, err
-          assert.ok replyMsg?.data?.files
-          assert.ok file._id, "File should have been given _id" for file in replyMsg.data.files
+          assert.ok files
+          assert.ok file._id, "File should have been given _id" for file in files
           done()
 
       it "should callback error if Mongo returns an error", (done) ->
         mockDb.openError = new Error "Cannot open DB"
-        channel.route message, (err, replyMsg) ->
-          assert.equal null, replyMsg
+        mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
+          assert.equal null, files
           assert.ok err
           assert.equal err.type, errorType.DATABASE_ERROR
           done()
 
+  describe 'destroy', ->
+    it 'should disconnect all live sockets'
+    it 'should close all live projects'
+
+  describe 'on disconnect', ->
+    it 'should close project'
+    it 'should not close project if new socket is attached'

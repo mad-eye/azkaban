@@ -2,6 +2,8 @@
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
+console.log "dataCenter require is", require './dataCenter'
+
 class DementorChannel
   constructor: () ->
     @liveSockets = {}
@@ -27,16 +29,16 @@ class DementorChannel
         callback?()
 
     #callback: (error, files) ->
-    socket.on messageAction.ADD_FILES, (projectId, files, callback) =>
+    socket.on messageAction.ADD_FILES, (data, callback) =>
       dataCenter = new DataCenter
-      dataCenter.addFiles files, projectId, callback
+      dataCenter.addFiles data.files, data.projectId, callback
 
     #callback: (error) ->
-    socket.on messageAction.SAVE_FILE, (fileId, contents, callback) =>
-      console.log "Called saveFile for ", fileId
+    socket.on messageAction.SAVE_FILE, (data, callback) =>
+      console.log "Called saveFile for ", data.fileId
 
     #callback: (error) ->
-    socket.on messageAction.REMOVE_FILES, (files, callback) =>
+    socket.on messageAction.REMOVE_FILES, (data, callback) =>
       console.log "Called removeFiles with ", files
 
   closeProject : (projectId) ->

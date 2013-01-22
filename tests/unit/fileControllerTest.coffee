@@ -12,7 +12,7 @@ describe 'fileController', ->
   beforeEach ->
     fileController = new FileController
 
-  describe 'on save', ->
+  describe 'saveFile', ->
     FILE_CONTENTS = "a riveting text"
 
     PROJECT_ID = 7
@@ -30,21 +30,21 @@ describe 'fileController', ->
 
 
     it "should send a save file message to the socket server", ->
-      fileController.socketServer =
-        tell: sinon.spy()
+      fileController.dementorChannel =
+        saveFile: sinon.spy()
 
       fileController.saveFile req, res
-      callValues = fileController.socketServer.tell.getCall(0).args
+      callValues = fileController.dementorChannel.saveFile.getCall(0).args
       assert.equal PROJECT_ID, callValues[0]
       message = callValues[1]
       #console.log message
-      assert.equal message.data.fileId, FILE_ID
-      assert.equal message.data.contents, FILE_CONTENTS
+      assert.equal callValues[1], FILE_ID
+      assert.equal callValues[2], FILE_CONTENTS
 
     it "should return a confirmation when there are no problems", ->
-      fileController.socketServer =
-        tell: (projectId, message, callback)->
-          callback null, "W00T"
+      fileController.dementorChannel =
+        saveFile: (projectId, fileId, contents, callback)->
+          callback null
 
       fileController.request =
         get: (url, callback)->
@@ -63,10 +63,10 @@ describe 'fileController', ->
       assert.equal message.fileId, FILE_ID
       assert message.saved
 
-    it "should return a 500 if there is an error making the message", ->
-
-    it "should return a 500 if there is an error communicating with dementor", ->
-
-    it "should return a 500 if it cannot retrieve the file from bolide", ->
+    it "should return a 500 if there is an error communicating with dementor"
 
 
+  describe 'getFile', ->
+    it 'should send a getFile message to dementorChanel'
+    it 'should return the body on success'
+    it 'should return a 500 if there is an error communicating with dementor'

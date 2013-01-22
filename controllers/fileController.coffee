@@ -26,7 +26,7 @@ class FileController
         @request.put url, {body: '{"type": "text"}'}, (error, response, body)->
           res.send JSON.stringify projectId: projectId, fileId:fileId, body:contents
 
-  saveFile : (req, res) ->
+  saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']

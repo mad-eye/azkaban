@@ -1,6 +1,5 @@
 _ = require 'underscore'
 mongo = require 'mongodb'
-{DementorChannel} = require './src/dementorChannel'
 {Settings} = require 'madeye-common'
 {SocketServer} = require 'madeye-common'
 {MockDb} = require './tests/mock/MockMongo'
@@ -33,15 +32,9 @@ class ServiceKeeperInner
     server = new mongo.Server(Settings.mongoHost, Settings.mongoPort, {auto_reconnect: true})
     return Db = new mongo.Db(DB_NAME, server, {safe:true})
 
-  getSocketServer: ->
-    #Need to do this here, because if we do it above, we require DementorChannel before it's been loaded.
-    unless @socketServer
-      #console.log "Constructing new socketServer"
-      {DementorChannel} = require './src/dementorChannel'
-      @socketServer = new SocketServer(new DementorChannel())
-    return @socketServer
-
   getDementorChannel: ->
+    #Need to do this here, because if we do it above, we require DementorChannel before it's been loaded.
+    {DementorChannel} = require './src/dementorChannel'
     @dementorChannel ?= new DementorChannel
 
 exports.ServiceKeeper = ServiceKeeper
