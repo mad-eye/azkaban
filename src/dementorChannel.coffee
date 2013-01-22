@@ -5,6 +5,7 @@
 class DementorChannel
   constructor: () ->
     @liveSockets = {}
+    @socketProjectIds = {}
 
   destroy: (callback) ->
     for projectId, socket in @liveSockets
@@ -14,17 +15,20 @@ class DementorChannel
 
   attach: (socket) ->
     socket.on 'disconnect', =>
-      socket.get 'projectId', (projectId) =>
-        #Don't close the project if another connection is 'active'
-        return unless projectId && @liveSockets[projectId] == socket
+      console.log "Disconnecting socket"
+      projectId = @socketProjectIds[socket.id]
+      console.log "Got projectId for closing", projectId
+      #Don't close the project if another connection is 'active'
+      if projectId && @liveSockets[projectId] == socket
         @closeProject projectId
 
 
     #callback: (error) ->
     socket.on messageAction.HANDSHAKE, (projectId, callback) =>
+      console.log "Received handshake for projectId", projectId
       @liveSockets[projectId] = socket
-      socket.set 'projectId', projectId, ->
-        callback?()
+      @socketProjectIds[socket.id] = projectId
+      callback?()
 
     #callback: (error, files) ->
     socket.on messageAction.ADD_FILES, (data, callback) =>

@@ -51,7 +51,7 @@ shutdownGracefully = ->
   SHUTTING_DOWN = true
   console.log "Shutting down gracefully."
   flow.exec ->
-    socketServer.destroy this.MULTI(),
+    dementorChannel.destroy this.MULTI(),
     httpServer.close this.MULTI()
   , ->
     console.log "Closed out connections."
