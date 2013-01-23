@@ -64,7 +64,7 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
 # Real DB tests
 ###
 
-describe "DementorController with real db fweep", ->
+describe "DementorController with real db", ->
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},

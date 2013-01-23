@@ -1,5 +1,6 @@
 {Settings} = require 'madeye-common'
 {Project} = require './models'
+{errors, errorType} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
   console.log "Sending error ", err
