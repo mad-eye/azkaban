@@ -61,10 +61,11 @@ describe 'DataCenter', ->
       projectId = project = returnedProject = null
       file1Id = otherProjectId = null
       mockDb = null
+      projectName = 'nerzo'
 
       newProject = (projId) ->
         _id: projId
-        name: 'nerzo'
+        name: projectName
         opened: false
 
       describe "should return project", ->
@@ -73,7 +74,8 @@ describe 'DataCenter', ->
           project = newProject projectId
           mockDb = refreshDb project
           dataCenter = new DataCenter
-          dataCenter.refreshProject projectId, [], (err, result) ->
+          proj = {projectId:projectId, projectName:projectName}
+          dataCenter.refreshProject proj, [], (err, result) ->
             assert.equal err, null, "There should be no error, but got #{JSON.stringify err}"
             returnedProject = result.project
             done()
@@ -110,8 +112,9 @@ describe 'DataCenter', ->
           mockDb = refreshDb project, oldFiles
 
           dataCenter = new DataCenter
-          dataCenter.refreshProject projectId, newFiles, (err, proj) ->
-            returnedFiles = proj.files
+          newProj = {projectId:projectId, projectName:projectName}
+          dataCenter.refreshProject newProj, newFiles, (err, result) ->
+            returnedFiles = result.files
             done()
 
         it 'should return completed submitted files', ->
@@ -139,7 +142,8 @@ describe 'DataCenter', ->
         mockDb = refreshDb project
         mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError = new Error 'Cannot open collection'
         dataCenter = new DataCenter
-        dataCenter.refreshProject projectId, newFiles, (err, proj) ->
+        newProj = {projectId:projectId, projectName:projectName}
+        dataCenter.refreshProject newProj, newFiles, (err, proj) ->
           assert.ok err
           assert.equal err.type, errorType.DATABASE_ERROR
           assert.equal proj, null
@@ -147,16 +151,34 @@ describe 'DataCenter', ->
           delete mockDb.collections[DataCenter.PROJECT_COLLECTION].crudError
           done()
 
-      it 'should throw an error if the project does not exist', (done) ->
-        projectId = uuid.v4()
-        project = newProject projectId
-        mockDb = refreshDb project
-        dataCenter = new DataCenter
-        dataCenter.refreshProject uuid.v4(), newFiles, (err, proj) ->
-          assert.ok err
-          assert.equal err.type, errorType.MISSING_OBJECT
-          assert.equal proj, null
-          done()
+      describe 'without existing project', ->
+        result = newProjectId = null
+        before (done) ->
+          projectId = uuid.v4()
+          project = newProject projectId
+          mockDb = refreshDb project
+          dataCenter = new DataCenter
+          newProjectId = uuid.v4()
+          newProj = {projectId:newProjectId, projectName:projectName}
+          dataCenter.refreshProject newProj, newFiles, (err, _result) ->
+            assert.equal err, null
+            result = _result
+            done()
+
+        it 'should create the project', ->
+          assert.ok result.project
+          assert.equal result.project.name, projectName
+          assert.ok result.project._id
+          assert.equal result.project._id, newProjectId
+          assert.equal result.project.opened, true
+
+        it 'should create the project', ->
+          projId = result.project._id
+          dbProject = mockDb.collections[DataCenter.PROJECT_COLLECTION].get projId
+          assert.deepEqual dbProject, result.project
+
+        it 'should return the correct files', ->
+          assertFilesCorrect result.files, newFiles, result.project._id
 
     describe 'createProject', ->
       mockDb = null
@@ -166,7 +188,8 @@ describe 'DataCenter', ->
       before (done) ->
         mockDb = refreshDb()
         dataCenter = new DataCenter
-        dataCenter.createProject projectName, newFiles, (err, theResult) ->
+        newProj = {projectName:projectName}
+        dataCenter.createProject newProj, newFiles, (err, theResult) ->
           assert.equal err, null
           assert.ok theResult
           result = theResult

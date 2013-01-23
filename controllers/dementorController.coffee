@@ -10,14 +10,16 @@ class DementorController
     @dataCenter = new DataCenter
 
   createProject: (req, res) =>
-    @dataCenter.createProject req.params['projectName'], req.body['files'], (err, results) ->
+    proj = {projectId:req.params['projectId'], projectName:req.params['projectName']}
+    @dataCenter.createProject proj, req.body['files'], (err, results) ->
       if err then sendErrorResponse(res, err); return
       results.id = id = results.project._id
       results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
       res.json results
 
   refreshProject: (req, res) =>
-    @dataCenter.refreshProject req.params['projectId'], req.body['files'], (err, results) ->
+    proj = {projectId:req.params['projectId'], projectName:req.body['projectName']}
+    @dataCenter.refreshProject proj, req.body['files'], (err, results) ->
       if err then sendErrorResponse(res, err); return
       results.id = id = results.project._id
       results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"

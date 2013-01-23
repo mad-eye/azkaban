@@ -30,9 +30,9 @@ describe 'DementorController', ->
         body: {files: newFiles}
       res = new MockResponse
 
-      dementorController.dataCenter = createProject: (projName, files, callback) ->
-        projectId = uuid.v4()
-        project = {_id: projectId, name: projName, opened:true, created:new Date().getTime()}
+      dementorController.dataCenter = createProject: (proj, files, callback) ->
+        projectId = proj.projectId ? uuid.v4()
+        project = {_id: projectId, name: proj.projectName, opened:true, created:new Date().getTime()}
         returnFiles = []
         for file in files
           f = _.clone file
@@ -104,16 +104,16 @@ describe 'DementorController', ->
       projectId = uuid.v4()
       req =
         params: {projectId:projectId}
-        body: {files: newFiles}
+        body: {projectName:projectName, files:newFiles}
       res = new MockResponse
 
-      dementorController.dataCenter = refreshProject: (projId, files, callback) ->
-        project = {_id: projectId, name: projectName, opened:true, created:new Date().getTime()}
+      dementorController.dataCenter = refreshProject: (proj, files, callback) ->
+        project = {_id: proj.projectId, name: proj.projectName, opened:true, created:new Date().getTime()}
         returnFiles = []
         for file in files
           f = _.clone file
           f._id = uuid.v4()
-          f.projectId = projectId
+          f.projectId = proj.projectId
           returnFiles.push f
         callback null,
           project: project
@@ -156,10 +156,10 @@ describe 'DementorController', ->
       before (done) ->
         req =
           params: {projectId:projectId}
-          body: {files: newFiles}
+          body: {projectName:projectName, files:newFiles}
         res = new MockResponse
 
-        dementorController.dataCenter = refreshProject: (projId, files, callback) ->
+        dementorController.dataCenter = refreshProject: (proj, files, callback) ->
           callback errors.new errorType.DATABASE_ERROR
 
         res.end = (_body) ->

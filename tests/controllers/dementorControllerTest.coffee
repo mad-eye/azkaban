@@ -107,7 +107,8 @@ describe "DementorController with real db", ->
     objects = {}
     before (done) ->
       dataCenter = new DataCenter
-      dataCenter.createProject projectName, files, (err, results) ->
+      project = {projectId: projectId, projectName:projectName}
+      dataCenter.createProject project, files, (err, results) ->
         assert.equal err, null
         projectId = results.project._id
         sendRefreshRequest(projectId, files, objects, done)

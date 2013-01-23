@@ -9,16 +9,18 @@ class DataCenter
     new MongoConnection errorHandler
 
   #callback: (err, {project:, files:}) ->
-  createProject: (projectName, files, callback) ->
-    projects = [{_id: uuid.v4(), name: projectName, opened:true, created:new Date().getTime()}]
+  #project: projectName:, projectId:?
+  createProject: (project, files, callback) ->
+    projectId = project.projectId ? uuid.v4()
+    projects = [{_id: projectId, name: project.projectName, opened:true, created:new Date().getTime()}]
     db = @getConnection callback
     #console.log "Init db is mock: #{db.Db.isMock}"
     db.connect =>
       db.insert projects, @PROJECT_COLLECTION, (projs) =>
-        project = projs[0]
-        @updateProjectFiles db, project._id, files, (files) =>
+        proj = projs[0]
+        @updateProjectFiles db, proj._id, files, (files) =>
           callback null,
-            project: project
+            project: proj
             files: files
           db.close()
 
@@ -31,18 +33,22 @@ class DataCenter
         db.close()
 
   #callback: (err, {project:, files:}) ->
-  refreshProject: (projectId, files, callback) ->
+  #project: projectName:, projectId:
+  refreshProject: (project, files, callback) ->
+    projectId = project.projectId
+    projectName = project.projectName
     db = @getConnection callback
     db.connect =>
-      db.findAndModifyObject projectId, @PROJECT_COLLECTION, {opened:true}, (project) =>
-        unless project?
-          callback errors.new(errorType.MISSING_OBJECT, objectId: projectId)
-          return
-        @updateProjectFiles db, projectId, files, (results) =>
-          callback null,
-            project: project
-            files: results
+      db.findAndModifyObject projectId, @PROJECT_COLLECTION, {opened:true}, (proj) =>
+        if proj?
+          @updateProjectFiles db, projectId, files, (results) =>
+            callback null,
+              project: proj
+              files: results
+              db.close()
+        else
           db.close()
+          @createProject project, files, callback
 
   #callback: (files) ->
   #options: noclobber (bool) -- if true, don't delete entries in db not in files
