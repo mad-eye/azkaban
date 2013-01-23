@@ -2,7 +2,6 @@ assert = require 'assert'
 request = require 'request'
 url = require 'url'
 uuid = require 'node-uuid'
-{DataCenter} = require '../../src/dataCenter'
 {ServiceKeeper} = require '../../ServiceKeeper'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
@@ -106,7 +105,6 @@ describe "DementorController with real db", ->
     projectId = null
     objects = {}
     before (done) ->
-      dataCenter = new DataCenter
       project = new Project
         name:projectName
       project.save (err) ->

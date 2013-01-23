@@ -58,9 +58,6 @@ describe 'DementorController', ->
           body: {files: newFiles}
         res = new MockResponse
 
-        dementorController.dataCenter = createProject: (projName, files, callback) ->
-          callback errors.new errorType.DATABASE_ERROR
-
         res.end = (_body) ->
           statusCode = res.statusCode
           assert.ok _body
@@ -76,7 +73,7 @@ describe 'DementorController', ->
       #it "returns an error with the correct type", ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
-  describe "refreshProject fweep", ->
+  describe "refreshProject", ->
     projectName = 'gloth'
     projectId = null
     result = body = null
@@ -122,9 +119,6 @@ describe 'DementorController', ->
           params: {projectId:projectId}
           body: {projectName:projectName, files:newFiles}
         res = new MockResponse
-
-        dementorController.dataCenter = refreshProject: (proj, files, callback) ->
-          callback errors.new errorType.DATABASE_ERROR
 
         res.end = (_body) ->
           statusCode = res.statusCode

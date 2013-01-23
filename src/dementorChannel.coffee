@@ -1,4 +1,4 @@
-{DataCenter} = require './dataCenter'
+{Project, wrapDbError} = require './models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
@@ -30,8 +30,12 @@ class DementorChannel
 
     #callback: (error, files) ->
     socket.on messageAction.ADD_FILES, (data, callback) =>
-      dataCenter = new DataCenter
-      dataCenter.addFiles data.files, data.projectId, callback
+      Project.findOne {_id: data.projectId}, (err, project) ->
+        if err then callback wrapDbError err; return
+        project.addFiles data.files
+        project.save (err) ->
+          if err then callback wrapDbError err; return
+          callback null, project.files
 
     #callback: (error) ->
     socket.on messageAction.SAVE_FILE, (data, callback) =>
@@ -41,11 +45,11 @@ class DementorChannel
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
       console.log "Called removeFiles with ", files
 
-  closeProject : (projectId) ->
-    dataCenter = new DataCenter
-    dataCenter.closeProject projectId, (err) ->
-      if err
-        console.error "Error in closing project #{projectId}:", err
+  #callback: (err) ->
+  closeProject : (projectId, callback) ->
+    Project.update {_id:projectId}, {closed:true}, (err) ->
+      callback? err
+
 
   # Methods for Azkaban to call to give Dementor orders
   #callback: (err) ->
