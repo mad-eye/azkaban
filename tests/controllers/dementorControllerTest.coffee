@@ -9,6 +9,7 @@ uuid = require 'node-uuid'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 testUtils = require '../util/testUtils'
+{Project} = require '../../src/models'
 
 # INTEGRATION TEST -- requires app and MongoDb to be running.
 require '../../app'
@@ -20,22 +21,22 @@ require '../../app'
 sendInitRequest = (projectName, files, objects, done) ->
   options =
     method: "POST"
-    uri: "http://localhost:#{Settings.httpPort}/project/#{projectName}"
-    json: {files:files}
+    uri: "http://localhost:#{Settings.httpPort}/project"
+    json: {projectName:projectName, files:files}
   sendRequest options, objects, done
 
-sendRefreshRequest = (projectId, files, objects, done) ->
+sendRefreshRequest = (projectId, projectName, files, objects, done) ->
   options =
     method: "PUT"
     uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}"
-    json: {files:files}
+    json: {projectName:projectName, files:files}
   sendRequest options, objects, done
 
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    #console.log "Found body ", _body
-    #console.log "Body type", typeof _body
+    console.log "Body type", typeof _body
+    console.log "Found body ", _body
     if typeof _body == 'string'
       objects.bodyStr = _body
       try
@@ -63,7 +64,7 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
 # Real DB tests
 ###
 
-describe "DementorController with real db", ->
+describe "DementorController with real db fweep", ->
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},
@@ -71,23 +72,22 @@ describe "DementorController with real db", ->
   ]
 
   assertValidResponseBody = (objects, projectName) ->
-    it "returns an id", ->
-      assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
-    it "returns a url", ->
-      assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
-    it "returns a url with the correct hostname", ->
-      #console.log "Found url:", objects.body.url
-      u = url.parse(objects.body.url)
-      assert.ok u.hostname
-      assert.equal u.hostname, Settings.apogeeHost
+    #it "returns an id", ->
+      #assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
+    #it "returns a url", ->
+      #assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
+    #it "returns a url with the correct hostname", ->
+      ##console.log "Found url:", objects.body.url
+      #u = url.parse(objects.body.url)
+      #assert.ok u.hostname
+      #assert.equal u.hostname, Settings.apogeeHost
     it "returns a project with valid info", ->
       project = objects.body.project
       assert.ok project
       assert.ok project._id
-      assert.equal project._id, objects.body.id
       assert.equal project.name, projectName
     it "returns files correctly", ->
-      returnedFiles = objects.body.files
+      returnedFiles = objects.body.project.files
       assert.ok returnedFiles
       assert.equal returnedFiles.length, files.length
       assert.ok file._id for file in returnedFiles
@@ -107,15 +107,18 @@ describe "DementorController with real db", ->
     objects = {}
     before (done) ->
       dataCenter = new DataCenter
-      project = {projectId: projectId, projectName:projectName}
-      dataCenter.createProject project, files, (err, results) ->
+      project = new Project
+        name:projectName
+      project.save (err) ->
         assert.equal err, null
-        projectId = results.project._id
-        sendRefreshRequest(projectId, files, objects, done)
+        console.log "Saved project is", project
+        projectId = project._id
+        sendRefreshRequest(projectId, projectName, files, objects, done)
+
 
     assertResponseOk objects
     assertValidResponseBody objects, projectName
     it "should keep the right project id", ->
-      assert.equal objects.body.id, projectId
+      assert.equal objects.body.project._id, projectId
 
     it "updates existing files in db for project"

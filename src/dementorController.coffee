@@ -1,4 +1,5 @@
 {Settings} = require 'madeye-common'
+{Project} = require './models'
 
 sendErrorResponse = (res, err) ->
   console.log "Sending error ", err
@@ -6,24 +7,43 @@ sendErrorResponse = (res, err) ->
 
 class DementorController
   constructor: () ->
-    {DataCenter} = require('../src/dataCenter')
-    @dataCenter = new DataCenter
 
   createProject: (req, res) =>
-    proj = {projectId:req.params['projectId'], projectName:req.params['projectName']}
-    @dataCenter.createProject proj, req.body['files'], (err, results) ->
-      if err then sendErrorResponse(res, err); return
-      results.id = id = results.project._id
-      results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
-      res.json results
+    proj = new Project
+      name: req.body['projectName']
+      files: req.body['files']
+    proj.save (err) ->
+      if err
+        err = errors.new errorType.DATABASE_ERROR, err
+        sendErrorResponse(res, err)
+        return
+      res.json project:proj
 
   refreshProject: (req, res) =>
-    proj = {projectId:req.params['projectId'], projectName:req.body['projectName']}
-    @dataCenter.refreshProject proj, req.body['files'], (err, results) ->
-      if err then sendErrorResponse(res, err); return
-      results.id = id = results.project._id
-      results.url = "http://#{Settings.apogeeHost}:#{Settings.apogeePort}/project/#{id}"
-      res.json results
-      
+    projectId = req.params['projectId']
+    Project.findOne {_id:projectId}, (err, proj) ->
+      if err
+        err = errors.new errorType.DATABASE_ERROR, err
+        sendErrorResponse(res, err)
+        return
+      if proj
+        proj.files = req.body['files']
+        proj.save (err) ->
+          if err
+            err = errors.new errorType.DATABASE_ERROR, err
+            sendErrorResponse(res, err)
+            return
+          res.json project:proj
+      else
+        proj = new Project
+          _id: projectId
+          name: req.body['projectName']
+          files: req.body['files']
+        proj.save (err) ->
+          if err
+            err = errors.new errorType.DATABASE_ERROR, err
+            sendErrorResponse(res, err)
+            return
+          res.json project:proj
 
 module.exports = DementorController

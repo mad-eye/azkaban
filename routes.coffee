@@ -5,7 +5,7 @@ routes = (app) ->
   fileController = new FileController
   dementorController = new DementorController
 
-  app.post '/project/:projectName', (req, res)->
+  app.post '/project', (req, res)->
     dementorController.createProject(req, res)
 
   app.put '/project/:projectId', (req, res)->
