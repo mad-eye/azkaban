@@ -3,7 +3,7 @@ uuid = require 'node-uuid'
 sinon = require 'sinon'
 request = require "request"
 
-FileController = require '../../controllers/fileController'
+FileController = require '../../src/fileController'
 {ServiceKeeper} = require "../../ServiceKeeper.coffee"
 {Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'

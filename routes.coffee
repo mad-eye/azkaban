@@ -1,5 +1,5 @@
-FileController = require('./controllers/fileController')
-DementorController = require('./controllers/dementorController')
+FileController = require('./src/fileController')
+DementorController = require('./src/dementorController')
 
 routes = (app) ->
   fileController = new FileController

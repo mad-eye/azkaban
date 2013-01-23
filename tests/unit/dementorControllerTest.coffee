@@ -5,7 +5,7 @@ url = require 'url'
 _ = require 'underscore'
 {errors, errorType} = require 'madeye-common'
 {Settings} = require 'madeye-common'
-DementorController = require '../../controllers/dementorController'
+DementorController = require '../../src/dementorController'
 MockResponse = require '../mock/mockResponse'
 testUtils = require '../util/testUtils'
 

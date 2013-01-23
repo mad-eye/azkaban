@@ -2,7 +2,7 @@ assert = require("chai").assert
 uuid = require 'node-uuid'
 sinon = require 'sinon'
 
-FileController = require '../../controllers/fileController'
+FileController = require '../../src/fileController'
 {ServiceKeeper} = require "../../ServiceKeeper.coffee"
 {Settings} = require 'madeye-common'
 
