@@ -1,8 +1,9 @@
 {Settings} = require 'madeye-common'
-{Project} = require './models'
+{Project, File, wrapDbError} = require './models'
 {errors, errorType} = require 'madeye-common'
 
 sendErrorResponse = (res, err) ->
+  err = wrapDbError err
   console.log "Sending error ", err
   res.json 500, {error:err}
 
@@ -11,40 +12,23 @@ class DementorController
 
   createProject: (req, res) =>
     proj = new Project
-      name: req.body['projectName']
-      files: req.body['files']
-    proj.save (err) ->
-      if err
-        err = errors.new errorType.DATABASE_ERROR, err
-        sendErrorResponse(res, err)
-        return
-      res.json project:proj
+    Project.create name: req.body['projectName'], (err, proj) ->
+      if err then sendErrorResponse(res, err); return
+      File.addFiles req.body['files'], proj._id, (err, files) ->
+        if err then sendErrorResponse(res, err); return
+        res.json project:proj, files: files
 
   refreshProject: (req, res) =>
     projectId = req.params['projectId']
-    Project.findOne {_id:projectId}, (err, proj) ->
-      if err
-        err = errors.new errorType.DATABASE_ERROR, err
-        sendErrorResponse(res, err)
-        return
-      if proj
-        proj.files = req.body['files']
-        proj.save (err) ->
-          if err
-            err = errors.new errorType.DATABASE_ERROR, err
-            sendErrorResponse(res, err)
-            return
-          res.json project:proj
-      else
-        proj = new Project
-          _id: projectId
-          name: req.body['projectName']
-          files: req.body['files']
-        proj.save (err) ->
-          if err
-            err = errors.new errorType.DATABASE_ERROR, err
-            sendErrorResponse(res, err)
-            return
-          res.json project:proj
+    proj =
+      _id: projectId
+      name: req.body['projectName']
+      closed: false
+    Project.findOrCreate proj, (err, project) ->
+      if err then sendErrorResponse(res, err); return
+      deleteMissing = true
+      File.addFiles req.body['files'], project._id, deleteMissing, (err, files) ->
+        if err then sendErrorResponse(res, err); return
+        res.json project:project, files: files
 
 module.exports = DementorController

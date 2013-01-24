@@ -29,7 +29,9 @@ require('./routes')(app)
 #Set up mongo/mongoose
 #TODO: Put this in settings?
 DB_NAME = 'meteor'
-mongoose.connect "mongodb://#{Settings.mongoHost}:#{Settings.mongoPort}/#{DB_NAME}"
+mongoUrl = "mongodb://#{Settings.mongoHost}:#{Settings.mongoPort}/#{DB_NAME}"
+console.log "Connecting to mongo #{mongoUrl}"
+mongoose.connect mongoUrl
 
 #Set up http/socket servers
 httpServer = http.createServer(app)

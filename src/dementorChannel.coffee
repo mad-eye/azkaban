@@ -1,4 +1,4 @@
-{Project, wrapDbError} = require './models'
+{Project, File, wrapDbError} = require './models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
@@ -30,12 +30,9 @@ class DementorChannel
 
     #callback: (error, files) ->
     socket.on messageAction.ADD_FILES, (data, callback) =>
-      Project.findOne {_id: data.projectId}, (err, project) ->
+      File.addFiles data.files, data.projectId, (err, files) ->
         if err then callback wrapDbError err; return
-        project.addFiles data.files
-        project.save (err) ->
-          if err then callback wrapDbError err; return
-          callback null, project.files
+        callback null, files
 
     #callback: (error) ->
     socket.on messageAction.SAVE_FILE, (data, callback) =>

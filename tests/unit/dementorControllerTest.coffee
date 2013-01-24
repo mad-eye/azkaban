@@ -46,7 +46,7 @@ describe 'DementorController', ->
       assert.ok project._id
       assert.equal project.name, projectName
     it "returns files correctly", ->
-      returnedFiles = result.project.files
+      returnedFiles = result.files
       assert.ok returnedFiles
       assertFilesCorrect returnedFiles, newFiles, projectId
 
@@ -93,7 +93,7 @@ describe 'DementorController', ->
           assert.ok _body
           body = _body
           result = JSON.parse _body
-          console.log "Found response body", result
+          #console.log "Found response body", result
           done()
 
         dementorController.refreshProject req, res
@@ -107,8 +107,7 @@ describe 'DementorController', ->
       assert.equal project._id, projectId
       assert.equal project.name, projectName
     it "returns files correctly", ->
-      returnedFiles = result.project.files
-      console.log "Returned files:", returnedFiles
+      returnedFiles = result.files
       assert.ok returnedFiles
       assertFilesCorrect returnedFiles, newFiles, projectId
 

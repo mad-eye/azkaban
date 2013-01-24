@@ -34,8 +34,8 @@ sendRefreshRequest = (projectId, projectName, files, objects, done) ->
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    console.log "Body type", typeof _body
-    console.log "Found body ", _body
+    #console.log "Body type", typeof _body
+    #console.log "Found body ", _body
     if typeof _body == 'string'
       objects.bodyStr = _body
       try
@@ -86,7 +86,7 @@ describe "DementorController with real db", ->
       assert.ok project._id
       assert.equal project.name, projectName
     it "returns files correctly", ->
-      returnedFiles = objects.body.project.files
+      returnedFiles = objects.body.files
       assert.ok returnedFiles
       assert.equal returnedFiles.length, files.length
       assert.ok file._id for file in returnedFiles
@@ -109,7 +109,6 @@ describe "DementorController with real db", ->
         name:projectName
       project.save (err) ->
         assert.equal err, null
-        console.log "Saved project is", project
         projectId = project._id
         sendRefreshRequest(projectId, projectName, files, objects, done)
 
