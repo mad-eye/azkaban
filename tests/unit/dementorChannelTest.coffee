@@ -3,10 +3,9 @@ uuid = require 'node-uuid'
 {MockSocket, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
 {ServiceKeeper} = require '../../ServiceKeeper'
-{MongoConnection} = require '../../src/mongoConnection'
-{DataCenter} = require '../../src/dataCenter'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
+{Project} = require '../../src/models'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 
@@ -25,28 +24,19 @@ describe "DementorChannel", ->
   before ->
     channel = new DementorChannel()
 
-  describe "with mockDb", ->
+  describe "on receiving addFiles message", ->
+    data = null
+    mockSocket = null
+    projectId = null
 
-    describe "on receiving addFiles message", ->
-      data = null
-      mockDb = mockSocket = null
+    beforeEach (done) ->
+      project = new Project
+        name: 'swansa'
 
-      #TODO: Extract this to testUtils.coffee
-      refreshDb = (proj, files = []) ->
-        Settings.mockDb = true
-        newMockDb = new MockDb
-        newMockDb.load 'projects', proj
-        for file in files
-          newMockDb.load 'files', file
-        ServiceKeeper.instance().Db = newMockDb
-        return newMockDb
+      project.save (err) ->
+        assert.equal err, null
+        projectId = project._id
 
-      beforeEach ->
-        projectId = uuid.v4()
-        mockSocket = new MockSocket
-        channel.attach mockSocket
-        mockSocket.trigger messageAction.HANDSHAKE, projectId
-        mockDb = refreshDb()
         data =
           projectId: projectId
           files: [
@@ -55,20 +45,29 @@ describe "DementorChannel", ->
             {path:'foo/bar/dir1/file2', isDir:false }
           ]
 
-      it "should add _id field", (done) ->
-        mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
-          assert.equal null, err
-          assert.ok files
-          assert.ok file._id, "File should have been given _id" for file in files
-          done()
+        mockSocket = new MockSocket
+        channel.attach mockSocket
+        mockSocket.trigger messageAction.HANDSHAKE, projectId
+        done()
 
-      it "should callback error if Mongo returns an error", (done) ->
-        mockDb.openError = new Error "Cannot open DB"
-        mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
-          assert.equal null, files
-          assert.ok err
-          assert.equal err.type, errorType.DATABASE_ERROR
-          done()
+    it "should add _id field", (done) ->
+      mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
+        assert.equal null, err
+        assert.ok files
+        assert.ok file._id, "File should have been given _id" for file in files
+        done()
+
+    it 'should not overwrite existing files'
+
+    #TODO commented out until we can mock mongoose to give errors.
+    it "should callback error if Mongo returns an error"
+    #it "should callback error if Mongo returns an error", (done) ->
+      #mockDb.openError = new Error "Cannot open DB"
+      #mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
+        #assert.equal null, files
+        #assert.ok err
+        #assert.equal err.type, errorType.DATABASE_ERROR
+        #done()
 
   describe 'destroy', ->
     it 'should disconnect all live sockets'
@@ -77,3 +76,20 @@ describe "DementorChannel", ->
   describe 'on disconnect', ->
     it 'should close project'
     it 'should not close project if new socket is attached'
+
+  describe 'closeProject', ->
+    projectId = null
+    before (done) ->
+      project = new Project
+        name: 'nitfol'
+        closed: false
+      project.save (err) ->
+        assert.equal err, null
+        projectId = project._id
+        channel.closeProject projectId, done
+    it 'should close project', (done) ->
+      Project.findOne {_id: projectId}, (err, proj) ->
+        assert.equal err, null
+        assert.equal proj.closed, true
+        done()
+    

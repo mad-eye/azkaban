@@ -5,6 +5,7 @@ io = require 'socket.io'
 {ServiceKeeper} = require './ServiceKeeper'
 cors = require './cors'
 flow = require 'flow'
+mongoose = require 'mongoose'
 
 app = module.exports = express()
 
@@ -24,6 +25,13 @@ app.configure 'test', ->
   app.use(express.errorHandler())
 
 require('./routes')(app)
+
+#Set up mongo/mongoose
+#TODO: Put this in settings?
+DB_NAME = 'meteor'
+mongoUrl = "mongodb://#{Settings.mongoHost}:#{Settings.mongoPort}/#{DB_NAME}"
+console.log "Connecting to mongo #{mongoUrl}"
+mongoose.connect mongoUrl
 
 #Set up http/socket servers
 httpServer = http.createServer(app)

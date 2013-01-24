@@ -221,6 +221,31 @@
         }
       }
     },
+    "mongoose": {
+      "version": "3.5.4",
+      "dependencies": {
+        "hooks": {
+          "version": "0.2.1"
+        },
+        "mongodb": {
+          "version": "1.2.8",
+          "dependencies": {
+            "bson": {
+              "version": "0.1.5"
+            }
+          }
+        },
+        "ms": {
+          "version": "0.1.0"
+        },
+        "sliced": {
+          "version": "0.0.3"
+        },
+        "muri": {
+          "version": "0.1.0"
+        }
+      }
+    },
     "chai": {
       "version": "1.4.2"
     },
