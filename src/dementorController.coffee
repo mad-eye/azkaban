@@ -11,7 +11,6 @@ class DementorController
   constructor: () ->
 
   createProject: (req, res) =>
-    proj = new Project
     Project.create name: req.body['projectName'], (err, proj) ->
       if err then sendErrorResponse(res, err); return
       File.addFiles req.body['files'], proj._id, (err, files) ->
@@ -21,10 +20,9 @@ class DementorController
   refreshProject: (req, res) =>
     projectId = req.params['projectId']
     proj =
-      _id: projectId
       name: req.body['projectName']
       closed: false
-    Project.findOrCreate proj, (err, project) ->
+    Project.findOneAndUpdate {_id:projectId}, proj, {new:true, upsert:true}, (err, project) ->
       if err then sendErrorResponse(res, err); return
       deleteMissing = true
       File.addFiles req.body['files'], project._id, deleteMissing, (err, files) ->

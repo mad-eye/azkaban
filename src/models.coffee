@@ -59,19 +59,6 @@ projectSchema = mongoose.Schema
   created: {type: Date, default: Date.now}
   #files: [fileSchema]
 
-#callback: (err, project) ->
-projectSchema.statics.findOrCreate = (project, callback) ->
-  @findById project._id, (err, proj) ->
-    if err then callback err; return
-    if proj?
-      callback null, proj
-    else
-      proj = new Project project
-      proj.save (err) ->
-        if err then callback err; return
-        callback null, proj
-
-
 Project = mongoose.model 'Project', projectSchema, 'projects'
 
 wrapDbError = (err) ->
