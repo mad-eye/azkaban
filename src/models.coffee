@@ -50,7 +50,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
 
 
 
-File = mongoose.model 'files', fileSchema
+File = mongoose.model 'File', fileSchema, 'files'
 
 projectSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
