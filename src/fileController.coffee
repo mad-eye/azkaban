@@ -21,10 +21,8 @@ class FileController
       if err
         @sendErrorResponse(res, err)
       else
-        url = "http://#{@Settings.bolideHost}:#{@Settings.bolidePort}/doc/#{fileId}"
-        #TODO handle error cases, test, abstract this into a class that can be mocked
-        @request.put url, {body: '{"type": "text2"}'}, (error, response, body)->
-          res.send JSON.stringify projectId: projectId, fileId:fileId, body:contents
+        res.send JSON.stringify projectId: projectId, fileId:fileId, body:contents
+
 
   saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
