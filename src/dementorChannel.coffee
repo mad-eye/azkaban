@@ -36,11 +36,11 @@ class DementorChannel
 
     #callback: (error) ->
     socket.on messageAction.SAVE_FILE, (data, callback) =>
-      console.log "Called saveFile for ", data.fileId
+      console.log "Called saveFile for ", data
 
     #callback: (error) ->
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
-      console.log "Called removeFiles with ", files
+      console.log "Called removeFiles with ", data
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->
