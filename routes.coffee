@@ -17,4 +17,7 @@ routes = (app) ->
   app.put '/project/:projectId/file/:fileId', (req, res)->
     fileController.saveFile(req, res)
 
+  app.get "/", (req, res)->
+    res.json {success: true}
+
 module.exports = routes
