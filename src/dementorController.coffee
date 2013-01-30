@@ -1,4 +1,3 @@
-{Settings} = require 'madeye-common'
 {Project, File, wrapDbError} = require './models'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'

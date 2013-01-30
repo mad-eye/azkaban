@@ -4,7 +4,6 @@ sinon = require 'sinon'
 
 FileController = require '../../src/fileController'
 {ServiceKeeper} = require "../../ServiceKeeper.coffee"
-{Settings} = require 'madeye-common'
 
 describe 'fileController', ->
   ServiceKeeper.reset()

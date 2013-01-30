@@ -4,7 +4,6 @@ messageMaker = require("madeye-common").messageMaker
 class FileController
   constructor: ->
     @dementorChannel = require('../ServiceKeeper').ServiceKeeper.instance().getDementorChannel()
-    @Settings = require('madeye-common').Settings
     @request = require "request"
 
   sendErrorResponse: (res, err) ->

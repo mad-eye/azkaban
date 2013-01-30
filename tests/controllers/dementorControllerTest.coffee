@@ -20,14 +20,14 @@ require '../../app'
 sendInitRequest = (projectName, files, objects, done) ->
   options =
     method: "POST"
-    uri: "http://localhost:#{Settings.httpPort}/project"
+    uri: "http://localhost:#{Settings.azkabanPort}/project"
     json: {projectName:projectName, files:files}
   sendRequest options, objects, done
 
 sendRefreshRequest = (projectId, projectName, files, objects, done) ->
   options =
     method: "PUT"
-    uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}"
+    uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}"
     json: {projectName:projectName, files:files}
   sendRequest options, objects, done
 

@@ -11,7 +11,7 @@ mongoose = require 'mongoose'
 app = module.exports = express()
 
 app.configure ->
-  app.set('port', Settings.httpPort || 4004)
+  app.set('port', Settings.azkabanPort || 4004)
   app.use(express.favicon())
   app.use(express.logger('dev'))
   app.use(express.bodyParser())
@@ -29,10 +29,8 @@ require('./routes')(app)
 
 #Set up mongo/mongoose
 #TODO: Put this in settings?
-DB_NAME = 'meteor'
-mongoUrl = "mongodb://#{Settings.mongoHost}:#{Settings.mongoPort}/#{DB_NAME}"
-console.log "Connecting to mongo #{mongoUrl}"
-mongoose.connect mongoUrl
+console.log "Connecting to mongo #{Settings.mongoUrl}"
+mongoose.connect Settings.mongoUrl
 
 #Set up http/socket servers
 httpServer = http.createServer(app)
