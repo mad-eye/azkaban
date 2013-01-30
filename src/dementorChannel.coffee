@@ -15,8 +15,6 @@ class DementorChannel
       callback?()
 
   attach: (socket) ->
-    logger.debug "Attaching socket #{socket.id}"
-
     socket.on 'disconnect', =>
       projectId = @socketProjectIds[socket.id]
       logger.debug "Disconnecting socket #{socket.id}", projectId:projectId
@@ -52,7 +50,7 @@ class DementorChannel
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->
-    logger.debug "Closing project #{projectId}"
+    logger.debug "Closing project", {projectId:projectId}
     Project.update {_id:projectId}, {closed:true}, (err) ->
       callback? err
 

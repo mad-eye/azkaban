@@ -1,5 +1,4 @@
 messageMaker = require("madeye-common").messageMaker
-{wrapDbError} = require './models'
 {logger} = require './logger'
 
 class FileController
@@ -9,8 +8,7 @@ class FileController
     @request = require "request"
 
   sendErrorResponse: (res, err) ->
-    err = wrapDbError err
-    #logger.error err.message, err
+    logger.error err.message, err
     res.json 500, {error:err}
 
   #TODO: Check for permissions

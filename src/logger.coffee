@@ -1,8 +1,6 @@
 winston = require('winston')
 {Settings} = require 'madeye-common'
 
-console.log "Found Settings", Settings
-
 consoleOptions =
   level: 'info'
   silent: false
@@ -47,5 +45,6 @@ winston.remove winston.transports.Console
 winston.add winston.transports.Console, consoleOptions
 winston.add winston.transports.File, fileOptions
 winston.add Loggly, logglyOptions
-winston.handleExceptions new winston.transports.File errorFileOptions
+#This is breaking tests, since it swallows exceptions that mocha needs to fail a test.
+#winston.handleExceptions new winston.transports.File errorFileOptions
 exports.logger = winston

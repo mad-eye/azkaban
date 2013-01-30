@@ -5,7 +5,7 @@
 
 sendErrorResponse = (res, err) ->
   err = wrapDbError err
-  #logger.error err.message, err
+  logger.error err.message, err
   res.json 500, {error:err}
 
 class DementorController
