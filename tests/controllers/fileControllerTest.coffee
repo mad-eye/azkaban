@@ -48,7 +48,7 @@ describe 'FileController', ->
       objects = {}
       options =
         method: "PUT"
-        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
         json:
           contents: contents
 
@@ -74,7 +74,7 @@ describe 'FileController', ->
       fileId = uuid.v4()
       options =
         method: "PUT"
-        uri: "http://localhost:#{Settings.httpPort}/project/#{uuid.v4()}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.azkabanPort}/project/#{uuid.v4()}/file/#{fileId}"
         json:
           contents: contents
 
@@ -89,7 +89,7 @@ describe 'FileController', ->
       fileId = uuid.v4()
       options =
         method: "PUT"
-        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
         json:
           contents: null
 
@@ -126,7 +126,7 @@ describe 'FileController', ->
       objects = {}
       options =
         method: "GET"
-        uri: "http://localhost:#{Settings.httpPort}/project/#{projectId}/file/#{fileId}"
+        uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
 
       request options, (err, _res, _body) ->
         objects.bodyStr = _body

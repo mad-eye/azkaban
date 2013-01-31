@@ -6,11 +6,12 @@ io = require 'socket.io'
 cors = require './cors'
 flow = require 'flow'
 mongoose = require 'mongoose'
+{logger} = require './src/logger'
 
 app = module.exports = express()
 
 app.configure ->
-  app.set('port', Settings.httpPort || 4004)
+  app.set('port', Settings.azkabanPort || 4004)
   app.use(express.favicon())
   app.use(express.logger('dev'))
   app.use(express.bodyParser())
@@ -28,10 +29,8 @@ require('./routes')(app)
 
 #Set up mongo/mongoose
 #TODO: Put this in settings?
-DB_NAME = 'meteor'
-mongoUrl = "mongodb://#{Settings.mongoHost}:#{Settings.mongoPort}/#{DB_NAME}"
-console.log "Connecting to mongo #{mongoUrl}"
-mongoose.connect mongoUrl
+console.log "Connecting to mongo #{Settings.mongoUrl}"
+mongoose.connect Settings.mongoUrl
 
 #Set up http/socket servers
 httpServer = http.createServer(app)
@@ -39,8 +38,8 @@ socketServer = io.listen httpServer
 dementorChannel = ServiceKeeper.instance().getDementorChannel()
 socketServer.sockets.on 'connection', (socket) =>
   dementorChannel.attach socket
-httpServer.listen(app.get('port'), ->
-  console.log("Express server listening on port " + app.get('port')))
+httpServer.listen app.get('port'), ->
+  logger.info "Express server listening on port " + app.get('port')
 
 socketServer.configure ->
   socketServer.set 'log level', 2
@@ -54,26 +53,23 @@ shutdown = (returnVal=0) ->
   process.exit(returnVal || 1) if SHUTTING_DOWN # || not ?, because we don't want 0
   shutdownGracefully(returnVal)
 
-shutdownGracefully = ->
+shutdownGracefully = (returnVal) ->
   return if SHUTTING_DOWN
   SHUTTING_DOWN = true
-  console.log "Shutting down gracefully."
+  logger.debug "Shutting down Azkaban gracefully."
   flow.exec ->
     dementorChannel.destroy this.MULTI(),
     httpServer.close this.MULTI()
   , ->
-    console.log "Closed out connections."
-    process.exit 0
+    process.exit returnVal ? 0
  
   setTimeout ->
-    console.error "Could not close connections in time, forcefully shutting down"
-    process.exit(1)
+    logger.warn "Could not close connections in time, forcefully shutting down"
+    process.exit returnVal || 1
   , 30*1000
 
 process.on 'SIGINT', ->
-  console.log 'Received SIGINT.'
   shutdown()
 
 process.on 'SIGTERM', ->
-  console.log "Received kill signal (SIGTERM)"
   shutdown()
