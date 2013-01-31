@@ -28,7 +28,8 @@ class DementorChannel
       logger.debug "Received handshake", projectId:projectId
       @liveSockets[projectId] = socket
       @socketProjectIds[socket.id] = projectId
-      callback?()
+      @openProject projectId, (err) ->
+        callback? err
 
     #callback: (error, files) ->
     socket.on messageAction.ADD_FILES, (data, callback) =>
@@ -47,6 +48,12 @@ class DementorChannel
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       logger.debug "Removing remote files", projectId:projectId
+
+  #callback: (err) ->
+  openProject : (projectId, callback) ->
+    logger.debug "Opening project", {projectId:projectId}
+    Project.update {_id:projectId}, {closed:false}, (err) ->
+      callback? err
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->

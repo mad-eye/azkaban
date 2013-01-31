@@ -76,6 +76,30 @@ describe "DementorChannel", ->
     it 'should close project'
     it 'should not close project if new socket is attached'
 
+  describe 'on handshake', ->
+    it 'should open project'
+    projectId = null
+    mockSocket = null
+    before (done) ->
+      mockSocket = new MockSocket
+      channel.attach mockSocket
+
+      project = new Project
+        name: 'onkik'
+        closed: true
+      project.save (err) ->
+        assert.equal err, null
+        projectId = project._id
+        done()
+    it 'should close project', (done) ->
+      mockSocket.trigger messageAction.HANDSHAKE, projectId, ->
+        Project.findOne {_id: projectId}, (err, proj) ->
+          assert.equal err, null
+          assert.equal proj.closed, false
+          done()
+
+
+
   describe 'closeProject', ->
     projectId = null
     before (done) ->
