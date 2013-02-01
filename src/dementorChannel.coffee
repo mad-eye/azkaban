@@ -7,6 +7,7 @@ class DementorChannel
   constructor: () ->
     @liveSockets = {}
     @socketProjectIds = {}
+    @closeProjectTimers = {}
 
   destroy: (callback) ->
     for projectId, socket in @liveSockets
@@ -20,7 +21,9 @@ class DementorChannel
       logger.debug "Disconnecting socket #{socket.id}", projectId:projectId
       #Don't close the project if another connection is 'active'
       if projectId && @liveSockets[projectId] == socket
-        @closeProject projectId
+        @closeProjectTimers[projectId] = setTimeout (=>
+          @closeProject projectId
+        ), 5*1000
 
 
     #callback: (error) ->
@@ -52,6 +55,8 @@ class DementorChannel
   #callback: (err) ->
   openProject : (projectId, callback) ->
     logger.debug "Opening project", {projectId:projectId}
+    clearTimeout @closeProjectTimers[projectId]
+    @closeProjectTimers[projectId] = null
     Project.update {_id:projectId}, {closed:false}, (err) ->
       callback? err
 
@@ -62,7 +67,9 @@ class DementorChannel
       callback? err
 
 
+  #####
   # Methods for Azkaban to call to give Dementor orders
+
   #callback: (err) ->
   saveFile: (projectId, fileId, contents, callback) ->
     logger.debug "Saving local file", {fileId:fileId, projectId:projectId}
