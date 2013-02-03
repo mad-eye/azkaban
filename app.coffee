@@ -58,6 +58,7 @@ shutdownGracefully = (returnVal) ->
   SHUTTING_DOWN = true
   logger.debug "Shutting down Azkaban gracefully."
   flow.exec ->
+    mongoose.disconnect this.MULTI(),
     dementorChannel.destroy this.MULTI(),
     httpServer.close this.MULTI()
   , ->
