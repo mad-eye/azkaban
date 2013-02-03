@@ -32,6 +32,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
         newFile = new File file
         filesToSave.push newFile
 
+    #This is a little dangerous, but @ returns a Promise, not a true Model object.
     File.create filesToSave, (err) ->
       if err then callback wrapDbError err; return
       savedFiles = Array.prototype.slice.call arguments, 1
