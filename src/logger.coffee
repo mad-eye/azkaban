@@ -1,5 +1,15 @@
 winston = require('winston')
 {Settings} = require 'madeye-common'
+fs = require 'fs'
+
+logDir = process.env.MADEYE_LOG_DIR
+if not logDir and process.env.MADEYE_HOME
+  logDir = "#{process.env.MADEYE_HOME}/log" 
+
+unless logDir
+  logDir = "/tmp"
+
+fs.mkdirSync logDir unless fs.existsSync logDir
 
 consoleOptions =
   level: 'info'
@@ -9,11 +19,11 @@ consoleOptions =
 
 fileOptions =
   level: 'info'
-  filename: '/tmp/azkaban.log'
+  filename: "#{logDir}/azkaban.log"
   timestamp: true
   json: false
 
-ERROR_FILENAME = '/tmp/azkaban-error.log'
+ERROR_FILENAME = "#{logDir}/azkaban-error.log"
 errorFileOptions =
   level: 'error'
   filename: ERROR_FILENAME
