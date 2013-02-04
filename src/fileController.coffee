@@ -17,6 +17,7 @@ class FileController
     projectId = req.params['projectId']
     logger.debug "Getting file contents", {projectId:projectId, fileId:fileId}
     @dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+      logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
       if err
         @sendErrorResponse(res, err)
       else
@@ -30,6 +31,7 @@ class FileController
     contents = req.body.contents
     logger.debug "Saving file contents", {projectId:projectId, fileId:fileId}
     @dementorChannel.saveFile projectId, fileId, contents, (err) =>
+      logger.debug "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
       if err
         @sendErrorResponse(res, err)
       else
