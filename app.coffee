@@ -7,7 +7,6 @@ io = require 'socket.io'
 FileController = require('./src/fileController')
 DementorController = require('./src/dementorController')
 cors = require './cors'
-flow = require 'flow'
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
 
