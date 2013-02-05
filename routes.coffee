@@ -1,9 +1,9 @@
-FileController = require('./src/fileController')
-DementorController = require('./src/dementorController')
+{Azkaban} = require './src/azkaban'
 
 routes = (app) ->
-  fileController = new FileController
-  dementorController = new DementorController
+  azkaban = Azkaban.instance()
+  fileController = azkaban.fileController
+  dementorController = azkaban.dementorController
 
   app.post '/project', (req, res)->
     dementorController.createProject(req, res)
