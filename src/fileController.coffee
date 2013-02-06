@@ -4,6 +4,7 @@ messageMaker = require("madeye-common").messageMaker
 class FileController
   constructor: () ->
     @request = require "request"
+    @Settings = require("madeye-common").Settings
 
   sendErrorResponse: (res, err) ->
     logger.error err.message, err
@@ -20,7 +21,10 @@ class FileController
       if err
         @sendErrorResponse(res, err)
       else
-        res.send JSON.stringify projectId: projectId, fileId:fileId, body:contents
+        url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
+        #write file contents to ShareJS (p is position, i is insert)
+        @request.post url, json: [contents], (error, response, body)->
+          res.send JSON.stringify projectId: projectId, fileId:fileId
 
 
   saveFile: (req, res) ->

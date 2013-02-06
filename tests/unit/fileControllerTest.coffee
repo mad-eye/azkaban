@@ -4,6 +4,7 @@ sinon = require 'sinon'
 {Azkaban} = require '../../src/azkaban'
 
 FileController = require '../../src/fileController'
+MockResponse = require '../mock/mockResponse'
 
 describe 'fileController', ->
   Azkaban.initialize()
@@ -69,5 +70,18 @@ describe 'fileController', ->
 
   describe 'getFile', ->
     it 'should send a getFile message to dementorChanel'
-    it 'should return the body on success'
+    it 'should send a post request to bolide FWEEP', (done)->
+      azkaban.setService "dementorChannel",
+        getFileContents: (projectId, fileId, callback)->
+          callback null, "FAKE CONTENTS"
+      fileController.request = {post: -> done()}
+
+      res = new MockResponse
+      fileController.getFile
+        params:
+          fileId: "FILE_ID"
+          projectId: "PROOJECT_ID"
+        , res
+
+    it 'should return a 200 on success'
     it 'should return a 500 if there is an error communicating with dementor'

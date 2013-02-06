@@ -146,8 +146,6 @@ describe 'FileController', ->
       assert.ok objects.body
     it 'should return a fileId in response body', ->
       assert.equal objects.body.fileId, fileId
-    it 'should return file body from dementor', ->
-      assert.equal objects.body.body, body
 
     it 'should send request message to dementor', ->
       assert.ok requestedFiles[fileId]
