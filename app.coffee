@@ -2,16 +2,18 @@ express = require('express')
 http = require('http')
 io = require 'socket.io'
 {Settings} = require 'madeye-common'
-{ServiceKeeper} = require './ServiceKeeper'
+{DementorChannel} = require './src/dementorChannel'
+{Azkaban} = require './src/azkaban'
+FileController = require('./src/fileController')
+DementorController = require('./src/dementorController')
 cors = require './cors'
-flow = require 'flow'
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
 
 app = module.exports = express()
 
 app.configure ->
-  app.set('port', Settings.azkabanPort || 4004)
+  app.set('port', Settings.azkabanPort)
   app.use(express.favicon())
   app.use(express.logger('dev'))
   app.use(express.bodyParser())
@@ -25,24 +27,35 @@ app.configure 'development', ->
 app.configure 'test', ->
   app.use(express.errorHandler())
 
-require('./routes')(app)
 
 #Set up mongo/mongoose
-#TODO: Put this in settings?
-console.log "Connecting to mongo #{Settings.mongoUrl}"
+logger.debug "Connecting to mongo #{Settings.mongoUrl}"
 mongoose.connect Settings.mongoUrl
 
 #Set up http/socket servers
 httpServer = http.createServer(app)
+
 socketServer = io.listen httpServer
-dementorChannel = ServiceKeeper.instance().getDementorChannel()
+socketServer.configure ->
+  socketServer.set 'log level', 2
+
+dementorChannel = new DementorChannel
 socketServer.sockets.on 'connection', (socket) =>
   dementorChannel.attach socket
 httpServer.listen app.get('port'), ->
-  logger.info "Express server listening on port " + app.get('port')
+  logger.debug "Express server listening on port " + app.get('port')
 
-socketServer.configure ->
-  socketServer.set 'log level', 2
+Azkaban.initialize
+  socketServer: socketServer
+  httpServer: httpServer
+  dementorChannel: dementorChannel
+  dementorController: new DementorController
+  fileController: new FileController
+  mongoose: mongoose
+
+azkaban = Azkaban.instance()
+  
+require('./routes')(app)
   
 
 # Shutdown section
@@ -51,22 +64,14 @@ SHUTTING_DOWN = false
 shutdown = (returnVal=0) ->
   #Multiple ^C will allow exit in haste
   process.exit(returnVal || 1) if SHUTTING_DOWN # || not ?, because we don't want 0
-  shutdownGracefully(returnVal)
-
-shutdownGracefully = (returnVal) ->
-  return if SHUTTING_DOWN
   SHUTTING_DOWN = true
-  logger.debug "Shutting down Azkaban gracefully."
-  flow.exec ->
-    dementorChannel.destroy this.MULTI(),
-    httpServer.close this.MULTI()
-  , ->
+  azkaban.shutdownGracefully ->
     process.exit returnVal ? 0
- 
   setTimeout ->
-    logger.warn "Could not close connections in time, forcefully shutting down"
+    logger.error "Could not close connections in time, forcefully shutting down"
     process.exit returnVal || 1
   , 30*1000
+
 
 process.on 'SIGINT', ->
   shutdown()

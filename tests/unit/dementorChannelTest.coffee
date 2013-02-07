@@ -2,7 +2,6 @@ assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
-{ServiceKeeper} = require '../../ServiceKeeper'
 {MockDb} = require '../mock/MockMongo'
 {Project} = require '../../src/models'
 {messageMaker, messageAction} = require 'madeye-common'
@@ -19,16 +18,14 @@ uuid = require 'node-uuid'
 # }
 
 describe "DementorChannel", ->
-  channel = null
-  before ->
-    channel = new DementorChannel()
-
   describe "on receiving addFiles message", ->
+    channel = null
     data = null
     mockSocket = null
     projectId = null
 
     beforeEach (done) ->
+      channel = new DementorChannel()
       project = new Project
         name: 'swansa'
 
@@ -73,12 +70,68 @@ describe "DementorChannel", ->
     it 'should close all live projects'
 
   describe 'on disconnect', ->
-    it 'should close project'
+    it 'should close project after 5 seconds'
     it 'should not close project if new socket is attached'
+
+  describe 'on handshake', ->
+    projectId = null
+    channel = null
+    mockSocket = null
+    before (done) ->
+      mockSocket = new MockSocket
+      channel = new DementorChannel()
+      channel.attach mockSocket
+
+      project = new Project
+        name: 'onkik'
+        closed: true
+      project.save (err) ->
+        assert.equal err, null
+        projectId = project._id
+        done()
+    it 'should open project', (done) ->
+      mockSocket.trigger messageAction.HANDSHAKE, projectId, ->
+        Project.findOne {_id: projectId}, (err, proj) ->
+          assert.equal err, null
+          assert.equal proj.closed, false
+          done()
+
+  describe 'on quick disconnect/reconnect', ->
+    projectId = null
+    channel = null
+    mockSocket = null
+    before (done) ->
+      mockSocket = new MockSocket
+      channel = new DementorChannel()
+      channel.attach mockSocket
+
+      project = new Project
+        name: 'foblub'
+        closed: false
+      project.save (err) ->
+        assert.equal err, null
+        projectId = project._id
+        done()
+
+    it 'should not close the project at all', (done) ->
+      channel.closeProject = (projectId, callback) ->
+        assert.fail "Should not call closeProject."
+      mockSocket.trigger 'disconnect'
+      setTimeout (->
+        mockSocket.trigger messageAction.HANDSHAKE, projectId, (err) ->
+          Project.findOne {_id: projectId}, (err, proj) ->
+            assert.equal err, null
+            assert.equal proj.closed, false
+            done()
+      ), 100
+
+
 
   describe 'closeProject', ->
     projectId = null
+    channel = null
     before (done) ->
+      channel = new DementorChannel()
       project = new Project
         name: 'nitfol'
         closed: false

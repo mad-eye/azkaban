@@ -11,7 +11,9 @@ class DementorController
   constructor: () ->
 
   createProject: (req, res) =>
+    console.log "createProject"
     Project.create name: req.body['projectName'], (err, proj) ->
+      console.log "Returning from createProject"
       if err then sendErrorResponse(res, err); return
       logger.debug "Project created", {projectId:proj._id}
       File.addFiles req.body['files'], proj._id, (err, files) ->

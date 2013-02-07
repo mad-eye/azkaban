@@ -1,15 +1,19 @@
 assert = require("chai").assert
 uuid = require 'node-uuid'
 sinon = require 'sinon'
+{Azkaban} = require '../../src/azkaban'
 
 FileController = require '../../src/fileController'
-{ServiceKeeper} = require "../../ServiceKeeper.coffee"
+MockResponse = require '../mock/mockResponse'
 
 describe 'fileController', ->
-  ServiceKeeper.reset()
+  Azkaban.initialize()
+  azkaban = Azkaban.instance()
   fileController = undefined
+
   beforeEach ->
     fileController = new FileController
+    azkaban.setService 'fileController', fileController
 
   describe 'saveFile', ->
     FILE_CONTENTS = "a riveting text"
@@ -29,11 +33,10 @@ describe 'fileController', ->
 
 
     it "should send a save file message to the socket server", ->
-      fileController.dementorChannel =
-        saveFile: sinon.spy()
+      azkaban.setService 'dementorChannel', saveFile: sinon.spy()
 
       fileController.saveFile req, res
-      callValues = fileController.dementorChannel.saveFile.getCall(0).args
+      callValues = azkaban.dementorChannel.saveFile.getCall(0).args
       assert.equal PROJECT_ID, callValues[0]
       message = callValues[1]
       #console.log message
@@ -41,7 +44,7 @@ describe 'fileController', ->
       assert.equal callValues[2], FILE_CONTENTS
 
     it "should return a confirmation when there are no problems", ->
-      fileController.dementorChannel =
+      azkaban.setService 'dementorChannel',
         saveFile: (projectId, fileId, contents, callback)->
           callback null
 
@@ -67,5 +70,18 @@ describe 'fileController', ->
 
   describe 'getFile', ->
     it 'should send a getFile message to dementorChanel'
-    it 'should return the body on success'
+    it 'should send a post request to bolide FWEEP', (done)->
+      azkaban.setService "dementorChannel",
+        getFileContents: (projectId, fileId, callback)->
+          callback null, "FAKE CONTENTS"
+      fileController.request = {post: -> done()}
+
+      res = new MockResponse
+      fileController.getFile
+        params:
+          fileId: "FILE_ID"
+          projectId: "PROOJECT_ID"
+        , res
+
+    it 'should return a 200 on success'
     it 'should return a 500 if there is an error communicating with dementor'

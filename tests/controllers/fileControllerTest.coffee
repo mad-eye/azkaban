@@ -2,9 +2,8 @@ assert = require("chai").assert
 uuid = require 'node-uuid'
 sinon = require 'sinon'
 request = require "request"
-
+{Azkaban} = require '../../src/azkaban'
 FileController = require '../../src/fileController'
-{ServiceKeeper} = require "../../ServiceKeeper.coffee"
 {Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
@@ -14,8 +13,8 @@ FileController = require '../../src/fileController'
 
 describe 'FileController', ->
   # Acceptance tests -- need app, but need to set DementorChannel first
-  dementorChannel = ServiceKeeper.instance().getDementorChannel()
   require '../../app'
+  dementorChannel = Azkaban.instance().dementorChannel
 
   fileController = undefined
   beforeEach ->
@@ -147,8 +146,6 @@ describe 'FileController', ->
       assert.ok objects.body
     it 'should return a fileId in response body', ->
       assert.equal objects.body.fileId, fileId
-    it 'should return file body from dementor', ->
-      assert.equal objects.body.body, body
 
     it 'should send request message to dementor', ->
       assert.ok requestedFiles[fileId]

@@ -31,12 +31,12 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
         file.projectId = projectId
         newFile = new File file
         filesToSave.push newFile
-        filesToReturn.push newFile
 
-    async.forEach filesToSave, ((file, cb) ->
-      file.save cb
-    ), (err) ->
+    #This is a little dangerous, but @ returns a Promise, not a true Model object.
+    File.create filesToSave, (err) ->
       if err then callback wrapDbError err; return
+      savedFiles = Array.prototype.slice.call arguments, 1
+      filesToReturn = filesToReturn.concat savedFiles
       unless deleteMissing
         callback null, filesToReturn
       else

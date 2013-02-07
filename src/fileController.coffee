@@ -2,9 +2,9 @@ messageMaker = require("madeye-common").messageMaker
 {logger} = require './logger'
 
 class FileController
-  constructor: ->
-    @dementorChannel = require('../ServiceKeeper').ServiceKeeper.instance().getDementorChannel()
+  constructor: () ->
     @request = require "request"
+    @Settings = require("madeye-common").Settings
 
   sendErrorResponse: (res, err) ->
     logger.error err.message, err
@@ -16,11 +16,15 @@ class FileController
     fileId = req.params['fileId']
     projectId = req.params['projectId']
     logger.debug "Getting file contents", {projectId:projectId, fileId:fileId}
-    @dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+    @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+      logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
       if err
         @sendErrorResponse(res, err)
       else
-        res.send JSON.stringify projectId: projectId, fileId:fileId, body:contents
+        url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
+        #write file contents to ShareJS (p is position, i is insert)
+        @request.post url, json: [contents], (error, response, body)->
+          res.send JSON.stringify projectId: projectId, fileId:fileId
 
 
   saveFile: (req, res) ->
@@ -29,7 +33,8 @@ class FileController
     projectId = req.params['projectId']
     contents = req.body.contents
     logger.debug "Saving file contents", {projectId:projectId, fileId:fileId}
-    @dementorChannel.saveFile projectId, fileId, contents, (err) =>
+    @azkaban.dementorChannel.saveFile projectId, fileId, contents, (err) =>
+      logger.debug "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
       if err
         @sendErrorResponse(res, err)
       else
