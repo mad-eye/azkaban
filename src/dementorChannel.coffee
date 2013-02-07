@@ -55,7 +55,10 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.METRIC, (data, callback) =>
       data.projectId ?= @socketProjectIds[socket.id]
-      logger.debug 'dementorMetric', data
+      if data.type == 'error'
+        logger.error 'dementorError', data
+      else
+        logger.debug 'dementorMetric', data
       callback?()
 
 
