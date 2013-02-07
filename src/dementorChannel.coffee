@@ -1,4 +1,4 @@
-{Project, File, Metrics, wrapDbError} = require './models'
+{Project, File, wrapDbError} = require './models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
@@ -53,10 +53,10 @@ class DementorChannel
       logger.debug "Removing remote files", projectId:projectId
 
     #callback: (error) ->
-    #socket.on messageAction.METRICS, (data, callback) =>
-      #projectId = @socketProjectIds[socket.id]
-      #TODO: grab data.metrics array and pass it on to custom logger.
-
+    socket.on messageAction.METRIC, (data, callback) =>
+      data.projectId ?= @socketProjectIds[socket.id]
+      logger.debug 'dementorMetric', data
+      callback?()
 
 
   #####
