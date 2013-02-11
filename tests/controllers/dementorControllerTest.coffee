@@ -8,9 +8,8 @@ uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
 testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
+server = require "../../server"
 
-# INTEGRATION TEST -- requires app and MongoDb to be running.
-require '../../app'
 
 ###
 # Request helper methods
@@ -63,6 +62,9 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
 ###
 
 describe "DementorController with real db", ->
+  # INTEGRATION TEST -- requires app and MongoDb to be running.
+  server.listen()
+
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},
@@ -87,7 +89,8 @@ describe "DementorController with real db", ->
     it "returns files correctly", ->
       returnedFiles = objects.body.files
       assert.ok returnedFiles
-      assert.equal returnedFiles.length, files.length
+      # this isn't true when parent directories are added
+      # assert.equal returnedFiles.length, files.length
       assert.ok file._id for file in returnedFiles
 
 

@@ -2,12 +2,25 @@ mongoose = require 'mongoose'
 async = require 'async'
 uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
+_ = require 'underscore'
 
 fileSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
   projectId: {type: String, required: true}
   path: {type: String, required: true}
   isDir: {type: Boolean, required: true}
+
+#file objects for all the parents
+fileSchema.virtual("parents").get ->
+  parents = []
+  path = undefined
+  parents = @path.split("/")[0..-2].map (dir)->
+    if path
+      path = "#{path}/#{dir}"
+    else
+      path = dir
+  return parents.map (path)->
+    new File {path: path, projectId: @projectId, isDir: true}
 
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback
@@ -16,6 +29,23 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
   if 'function' == typeof deleteMissing
     callback = deleteMissing
     deleteMissing = false
+
+  files = _.map files, (file)->
+    new File {path: file.path, isDir: file.isDir}
+
+  newFileMap = {}
+  _.each files, (file) ->
+    newFileMap[file.path] = file
+
+  #add any parent directories that are missing
+  parentsMap = {}
+  for file in files
+    for parent in file.parents
+      parentsMap[parent.path] = parent
+
+  for path, parent of parentsMap
+    files.push parent unless newFileMap[path]
+
   @findByProjectId projectId, (err, existingFiles) ->
     if err then callback wrapDbError err; return
 
