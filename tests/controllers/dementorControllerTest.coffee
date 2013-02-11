@@ -10,8 +10,6 @@ testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
 server = require "../../server"
 
-# INTEGRATION TEST -- requires app and MongoDb to be running.
-server.listen()
 
 ###
 # Request helper methods
@@ -64,6 +62,9 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
 ###
 
 describe "DementorController with real db", ->
+  # INTEGRATION TEST -- requires app and MongoDb to be running.
+  server.listen()
+
   files = [
     {isDir: false, path:'file1'},
           {isDir: true, path:'dir1'},
