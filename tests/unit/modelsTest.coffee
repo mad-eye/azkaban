@@ -1,6 +1,7 @@
 assert = require 'assert'
 async = require 'async'
 uuid = require 'node-uuid'
+_ = require 'underscore'
 {File, Project} = require '../../src/models.coffee'
 
 #callback: (files) ->
@@ -81,6 +82,9 @@ describe 'File', ->
         newFiles = []
         newFiles.push path:'path1', isDir:false
         newFiles.push path:'anotherPath1', isDir:true
+        newFiles.push path:'dir1/dir2/dir3/README', isDir:false
+        newFiles.push path:'dir1/dir2/dir3/blah', isDir:false
+
         deleteMissing = true
         File.addFiles newFiles, projectId, deleteMissing, (err, files) ->
           assert.equal err, null
@@ -88,12 +92,23 @@ describe 'File', ->
           done()
 
     it 'should return the files correctly', ->
-      assert.equal addedFiles.length, newFiles.length
+      assert.equal addedFiles.length, newFiles.length + 3 #dir1, dir2, dir3
+
+    it "should create the parent directories", (done)->
+      fileExists = (path)->
+      async.forEach ["dir1", "dir1/dir2", "dir1/dir2/dir3"], (path, callback) ->
+        File.findOne {path: path}, (err, result)->
+          assert result, "no file found for path #{path}"
+          assert result.isDir, "#{path} is a directory"
+          callback()
+      , done
 
     it 'should not duplicate files', (done) ->
       File.findByProjectId projectId, (err, files) ->
         assert.equal err, null
-        assert.equal files.length, newFiles.length
+        assert.equal files.length, newFiles.length + 3 #dir1, dir2, dir3
+        paths = _.map newFiles, (file)->file.path
+        assert.equal _.uniq(paths).length, paths.length
         done()
 
 
