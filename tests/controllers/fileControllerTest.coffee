@@ -9,11 +9,13 @@ FileController = require '../../src/fileController'
 {MockSocket} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
+server = require "../../server"
 
 
 describe 'FileController', ->
   # Acceptance tests -- need app, but need to set DementorChannel first
-  require '../../app'
+  server.listen()
+
   dementorChannel = Azkaban.instance().dementorChannel
 
   fileController = undefined
