@@ -8,9 +8,10 @@ uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
 testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
+server = require "../../server"
 
 # INTEGRATION TEST -- requires app and MongoDb to be running.
-require '../../app'
+server.listen()
 
 ###
 # Request helper methods
