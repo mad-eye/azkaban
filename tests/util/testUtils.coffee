@@ -1,7 +1,8 @@
 assert = require 'assert'
 
 exports.assertFilesCorrect = (files, targetFiles, projectId) ->
-  assert.equal files.length, targetFiles.length, "Number of files incorrect."
+  # not true when parent directories are added as well
+  # assert.equal files.length, targetFiles.length, "Number of files incorrect."
   targetMap = {}
   targetMap[file.path] = file for file in targetFiles
   for file in files
