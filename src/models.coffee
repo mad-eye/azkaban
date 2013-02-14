@@ -2,7 +2,6 @@ mongoose = require 'mongoose'
 async = require 'async'
 uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
-_ = require 'underscore'
 
 fileSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
@@ -20,8 +19,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
 
   files = files[..] #Prevent files mutation
   newFileMap = {}
-  _.each files, (file) ->
-    newFileMap[file.path] = file
+  newFileMap[file.path] = file for file in files
 
   #add any parent directories that are missing
   parentsMap = {}
