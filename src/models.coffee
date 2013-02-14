@@ -10,18 +10,6 @@ fileSchema = mongoose.Schema
   path: {type: String, required: true}
   isDir: {type: Boolean, required: true}
 
-#file objects for all the parents
-fileSchema.virtual("parents").get ->
-  parents = []
-  path = undefined
-  parents = @path.split("/")[0..-2].map (dir)->
-    if path
-      path = "#{path}/#{dir}"
-    else
-      path = dir
-  return parents.map (path)->
-    new File {path: path, projectId: @projectId, isDir: true}
-
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback
 
@@ -30,9 +18,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     callback = deleteMissing
     deleteMissing = false
 
-  files = _.map files, (file)->
-    new File {path: file.path, isDir: file.isDir}
-
+  files = files[..] #Prevent files mutation
   newFileMap = {}
   _.each files, (file) ->
     newFileMap[file.path] = file
@@ -40,8 +26,13 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
   #add any parent directories that are missing
   parentsMap = {}
   for file in files
-    for parent in file.parents
-      parentsMap[parent.path] = parent
+    path = file.path
+    while path.lastIndexOf('/') > -1
+      path = path.substr 0, path.lastIndexOf('/')
+      if (path of parentsMap) or (path of newFileMap)
+        break
+      else
+        parentsMap[path] = {path: path, projectId: @projectId, isDir: true}
 
   for path, parent of parentsMap
     files.push parent unless newFileMap[path]
@@ -55,6 +46,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     existingFileMap[file.path] = file for file in existingFiles
     for file in files
       if file.path of existingFileMap
+        #FIXME: we should extend existingFile with file, for when we add fields
         filesToReturn.push existingFileMap[file.path]
         delete existingFileMap[file.path]
       else
@@ -62,7 +54,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
         newFile = new File file
         filesToSave.push newFile
 
-    #This is a little dangerous, but @ returns a Promise, not a true Model object.
+    #Specifying 'File' is a little dangerous, but @ returns a Promise, not a true Model object.
     File.create filesToSave, (err) ->
       if err then callback wrapDbError err; return
       savedFiles = Array.prototype.slice.call arguments, 1
