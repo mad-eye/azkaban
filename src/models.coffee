@@ -2,6 +2,7 @@ mongoose = require 'mongoose'
 async = require 'async'
 uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
+_ = require 'underscore'
 
 fileSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
@@ -16,6 +17,26 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
   if 'function' == typeof deleteMissing
     callback = deleteMissing
     deleteMissing = false
+
+  files = files[..] #Prevent files mutation
+  newFileMap = {}
+  _.each files, (file) ->
+    newFileMap[file.path] = file
+
+  #add any parent directories that are missing
+  parentsMap = {}
+  for file in files
+    path = file.path
+    while path.lastIndexOf('/') > -1
+      path = path.substr 0, path.lastIndexOf('/')
+      if (path of parentsMap) or (path of newFileMap)
+        break
+      else
+        parentsMap[path] = {path: path, projectId: @projectId, isDir: true}
+
+  for path, parent of parentsMap
+    files.push parent unless newFileMap[path]
+
   @findByProjectId projectId, (err, existingFiles) ->
     if err then callback wrapDbError err; return
 
@@ -25,6 +46,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     existingFileMap[file.path] = file for file in existingFiles
     for file in files
       if file.path of existingFileMap
+        #FIXME: we should extend existingFile with file, for when we add fields
         filesToReturn.push existingFileMap[file.path]
         delete existingFileMap[file.path]
       else
@@ -32,7 +54,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
         newFile = new File file
         filesToSave.push newFile
 
-    #This is a little dangerous, but @ returns a Promise, not a true Model object.
+    #Specifying 'File' is a little dangerous, but @ returns a Promise, not a true Model object.
     File.create filesToSave, (err) ->
       if err then callback wrapDbError err; return
       savedFiles = Array.prototype.slice.call arguments, 1
