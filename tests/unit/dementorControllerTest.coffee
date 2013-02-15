@@ -11,6 +11,8 @@ testUtils = require '../util/testUtils'
 
 assertFilesCorrect = testUtils.assertFilesCorrect
 
+minDementorVersion = (new DementorController).minDementorVersion
+
 describe 'DementorController', ->
   dementorController = new DementorController
 
@@ -21,46 +23,75 @@ describe 'DementorController', ->
   ]
   
   describe 'createProject', ->
-    projectName = 'golmac'
-    projectId = null
-    result = body = null
-    before (done) ->
-      req =
-        body: {files: newFiles, projectName:projectName}
-      res = new MockResponse
-
-      res.end = (_body) ->
-        assert.ok _body
-        body = _body
-        result = JSON.parse _body
-        done()
-
-      dementorController.createProject req, res
-
-    it "does not return an error", ->
-      assert.equal result.error, null, "Body #{body} should not have an error."
-    it "returns a project with valid info", ->
-      project = result.project
-      assert.ok project
-      assert.ok project._id
-      assert.equal project.name, projectName
-    it "returns files correctly", ->
-      returnedFiles = result.files
-      assert.ok returnedFiles
-      assertFilesCorrect returnedFiles, newFiles, projectId
-
-    describe "with error", ->
-      body = statusCode = null
+    describe 'without error', ->
+      result = body = null
+      projectName = 'golmac'
+      projectId = null
       before (done) ->
         req =
-          params: {projectName:projectName}
-          body: {files: newFiles}
+          body:
+            files: newFiles
+            projectName: projectName
+            version: minDementorVersion
+
         res = new MockResponse
 
         res.end = (_body) ->
-          statusCode = res.statusCode
+          assert.ok _body
+          body = _body
+          result = JSON.parse _body
+          done()
+
+        dementorController.createProject req, res
+
+      it "does not return an error", ->
+        assert.equal result.error, null, "Body #{body} should not have an error."
+      it "returns a project with valid info", ->
+        project = result.project
+        assert.ok project
+        assert.ok project._id
+        assert.equal project.name, projectName
+      it "returns files correctly", ->
+        returnedFiles = result.files
+        assert.ok returnedFiles
+        assertFilesCorrect returnedFiles, newFiles, projectId
+
+    describe "with error", ->
+      res = body = statusCode = null
+      projectName = 'onbit'
+      beforeEach ->
+        res = new MockResponse
+
+      it 'should return correct error on missing version', (done) ->
+        req =
+          params: {projectName:projectName}
+          body:
+            files: newFiles
+            projectName: projectName
+
+        res.end = (_body) ->
+          assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
+          assert.ok result.error, "Body #{body} doesn't have error property."
+          assert.equal result.error.type, errorType.OUT_OF_DATE
+          done()
+        dementorController.createProject req, res
+
+      it 'should return correct error on too old version', (done) ->
+        req =
+          params: {projectName:projectName}
+          body:
+            files: newFiles
+            projectName: projectName
+            version: '0.0.10'
+
+        res.end = (_body) ->
+          assert.equal res.statusCode, 500
+          assert.ok _body
+          result = JSON.parse _body
+          assert.ok result.error, "Body #{body} doesn't have error property."
+          assert.equal result.error.type, errorType.OUT_OF_DATE
           done()
         dementorController.createProject req, res
 
@@ -73,57 +104,88 @@ describe 'DementorController', ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
   describe "refreshProject", ->
-    projectName = 'gloth'
-    projectId = null
-    result = body = null
-    before (done) ->
-      project = new Project
-        name: projectName
-        files: newFiles
-      project.save (err) ->
-        assert.equal err, null
-        projectId = project._id
+    describe 'without error', ->
+      result = body = null
+      projectName = 'gloth'
+      projectId = null
 
-        req =
-          params: {projectId:projectId}
-          body: {projectName:projectName, files:newFiles}
-        res = new MockResponse
-        res.end = (_body) ->
-          assert.ok _body
-          body = _body
-          result = JSON.parse _body
-          #console.log "Found response body", result
-          done()
+      before (done) ->
+        project = new Project
+          name: projectName
+          files: newFiles
+        project.save (err) ->
+          assert.equal err, null
+          projectId = project._id
 
-        dementorController.refreshProject req, res
+          req =
+            params: {projectId:projectId}
+            body:
+              files: newFiles
+              projectName: projectName
+              version: minDementorVersion
+          res = new MockResponse
+          res.end = (_body) ->
+            assert.ok _body
+            body = _body
+            result = JSON.parse _body
+            done()
 
-    it "does not return an error", ->
-      assert.equal result.error, null, "Body #{body} should not have an error."
-    it "returns a project with valid info", ->
-      project = result.project
-      assert.ok project
-      assert.ok project._id
-      assert.equal project._id, projectId
-      assert.equal project.name, projectName
-    it "returns files correctly", ->
-      returnedFiles = result.files
-      assert.ok returnedFiles
-      assertFilesCorrect returnedFiles, newFiles, projectId
+          dementorController.refreshProject req, res
+
+      it "does not return an error", ->
+        assert.equal result.error, null, "Body #{body} should not have an error."
+      it "returns a project with valid info", ->
+        project = result.project
+        assert.ok project
+        assert.ok project._id
+        assert.equal project._id, projectId
+        assert.equal project.name, projectName
+      it "returns files correctly", ->
+        returnedFiles = result.files
+        assert.ok returnedFiles
+        assertFilesCorrect returnedFiles, newFiles, projectId
 
     describe "with error", ->
-      body = statusCode = null
-      before (done) ->
+      res = body = statusCode = null
+      projectName = 'lesoch'
+      projectId = null
+      beforeEach ->
+        res = new MockResponse
+        projectId = uuid.v4()
+
+      it 'should return correct error on missing version', (done) ->
         req =
           params: {projectId:projectId}
-          body: {projectName:projectName, files:newFiles}
-        res = new MockResponse
+          body:
+            files: newFiles
+            projectName: projectName
 
         res.end = (_body) ->
-          statusCode = res.statusCode
+          assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
+          assert.ok result.error, "Body #{body} doesn't have error property."
+          assert.equal result.error.type, errorType.OUT_OF_DATE
           done()
-        dementorController.refreshProject req, res
+        dementorController.createProject req, res
+
+      it 'should return correct error on too old version', (done) ->
+        req =
+          params: {projectId:projectId}
+          body:
+            files: newFiles
+            projectName: projectName
+            version: '0.0.10'
+
+        res.end = (_body) ->
+          assert.equal res.statusCode, 500
+          assert.ok _body
+          result = JSON.parse _body
+          assert.ok result.error, "Body #{body} doesn't have error property."
+          assert.equal result.error.type, errorType.OUT_OF_DATE
+          done()
+        dementorController.createProject req, res
+
 
       #Making tests pending until we can mock Mongoose and test errors.
       it "returns an error"

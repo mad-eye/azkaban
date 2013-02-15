@@ -8,6 +8,7 @@ uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
 testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
+DementorController = require '../../src/dementorController'
 server = require "../../server"
 
 
@@ -15,18 +16,26 @@ server = require "../../server"
 # Request helper methods
 ###
 
+minDementorVersion = (new DementorController).minDementorVersion
+
 sendInitRequest = (projectName, files, objects, done) ->
   options =
     method: "POST"
     uri: "http://localhost:#{Settings.azkabanPort}/project"
-    json: {projectName:projectName, files:files}
+    json:
+      files: files
+      projectName: projectName
+      version: minDementorVersion
   sendRequest options, objects, done
 
 sendRefreshRequest = (projectId, projectName, files, objects, done) ->
   options =
     method: "PUT"
     uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}"
-    json: {projectName:projectName, files:files}
+    json:
+      files: files
+      projectName: projectName
+      version: minDementorVersion
   sendRequest options, objects, done
 
 sendRequest = (options, objects, done) ->

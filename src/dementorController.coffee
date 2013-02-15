@@ -1,6 +1,7 @@
 {Project, File, wrapDbError} = require './models'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
+semver = require 'semver'
 
 sendErrorResponse = (res, err) ->
   err = wrapDbError err
@@ -9,11 +10,15 @@ sendErrorResponse = (res, err) ->
 
 class DementorController
   constructor: () ->
+    @minDementorVersion = '0.0.14'
+
+  checkVersion: (version) ->
+    return version? && semver.gte version, @minDementorVersion
 
   createProject: (req, res) =>
-    console.log "createProject"
+    unless @checkVersion req.body['version']
+      sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
     Project.create name: req.body['projectName'], (err, proj) ->
-      console.log "Returning from createProject"
       if err then sendErrorResponse(res, err); return
       logger.debug "Project created", {projectId:proj._id}
       File.addFiles req.body['files'], proj._id, (err, files) ->
@@ -21,6 +26,8 @@ class DementorController
         res.json project:proj, files: files
 
   refreshProject: (req, res) =>
+    unless @checkVersion req.body['version']
+      sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
     projectId = req.params['projectId']
     project =
       name: req.body['projectName']

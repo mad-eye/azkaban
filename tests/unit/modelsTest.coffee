@@ -91,7 +91,7 @@ describe 'File', ->
           addedFiles = files
           done()
 
-    it 'should return the files correctly fweep', ->
+    it 'should return the files correctly', ->
       assert.equal addedFiles.length, newFiles.length + 3 #dir1, dir2, dir3
 
     it "should create the parent directories", (done)->
