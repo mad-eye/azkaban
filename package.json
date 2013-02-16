@@ -11,7 +11,7 @@
     "express": "~3.0.0",
     "underscore": "~1.4.2",
     "node-uuid": "~1.4.0",
-    "madeye-common": "0.0.1",
+    "madeye-common": "0.0.4",
     "socket.io": "~0.9.13",
     "mongoose": "~3.5.4",
     "async": "~0.1.22",
