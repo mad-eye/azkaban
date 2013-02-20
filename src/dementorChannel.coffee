@@ -46,7 +46,7 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.SAVE_FILE, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
-      logger.debug "Saving remote files", projectId:projectId
+      logger.debug "Saving remote file", projectId:projectId
 
     #callback: (error) ->
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
@@ -59,9 +59,10 @@ class DementorChannel
           unless file.modified
             file.remove cb
           else
+            logger.debug "Removing modified file", projectId:projectId, fileId:file._id
             message ?= ''
             message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
-            cb()
+            file.update {$set: {removed:true}}, cb
       , (err) ->
         if err then callback err; return
         response = null

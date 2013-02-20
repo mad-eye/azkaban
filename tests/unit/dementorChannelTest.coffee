@@ -121,6 +121,7 @@ describe "DementorChannel", ->
         File.findById file._id, (err, doc) ->
           assert.isNull err
           assert.equal doc.path, file.path
+          assert.isTrue doc.modified
           done()
 
 

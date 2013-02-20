@@ -9,6 +9,7 @@ fileSchema = mongoose.Schema
   path: {type: String, required: true}
   isDir: {type: Boolean, required: true}
   modified: {type: Boolean, default: false}
+  removed: {type: Boolean, default: false}
 
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback
