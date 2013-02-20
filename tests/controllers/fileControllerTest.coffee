@@ -58,7 +58,7 @@ describe 'FileController', ->
         objects.response = _res
         done()
 
-    it "returns a 200", ->
+    it "returns a 200 fweep", ->
       assert.equal objects.response.statusCode, 200
     it 'should return a non-empty body', ->
       assert.ok objects.body

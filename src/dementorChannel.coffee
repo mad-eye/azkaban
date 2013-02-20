@@ -2,6 +2,7 @@
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
+async = require 'async'
 
 class DementorChannel
   constructor: () ->
@@ -50,7 +51,25 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
-      logger.debug "Removing remote files", projectId:projectId
+      logger.debug "Removing remote files", projectId:projectId, files: data.files
+      message = null
+      async.each data.files, (f, cb) ->
+        File.findById f._id, (err, file) ->
+          return cb err if err
+          unless file.modified
+            file.remove cb
+          else
+            message ?= ''
+            message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
+            cb()
+      , (err) ->
+        if err then callback err; return
+        response = null
+        if message
+          response =
+            action: messageAction.WARNING
+            message: message
+        callback null, response
 
     #callback: (error) ->
     socket.on messageAction.METRIC, (data, callback) =>

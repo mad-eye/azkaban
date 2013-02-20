@@ -1,11 +1,13 @@
-assert = require 'assert'
+assert = require('chai').assert
+#assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket, messageMaker} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
 {MockDb} = require '../mock/MockMongo'
-{Project} = require '../../src/models'
+{Project, File} = require '../../src/models'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
+async = require 'async'
 
 #
 # Messages are of the form:
@@ -29,7 +31,7 @@ describe "DementorChannel", ->
       project = new Project
         name: 'swansa'
 
-      project.save (err) ->
+      project.save (err, project) ->
         assert.equal err, null
         projectId = project._id
 
@@ -65,13 +67,68 @@ describe "DementorChannel", ->
         #assert.equal err.type, errorType.DATABASE_ERROR
         #done()
 
+  describe "on receiving removeFiles message", ->
+    channel = null
+    data = null
+    mockSocket = null
+    projectId = null
+    fileMap = {}
+
+    beforeEach (done) ->
+      channel = new DementorChannel()
+      project = new Project
+        name: 'liskon'
+
+      project.save (err) ->
+        assert.equal err, null
+        projectId = project._id
+
+        mockSocket = new MockSocket
+        channel.attach mockSocket
+        mockSocket.trigger messageAction.HANDSHAKE, projectId
+
+        files = [
+          {path:'file1', projectId: projectId, isDir:false, modified: true},
+          {path:'dir1', projectId: projectId, isDir:true },
+          {path:'dir1/file2', projectId: projectId, isDir:false }
+        ]
+        async.each files, (f, cb) ->
+          File.create f, (err, file) ->
+            fileMap[file.path] = file
+            cb (err)
+        , (err) ->
+          done()
+
+    it 'should delete a single file', (done) ->
+      file = fileMap['dir1/file2']
+      data =
+        files: [file]
+      mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
+        assert.isNull err
+        File.findById file._id, (err, doc) ->
+          assert.isNull err
+          assert.isNull doc
+          done()
+
+    it 'should respond with message when file is modified', (done) ->
+      file = fileMap['file1']
+      data =
+        files: [file]
+      mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
+        assert.isNull err
+        assert.equal result.action, messageAction.WARNING
+        assert.ok result.message
+        File.findById file._id, (err, doc) ->
+          assert.isNull err
+          assert.equal doc.path, file.path
+          done()
+
+
+
+
   describe 'destroy', ->
     it 'should disconnect all live sockets'
     it 'should close all live projects'
-
-  describe 'on disconnect', ->
-    it 'should close project after 5 seconds'
-    it 'should not close project if new socket is attached'
 
   describe 'on handshake', ->
     projectId = null
@@ -96,8 +153,8 @@ describe "DementorChannel", ->
           assert.equal proj.closed, false
           done()
 
-  describe 'on quick disconnect/reconnect', ->
-    projectId = null
+  describe 'on disconnect', ->
+    projectId = project = null
     channel = null
     mockSocket = null
     before (done) ->
@@ -113,7 +170,13 @@ describe "DementorChannel", ->
         projectId = project._id
         done()
 
-    it 'should not close the project at all', (done) ->
+    beforeEach (done) ->
+      project.update {$set: {closed: false}}, done
+
+    it 'should close project after 5 seconds'
+
+    it 'should not close project if new socket is attached quickly', (done) ->
+
       channel.closeProject = (projectId, callback) ->
         assert.fail "Should not call closeProject."
       mockSocket.trigger 'disconnect'
