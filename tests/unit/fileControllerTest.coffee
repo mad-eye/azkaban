@@ -74,7 +74,9 @@ describe 'fileController', ->
       azkaban.setService "dementorChannel",
         getFileContents: (projectId, fileId, callback)->
           callback null, "FAKE CONTENTS"
-      fileController.request = {post: -> done()}
+      fileController.request =
+        post: -> done()
+        get:(url, callback) -> callback(null, null, null)
 
       res = new MockResponse
       fileController.getFile

@@ -15,16 +15,34 @@ class FileController
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
-    logger.debug "Getting file contents", {projectId:projectId, fileId:fileId}
-    @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
-      logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
-      if err
-        @sendErrorResponse(res, err)
-      else
-        url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
-        #write file contents to ShareJS (p is position, i is insert)
-        @request.post url, json: [contents], (error, response, body)->
-          res.send JSON.stringify projectId: projectId, fileId:fileId
+    if req.query?['reset']
+      logger.debug "Resetting file contents", {projectId:projectId, fileId:fileId}
+      url = "#{@Settings.bolideUrl}/doc/#{fileId}"
+      @request.del url, (error, response, body) =>
+        return @sendErrorResponse(res, err) if error
+        @setBolideContents(projectId, fileId)
+    else
+      logger.debug "Getting file contents", {projectId:projectId, fileId:fileId}
+      ensureEmptyFile = (callback)=>
+        @request.get "#{@Settings.bolideUrl}/doc/#{fileId}", (error, response, body) =>
+          return @sendErrorResponse(response, error) if error
+          if body
+            logger.error "getFile called more than once", {projectId:projectId, fileId:fileId}
+            return res.send ""
+          callback()
+      ensureEmptyFile =>
+        @setBolideContents projectId, fileId
+
+  setBolideContents: (projectId, fileId) ->
+      @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+        logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
+        if err
+          @sendErrorResponse(res, err)
+        else
+          url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
+          #write file contents to ShareJS (p is position, i is insert)
+          @request.post url, json: [contents], (error, response, body)->
+            res.json projectId: projectId, fileId:fileId
 
 
   saveFile: (req, res) ->
