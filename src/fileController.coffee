@@ -11,7 +11,7 @@ class FileController
     res.json 500, {error:err}
 
   #TODO: Check for permissions
-  getFile: (req, res) =>
+  getFile: (req, res) ->
     setBolideContents = (projectId, fileId) =>
       @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
         logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
@@ -36,7 +36,7 @@ class FileController
       logger.debug "Getting file contents", {projectId:projectId, fileId:fileId}
       ensureEmptyFile = (callback)=>
         @request.get "#{@Settings.bolideUrl}/doc/#{fileId}", (error, response, body) =>
-          return @sendErrorResponse(response, error) if error
+          return @sendErrorResponse(res, error) if error
           if body
             logger.error "getFile called more than once", {projectId:projectId, fileId:fileId}
             return res.send ""
