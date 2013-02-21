@@ -12,6 +12,17 @@ class FileController
 
   #TODO: Check for permissions
   getFile: (req, res) =>
+    setBolideContents = (projectId, fileId) =>
+      @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+        logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
+        if err
+          @sendErrorResponse(res, err)
+        else
+          url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
+          #write file contents to ShareJS (p is position, i is insert)
+          @request.post url, json: [contents], (error, response, body)=>
+            res.json projectId: projectId, fileId:fileId
+
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
@@ -32,17 +43,6 @@ class FileController
           callback()
       ensureEmptyFile =>
         setBolideContents projectId, fileId
-
-    setBolideContents = (projectId, fileId) =>
-      @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
-        logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
-        if err
-          @sendErrorResponse(res, err)
-        else
-          url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
-          #write file contents to ShareJS (p is position, i is insert)
-          @request.post url, json: [contents], (error, response, body)=>
-            res.json projectId: projectId, fileId:fileId
 
 
   saveFile: (req, res) ->
