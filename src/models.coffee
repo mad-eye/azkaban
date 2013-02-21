@@ -8,6 +8,8 @@ fileSchema = mongoose.Schema
   projectId: {type: String, required: true}
   path: {type: String, required: true}
   isDir: {type: Boolean, required: true}
+  modified: {type: Boolean, default: false}
+  removed: {type: Boolean, default: false}
 
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback
@@ -62,7 +64,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
       else
         filesToDelete = []
         filesToDelete.push file for path, file of existingFileMap
-        async.forEach filesToDelete, ((file, cb) ->
+        async.each filesToDelete, ((file, cb) ->
           file.remove cb
         ), (err) ->
           if err then callback wrapDbError err; return
