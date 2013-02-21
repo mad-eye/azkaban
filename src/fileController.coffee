@@ -20,7 +20,7 @@ class FileController
       url = "#{@Settings.bolideUrl}/doc/#{fileId}"
       @request.del url, (error, response, body) =>
         return @sendErrorResponse(res, err) if error
-        @setBolideContents(projectId, fileId)
+        setBolideContents(projectId, fileId)
     else
       logger.debug "Getting file contents", {projectId:projectId, fileId:fileId}
       ensureEmptyFile = (callback)=>
@@ -31,9 +31,9 @@ class FileController
             return res.send ""
           callback()
       ensureEmptyFile =>
-        @setBolideContents projectId, fileId
+        setBolideContents projectId, fileId
 
-  setBolideContents: (projectId, fileId) ->
+    setBolideContents = (projectId, fileId) =>
       @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
         logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
         if err
@@ -41,7 +41,7 @@ class FileController
         else
           url = "#{@Settings.bolideUrl}/doc/#{fileId}?v=0"
           #write file contents to ShareJS (p is position, i is insert)
-          @request.post url, json: [contents], (error, response, body)->
+          @request.post url, json: [contents], (error, response, body)=>
             res.json projectId: projectId, fileId:fileId
 
 
