@@ -46,7 +46,7 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.SAVE_FILE, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
-      logger.debug "Saving remote file", projectId:projectId
+      #logger.debug "Saving remote file", projectId:projectId
 
     #callback: (error) ->
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
