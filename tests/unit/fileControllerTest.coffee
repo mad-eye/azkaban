@@ -69,10 +69,9 @@ describe 'fileController', ->
 
 
   describe 'getFile', ->
-    it 'should send a getFile message to dementorChanel'
-    it 'should send open a shareJS document', (done) ->
-      hitDementorChannel = false
-      hitBolideClient = false
+    hitDementorChannel = false
+    hitBolideClient = false
+    before (done) ->
       azkaban.setService "dementorChannel",
         getFileContents: (projectId, fileId, callback)->
           hitDementorChannel = true
@@ -84,14 +83,17 @@ describe 'fileController', ->
 
       res = new MockResponse
       res.end = ->
-        assert.isTrue hitBolideClient
-        assert.isTrue hitDementorChannel
         done()
       fileController.getFile
         params:
           fileId: "FILE_ID"
           projectId: "PROJECT_ID"
         , res
+
+    it 'should send a getFile message to dementorChanel', ->
+        assert.isTrue hitDementorChannel
+    it 'should send open a shareJS document', ->
+        assert.isTrue hitBolideClient
 
     it 'should return a 200 on success'
     it 'should return a 500 if there is an error communicating with dementor'
