@@ -1,12 +1,10 @@
 messageMaker = require("madeye-common").messageMaker
 {logger} = require './logger'
-BolideClient = require "./bolideClient"
 
 class FileController
   constructor: () ->
     @request = require "request"
     @Settings = require("madeye-common").Settings
-    @bolideClient = new BolideClient
 
   sendErrorResponse: (res, err) ->
     logger.error err.message, err
@@ -22,7 +20,7 @@ class FileController
     @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
       logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
       return @sendErrorResponse(res, err) if err
-      @bolideClient.setDocumentContents fileId, reset, contents, (err) =>
+      @azkaban.bolideClient.setDocumentContents fileId, reset, contents, (err) =>
         return @sendErrorResponse(res, err) if err
         res.json projectId: projectId, fileId:fileId
 

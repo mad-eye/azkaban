@@ -76,7 +76,7 @@ describe 'fileController', ->
         getFileContents: (projectId, fileId, callback)->
           hitDementorChannel = true
           callback null, "FAKE CONTENTS"
-      fileController.bolideClient =
+      azkaban.setService "bolideClient"
         setDocumentContents: (docId, contents, reset=false, callback) ->
           hitBolideClient = true
           callback null

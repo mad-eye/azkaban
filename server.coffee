@@ -5,6 +5,7 @@ io = require 'socket.io'
 {DementorChannel} = require './src/dementorChannel'
 {Azkaban} = require './src/azkaban'
 FileController = require('./src/fileController')
+BolideClient = require "./src/bolideClient"
 DementorController = require('./src/dementorController')
 cors = require './cors'
 mongoose = require 'mongoose'
@@ -58,6 +59,7 @@ class Server
       dementorChannel: dementorChannel
       dementorController: new DementorController
       fileController: new FileController
+      bolideClient: new BolideClient
       mongoose: mongoose
 
     @azkaban = Azkaban.instance()
