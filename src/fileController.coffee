@@ -1,6 +1,6 @@
 messageMaker = require("madeye-common").messageMaker
 {logger} = require './logger'
-BolideClient = require "./BolideClient"
+BolideClient = require "./bolideClient"
 
 class FileController
   constructor: () ->
