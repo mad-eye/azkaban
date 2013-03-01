@@ -70,19 +70,27 @@ describe 'fileController', ->
 
   describe 'getFile', ->
     it 'should send a getFile message to dementorChanel'
-    it 'should send a post request to bolide FWEEP', (done)->
+    it 'should send open a shareJS document', (done) ->
+      hitDementorChannel = false
+      hitBolideClient = false
       azkaban.setService "dementorChannel",
         getFileContents: (projectId, fileId, callback)->
+          hitDementorChannel = true
           callback null, "FAKE CONTENTS"
-      fileController.request =
-        post: -> done()
-        get:(url, callback) -> callback(null, null, null)
+      fileController.bolideClient =
+        setDocumentContents: (docId, contents, reset=false, callback) ->
+          hitBolideClient = true
+          callback null
 
       res = new MockResponse
+      res.end = ->
+        assert.isTrue hitBolideClient
+        assert.isTrue hitDementorChannel
+        done()
       fileController.getFile
         params:
           fileId: "FILE_ID"
-          projectId: "PROOJECT_ID"
+          projectId: "PROJECT_ID"
         , res
 
     it 'should return a 200 on success'
