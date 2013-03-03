@@ -15,12 +15,12 @@ class FileController
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     projectId = req.params['projectId']
-    reset = req.query?['reset']
+    reset = req.query?['reset'] ? false
     if reset then logger.debug "Resetting file contents", {projectId:projectId, fileId:fileId}
     @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
       logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
       return @sendErrorResponse(res, err) if err
-      @azkaban.bolideClient.setDocumentContents fileId, reset, contents, (err) =>
+      @azkaban.bolideClient.setDocumentContents fileId, contents, reset, (err) =>
         return @sendErrorResponse(res, err) if err
         res.json projectId: projectId, fileId:fileId
 

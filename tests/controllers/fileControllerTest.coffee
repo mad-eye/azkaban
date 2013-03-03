@@ -10,6 +10,7 @@ FileController = require '../../src/fileController'
 {messageMaker, messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 server = require "../../server"
+sharejs = require('share').client
 
 
 describe 'FileController', ->
@@ -145,4 +146,10 @@ describe 'FileController', ->
         JSON.parse(objects.bodyStr)
     it 'should send request message to dementor', ->
       assert.ok requestedFiles[fileId]
+    it 'should have the right body in shareJs fweep', (done) ->
+      sharejs.open fileId, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
+        assert.isNull error
+        assert.equal doc.getText(), body
+        done()
+
 
