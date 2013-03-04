@@ -28,7 +28,9 @@ class FileController
           if err
             logger.error err
           else
-            file.update {$set: {modified_locally:false}}
+            file.update {$set: {modified_locally:false}}, (err) ->
+              if err
+                logger.error "Error getting file", projectId: projectId, fileId: fileId, err:err
 
   saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
@@ -46,6 +48,8 @@ class FileController
           if err
             logger.error err
           else
-            file.update {$set: {modified_locally:false}}
+            file.update {$set: {modified_locally:false}}, (err) ->
+              if err
+                logger.error "Error saving file", projectId: projectId, fileId: fileId, err:err
 
 module.exports = FileController
