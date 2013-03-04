@@ -53,7 +53,7 @@ describe 'fileController', ->
       assert.equal callValues[1], fileId
       assert.equal callValues[2], FILE_CONTENTS
 
-    it "should return a confirmation when there are no problems", ->
+    it "should return a confirmation when there are no problems", (done)->
       azkaban.setService 'dementorChannel',
         saveFile: (projectId, fileId, contents, callback)->
           callback null
@@ -63,17 +63,15 @@ describe 'fileController', ->
 #         TODO use process.nextTick here
           callback(null, {}, FILE_CONTENTS)
 
-      fakeResponse =
-        send: sinon.spy()
-        header: ->
-        statusCode: 200
+      fakeResponse = new MockResponse
+      fakeResponse.end = (body)->
+        message = JSON.parse body
+        assert.equal message.projectId, projectId
+        assert.equal message.fileId, fileId
+        assert message.saved
+        done()
+
       fileController.saveFile req, fakeResponse
-      assert.ok fakeResponse.send.called
-      callValues = fakeResponse.send.getCall(0).args
-      message = JSON.parse callValues[0]
-      assert.equal message.projectId, projectId
-      assert.equal message.fileId, fileId
-      assert message.saved
 
     it "should return a 500 if there is an error communicating with dementor"
 

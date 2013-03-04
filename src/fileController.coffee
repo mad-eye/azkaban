@@ -11,6 +11,15 @@ class FileController
     logger.error err.message, err
     res.json 500, {error:err}
 
+  _markLocallyModified = (projectId, fileId)->
+    File.findById fileId, (err, file) ->
+      if err
+        logger.error "Error finding file", projectId: projectId, fileId: fileId, err: wrapDbError err
+      else
+        file.update {$set: {modified_locally:false}}, (err) ->
+          if err
+            logger.error "Error updating file", projectId: projectId, fileId: fileId, err: wrapDbError err
+
   #TODO: Check for permissions
   getFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
@@ -24,13 +33,7 @@ class FileController
       @azkaban.bolideClient.setDocumentContents fileId, contents, reset, (err) =>
         return @sendErrorResponse(res, err) if err
         res.json projectId: projectId, fileId:fileId
-        File.findById fileId, (err, file) ->
-          if err
-            logger.error err
-          else
-            file.update {$set: {modified_locally:false}}, (err) ->
-              if err
-                logger.error "Error getting file", projectId: projectId, fileId: fileId, err:err
+        _markLocallyModified(projectId, fileId)
 
   saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
@@ -43,13 +46,8 @@ class FileController
       if err
         @sendErrorResponse(res, err)
       else
-        res.send JSON.stringify {projectId: projectId, fileId:fileId, saved:true}
-        File.findById fileId, (err, file) ->
-          if err
-            logger.error err
-          else
-            file.update {$set: {modified_locally:false}}, (err) ->
-              if err
-                logger.error "Error saving file", projectId: projectId, fileId: fileId, err:err
+        res.json {projectId: projectId, fileId:fileId, saved:true}
+        _markLocallyModified(projectId, fileId)
+
 
 module.exports = FileController
