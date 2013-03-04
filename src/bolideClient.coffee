@@ -4,6 +4,10 @@ sharejs = require('share').client
 {logger} = require './logger'
 {errors, errorType} = require 'madeye-common'
 
+wrapShareError: (err) ->
+  #TODO: wrap with madeye error
+  return err
+
 class BolideClient
   constructor: ->
 
@@ -12,7 +16,7 @@ class BolideClient
       callback = reset
       reset = false
     sharejs.open docId, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
-      return callback error if error
+      return callback wrapShareError error if error
       if doc.version > 0 and !reset
         return callback errors.new errorType.INITIALIZED_FILE_NOT_EMPTY
       if doc.getText().length > 0

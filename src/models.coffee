@@ -10,6 +10,7 @@ fileSchema = mongoose.Schema
   isDir: {type: Boolean, required: true}
   modified: {type: Boolean, default: false}
   removed: {type: Boolean, default: false}
+  modified_locally: {type: Boolean, default: false}
 
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback
