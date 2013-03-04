@@ -4,6 +4,7 @@ sinon = require 'sinon'
 request = require "request"
 {Azkaban} = require '../../src/azkaban'
 FileController = require '../../src/fileController'
+{File} = require '../../src/models'
 {Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
@@ -24,7 +25,7 @@ describe 'FileController', ->
     fileController = new FileController
 
   describe 'on save contents', ->
-    fileId = uuid.v4()
+    fileId = null
     projectId = uuid.v4()
     contents = '''If, in the morning, a kitten
     scampers up and boops your nose, are you dreaming?'''
@@ -47,17 +48,22 @@ describe 'FileController', ->
       dementorChannel.attach socket
       socket.trigger messageAction.HANDSHAKE, projectId
 
-      objects = {}
-      options =
-        method: "PUT"
-        uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
-        json:
-          contents: contents
+      file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
+      fileId = file._id
+      File.create file, (err) ->
+        assert.isNull err
 
-      request options, (err, _res, _body) ->
-        objects.body = _body
-        objects.response = _res
-        done()
+        options =
+          method: "PUT"
+          uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
+          json:
+            contents: contents
+
+        objects = {}
+        request options, (err, _res, _body) ->
+          objects.body = _body
+          objects.response = _res
+          done()
 
     it "returns a 200", ->
       assert.equal objects.response.statusCode, 200
@@ -69,6 +75,8 @@ describe 'FileController', ->
       assert.equal objects.body.projectId, projectId
     it 'should return a saved=true in response body', ->
       assert.ok objects.body.saved
+    it 'should set file.modified_locally=false'
+
     it 'should have sent the message to the socket', ->
       assert.equal saveFileMessages[fileId], contents
 
@@ -103,7 +111,7 @@ describe 'FileController', ->
         done()
 
   describe 'on get info', ->
-    fileId = uuid.v4()
+    fileId = null
     projectId = uuid.v4()
     body = '''without a cat one has to wonder,
       is the world real, or just imgur?'''
@@ -124,20 +132,25 @@ describe 'FileController', ->
       dementorChannel.attach socket
       socket.trigger messageAction.HANDSHAKE, projectId
 
-      objects = {}
-      options =
-        method: "GET"
-        uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
+      file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
+      fileId = file._id
+      File.create file, (err) ->
+        assert.isNull err
 
-      request options, (err, _res, _body) ->
-        objects.bodyStr = _body
-        try
-          objects.body = JSON.parse _body
-        catch error
-          console.log "Unable to parse", _body
-          "Let the test catch this."
-        objects.response = _res
-        done()
+        objects = {}
+        options =
+          method: "GET"
+          uri: "http://localhost:#{Settings.azkabanPort}/project/#{projectId}/file/#{fileId}"
+
+        request options, (err, _res, _body) ->
+          objects.bodyStr = _body
+          try
+            objects.body = JSON.parse _body
+          catch error
+            console.log "Unable to parse", _body
+            "Let the test catch this."
+          objects.response = _res
+          done()
 
     it "returns a 200", ->
       assert.ok objects.response.statusCode == 200
@@ -146,7 +159,7 @@ describe 'FileController', ->
         JSON.parse(objects.bodyStr)
     it 'should send request message to dementor', ->
       assert.ok requestedFiles[fileId]
-    it 'should have the right body in shareJs fweep', (done) ->
+    it 'should have the right body in shareJs', (done) ->
       sharejs.open fileId, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
         assert.isNull error
         assert.equal doc.getText(), body
