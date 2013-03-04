@@ -1,25 +1,53 @@
 assert = require('chai').assert
 #assert = require 'assert'
 uuid = require 'node-uuid'
-{MockSocket, messageMaker} = require 'madeye-common'
+{MockSocket} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
-{MockDb} = require '../mock/MockMongo'
+{Azkaban} = require '../../src/azkaban'
+BolideClient = require '../../src/bolideClient'
 {Project, File} = require '../../src/models'
-{messageMaker, messageAction} = require 'madeye-common'
+{messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 async = require 'async'
+sharejs = require('share').client
+{Settings} = require 'madeye-common'
 
-#
-# Messages are of the form:
-# {
-#   action: eg addFiles, removeFiles, etc
-#   id: uuid of message
-#   projectId: uuid of project
-#   timestamp: Date timestamp of sending
-#   data: JSON object, case specific data
-# }
+
 
 describe "DementorChannel", ->
+  Azkaban.initialize()
+  azkaban = Azkaban.instance()
+  azkaban.setService 'bolideClient', new BolideClient
+
+  setupProject = (projectName, objects, callback) ->
+    if 'function' == typeof objects
+      callback = objects
+      objects = {}
+    channel = new DementorChannel()
+    azkaban.setService 'dementorChannel', channel
+    project = new Project name: projectName
+
+    project.save (err) ->
+      assert.equal err, null
+      projectId = objects.projectId = project._id
+
+      mockSocket = objects.mockSocket = new MockSocket
+      channel.attach mockSocket
+      mockSocket.trigger messageAction.HANDSHAKE, projectId
+
+      files = [
+        {path:'file1', projectId: projectId, isDir:false, modified: true},
+        {path:'dir1', projectId: projectId, isDir:true },
+        {path:'dir1/file2', projectId: projectId, isDir:false }
+      ]
+      fileMap = objects.fileMap = {}
+      async.each files, (f, cb) ->
+        File.create f, (err, file) ->
+          fileMap[file.path] = file
+          cb (err)
+      , (err) ->
+        callback()
+
   describe "on receiving addFiles message", ->
     channel = null
     data = null
@@ -68,42 +96,16 @@ describe "DementorChannel", ->
         #done()
 
   describe "on receiving removeFiles message", ->
-    channel = null
-    data = null
-    mockSocket = null
-    projectId = null
-    fileMap = {}
+    objects = {}
 
     beforeEach (done) ->
-      channel = new DementorChannel()
-      project = new Project
-        name: 'liskon'
-
-      project.save (err) ->
-        assert.equal err, null
-        projectId = project._id
-
-        mockSocket = new MockSocket
-        channel.attach mockSocket
-        mockSocket.trigger messageAction.HANDSHAKE, projectId
-
-        files = [
-          {path:'file1', projectId: projectId, isDir:false, modified: true},
-          {path:'dir1', projectId: projectId, isDir:true },
-          {path:'dir1/file2', projectId: projectId, isDir:false }
-        ]
-        async.each files, (f, cb) ->
-          File.create f, (err, file) ->
-            fileMap[file.path] = file
-            cb (err)
-        , (err) ->
-          done()
+      setupProject 'liskon', objects, done
 
     it 'should delete a single file', (done) ->
-      file = fileMap['dir1/file2']
+      file = objects.fileMap['dir1/file2']
       data =
         files: [file]
-      mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
+      objects.mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
         assert.isNull err
         File.findById file._id, (err, doc) ->
           assert.isNull err
@@ -111,10 +113,10 @@ describe "DementorChannel", ->
           done()
 
     it 'should respond with message when file is modified', (done) ->
-      file = fileMap['file1']
+      file = objects.fileMap['file1']
       data =
         files: [file]
-      mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
+      objects.mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
         assert.isNull err
         assert.equal result.action, messageAction.WARNING
         assert.ok result.message
@@ -124,6 +126,43 @@ describe "DementorChannel", ->
           assert.isTrue doc.modified
           done()
 
+  describe "on receiving saveFile message", ->
+    objects = {}
+
+    beforeEach (done) ->
+      setupProject 'nerzo', objects, done
+
+    it 'should have the right body in shareJs', (done) ->
+      file = objects.fileMap['dir1/file2']
+      contents = "Rarrryys"
+      data =
+        contents: contents
+        file: file
+      objects.mockSocket.trigger messageAction.SAVE_FILE, data, (err, result) ->
+        assert.isNull err
+        sharejs.open file._id, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
+          assert.isNull error
+          assert.equal doc.getText(), contents
+          done()
+
+    #TODO: Break this up into a block with before
+    it 'should respond with message when file is modified fweep', (done) ->
+      file = objects.fileMap['file1']
+      contents = "Rarrryyasdfads"
+      data =
+        contents: contents
+        file: file
+      objects.mockSocket.trigger messageAction.SAVE_FILE, data, (err, result) ->
+        assert.isNull err
+        assert.equal result.action, messageAction.WARNING
+        assert.ok result.message
+        File.findById file._id, (err, doc) ->
+          assert.isNull err
+          assert.isTrue doc.modified_locally
+          sharejs.open file._id, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
+            assert.isNull error
+            assert.notEqual doc.getText(), contents
+            done()
 
 
 
@@ -177,7 +216,6 @@ describe "DementorChannel", ->
     it 'should close project after 5 seconds'
 
     it 'should not close project if new socket is attached quickly', (done) ->
-
       channel.closeProject = (projectId, callback) ->
         assert.fail "Should not call closeProject."
       mockSocket.trigger 'disconnect'

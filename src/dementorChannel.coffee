@@ -16,6 +16,10 @@ class DementorChannel
       @closeProject projectId
       callback?()
 
+  handleError: (err, projectId, callback) ->
+    logger.error "Error in dementorChannel", projectId: projectId, err
+    callback err
+
   attach: (socket) ->
     socket.on 'disconnect', =>
       projectId = @socketProjectIds[socket.id]
@@ -46,7 +50,20 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.SAVE_FILE, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
-      #logger.debug "Saving remote file", projectId:projectId
+      File.findById data.file._id, (err, file) =>
+        return @handleError wrapDbError err, projectId, callback if err
+        logger.debug "Saving remote file", projectId:projectId, fileId: data.file._id, fileModified:file.modified
+        if file.modified
+          file.update {$set: {modified_locally:true}}, (err) ->
+            callback err, {
+              action : messageAction.WARNING
+              message : "The file #{file.path} was modified by other; if they save it, it will be overwritten."
+            }
+        else
+          @azkaban.bolideClient.setDocumentContents file._id, data.contents, true, (err) =>
+            return @handleError err, projectId, callback if err
+            callback null
+        
 
     #callback: (error) ->
     socket.on messageAction.REMOVE_FILES, (data, callback) =>
