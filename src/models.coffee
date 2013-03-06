@@ -85,6 +85,7 @@ projectSchema = mongoose.Schema
 Project = mongoose.model 'Project', projectSchema, 'projects'
 
 wrapDbError = (err) ->
+  return err unless err?
   return err if err.madeye
   errors.new errorType.DATABASE_ERROR, cause:err
 

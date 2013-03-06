@@ -146,7 +146,7 @@ describe "DementorChannel", ->
           done()
 
     #TODO: Break this up into a block with before
-    it 'should respond with message when file is modified fweep', (done) ->
+    it 'should respond with message when file is modified', (done) ->
       file = objects.fileMap['file1']
       contents = "Rarrryyasdfads"
       data =
