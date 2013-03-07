@@ -6,6 +6,7 @@ io = require 'socket.io'
 {Azkaban} = require './src/azkaban'
 FileController = require('./src/fileController')
 BolideClient = require "./src/bolideClient"
+ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
 cors = require './cors'
 mongoose = require 'mongoose'
@@ -61,6 +62,7 @@ class Server
       fileController: new FileController
       bolideClient: new BolideClient
       mongoose: mongoose
+      apogeeLogProcessor: new ApogeeLogProcessor 1000 #interval to check metrics db
 
     @azkaban = Azkaban.instance()
       
