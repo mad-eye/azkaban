@@ -2,6 +2,7 @@
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
+{dementorLogger} = require './logger'
 async = require 'async'
 
 class DementorChannel
@@ -92,10 +93,9 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.METRIC, (data, callback) =>
       data.projectId ?= @socketProjectIds[socket.id]
-      if data.type == 'error'
-        logger.error 'dementorError', data
-      else
-        logger.debug 'dementorMetric', data
+      level = data.level; delete data.level
+      message = data.message; delete data.message
+      dementorLogger.log level, message, data
       callback?()
 
 

@@ -2,59 +2,71 @@ winston = require('winston')
 {Settings} = require 'madeye-common'
 fs = require 'fs'
 
-logDir = process.env.MADEYE_LOG_DIR
-if not logDir and process.env.MADEYE_HOME
-  logDir = "#{process.env.MADEYE_HOME}/log" 
-
-unless logDir
+logDir = null
+if process.env.MADEYE_LOG_DIR?
+  logDir = process.env.MADEYE_LOG_DIR
+else if process.env.MADEYE_HOME?
+  logDir = "#{process.env.MADEYE_HOME}/log"
+else
   logDir = "/tmp"
 
 fs.mkdirSync logDir unless fs.existsSync logDir
 
-consoleOptions =
+consoleOptions = (app) ->
   level: 'info'
   silent: false
   colorize: true
-  timestamp: true
+  timestamp: (app == 'azkaban')
 
-fileOptions =
+fileOptions = (app) ->
   level: 'info'
-  filename: "#{logDir}/azkaban.log"
-  timestamp: true
+  filename: "#{logDir}/#{app}.log"
+  timestamp: (app == 'azkaban')
   json: false
 
-ERROR_FILENAME = "#{logDir}/azkaban-error.log"
-errorFileOptions =
+errorFileOptions = (app) ->
   level: 'error'
-  filename: ERROR_FILENAME
-  timestamp: true
+  filename: "#{logDir}/#{app}-error.log"
+  timestamp: (app == 'azkaban')
   json: false
 
 #Add Loggly transport
 Loggly = require('winston-loggly').Loggly
-logglyOptions =
+logglyOptions = (logglyKey) ->
   level: 'debug'
   json: true
   subdomain: 'madeye'
-  inputToken: Settings.logglyAzkabanKey #Azakban's key
+  inputToken: logglyKey
 
-  ###
 logger = new winston.Logger
     transports: [
-      new winston.transports.File fileOptions,
-      new winston.transports.File errorFileOptions,
-      new winston.transports.Console consoleOptions,
-      new Loggly logglyOptions
+      new (winston.transports.File)(fileOptions('azkaban')),
+      #new winston.transports.File errorFileOptions,
+      new (winston.transports.Console)(consoleOptions('azkaban')),
+      new (Loggly)(logglyOptions(Settings.logglyAzkabanKey))
     ]
-    exceptionHandlers: [
-      new winston.transports.File filename: ERROR_FILENAME
-    ]
-    ###
+  #This is breaking tests, since it swallows exceptions that mocha needs to fail a test.
+    #exceptionHandlers: [
+      #new winston.transports.File filename: ERROR_FILENAME
+    #]
 
-winston.remove winston.transports.Console
-winston.add winston.transports.Console, consoleOptions
-winston.add winston.transports.File, fileOptions
-winston.add Loggly, logglyOptions
-#This is breaking tests, since it swallows exceptions that mocha needs to fail a test.
-#winston.handleExceptions new winston.transports.File errorFileOptions
-exports.logger = winston
+apogeeLogger = new winston.Logger
+    transports: [
+      new (winston.transports.File)(fileOptions('apogee-client')),
+      #new winston.transports.File errorFileOptions,
+      new (winston.transports.Console)(consoleOptions('apogee')),
+      new (Loggly)(logglyOptions(Settings.logglyApogeeKey))
+    ]
+
+dementorLogger = new winston.Logger
+    transports: [
+      new (winston.transports.File)(fileOptions('dementor')),
+      #new winston.transports.File errorFileOptions,
+      new (winston.transports.Console)(consoleOptions('dementor')),
+      new (Loggly)(logglyOptions(Settings.logglyDementorKey))
+    ]
+
+exports.logger = logger
+exports.dementorLogger = dementorLogger
+exports.apogeeLogger = apogeeLogger
+
