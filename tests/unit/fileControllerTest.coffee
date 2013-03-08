@@ -12,10 +12,6 @@ describe 'fileController', ->
   azkaban = Azkaban.instance()
   fileController = undefined
 
-  beforeEach ->
-    fileController = new FileController
-    azkaban.setService 'fileController', fileController
-
   describe 'saveFile', ->
     FILE_CONTENTS = "a riveting text"
 
@@ -35,6 +31,9 @@ describe 'fileController', ->
           fileId: fileId
         body:
           contents: FILE_CONTENTS
+
+      fileController = new FileController
+      azkaban.setService 'fileController', fileController
 
       File.create file, (err) ->
         assert.isNull err
@@ -84,7 +83,7 @@ describe 'fileController', ->
         getFileContents: (projectId, fileId, callback)->
           hitDementorChannel = true
           callback null, "FAKE CONTENTS"
-      azkaban.setService "bolideClient"
+      azkaban.setService "bolideClient",
         setDocumentContents: (docId, contents, reset=false, callback) ->
           hitBolideClient = true
           callback null
@@ -96,9 +95,12 @@ describe 'fileController', ->
       projectId = uuid.v4()
       file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
       fileId = file._id
+
+      fileController = new FileController
+      azkaban.setService 'fileController', fileController
+
       File.create file, (err) ->
         assert.isNull err
-
         fileController.getFile
           params:
             fileId: fileId
