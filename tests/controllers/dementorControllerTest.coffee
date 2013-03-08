@@ -70,7 +70,7 @@ assertResponseOk = (objects, isError=false, errorType=null) ->
 # Real DB tests
 ###
 
-describe "DementorController with real db", ->
+describe "DementorController (functional)", ->
   # INTEGRATION TEST -- requires app and MongoDb to be running.
   server.listen()
 

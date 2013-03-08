@@ -14,7 +14,7 @@ server = require "../../server"
 sharejs = require('share').client
 
 
-describe 'FileController', ->
+describe 'FileController (functional)', ->
   # Acceptance tests -- need app, but need to set DementorChannel first
   server.listen()
 
