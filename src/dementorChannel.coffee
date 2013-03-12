@@ -41,7 +41,7 @@ class DementorChannel
         callback? err
 
     #callback: (error, files) ->
-    socket.on messageAction.ADD_FILES, (data, callback) =>
+    socket.on messageAction.LOCAL_FILES_ADDED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       logger.debug "Adding remote files", projectId:projectId
       File.addFiles data.files, data.projectId, (err, files) ->
@@ -49,7 +49,7 @@ class DementorChannel
         callback null, files
 
     #callback: (error) ->
-    socket.on messageAction.SAVE_FILE, (data, callback) =>
+    socket.on messageAction.LOCAL_FILE_SAVED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       File.findById data.file._id, (err, file) =>
         return @handleError wrapDbError err, projectId, callback if err
@@ -67,7 +67,7 @@ class DementorChannel
         
 
     #callback: (error) ->
-    socket.on messageAction.REMOVE_FILES, (data, callback) =>
+    socket.on messageAction.LOCAL_FILES_REMOVED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       logger.debug "Removing remote files", projectId:projectId, files: data.files
       message = null
@@ -127,7 +127,7 @@ class DementorChannel
     unless socket?
       callback errors.new errorType.CONNECTION_CLOSED
       return
-    socket.emit messageAction.SAVE_FILE, {fileId:fileId, contents:contents}, callback
+    socket.emit messageAction.SAVE_LOCAL_FILE, {fileId:fileId, contents:contents}, callback
 
   #callback: (err, contents) ->
   getFileContents: (projectId, fileId, callback) ->

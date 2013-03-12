@@ -48,7 +48,7 @@ describe "DementorChannel", ->
       , (err) ->
         callback()
 
-  describe "on receiving addFiles message", ->
+  describe "on receiving localFilesAdded message", ->
     channel = null
     data = null
     mockSocket = null
@@ -77,7 +77,7 @@ describe "DementorChannel", ->
         done()
 
     it "should add _id field", (done) ->
-      mockSocket.trigger messageAction.ADD_FILES, data, (err, files) ->
+      mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, files) ->
         assert.equal null, err
         assert.ok files
         assert.ok file._id, "File should have been given _id" for file in files
@@ -95,7 +95,7 @@ describe "DementorChannel", ->
         #assert.equal err.type, errorType.DATABASE_ERROR
         #done()
 
-  describe "on receiving removeFiles message", ->
+  describe "on receiving localFilesRemoved message", ->
     objects = {}
 
     beforeEach (done) ->
@@ -105,7 +105,7 @@ describe "DementorChannel", ->
       file = objects.fileMap['dir1/file2']
       data =
         files: [file]
-      objects.mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_REMOVED, data, (err, result) ->
         assert.isNull err
         File.findById file._id, (err, doc) ->
           assert.isNull err
@@ -116,7 +116,7 @@ describe "DementorChannel", ->
       file = objects.fileMap['file1']
       data =
         files: [file]
-      objects.mockSocket.trigger messageAction.REMOVE_FILES, data, (err, result) ->
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_REMOVED, data, (err, result) ->
         assert.isNull err
         assert.equal result.action, messageAction.WARNING
         assert.ok result.message
@@ -126,7 +126,7 @@ describe "DementorChannel", ->
           assert.isTrue doc.modified
           done()
 
-  describe "on receiving saveFile message", ->
+  describe "on receiving localFileSaved message", ->
     objects = {}
 
     beforeEach (done) ->
@@ -138,7 +138,7 @@ describe "DementorChannel", ->
       data =
         contents: contents
         file: file
-      objects.mockSocket.trigger messageAction.SAVE_FILE, data, (err, result) ->
+      objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
         assert.isNull err
         sharejs.open file._id, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
           assert.isNull error
@@ -152,7 +152,7 @@ describe "DementorChannel", ->
       data =
         contents: contents
         file: file
-      objects.mockSocket.trigger messageAction.SAVE_FILE, data, (err, result) ->
+      objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
         assert.isNull err
         assert.equal result.action, messageAction.WARNING
         assert.ok result.message

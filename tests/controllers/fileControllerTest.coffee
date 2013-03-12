@@ -32,10 +32,9 @@ describe 'FileController (functional)', ->
     objects = socket = null
     saveFileMessages = {}
     before (done) ->
-
       socket = new MockSocket
       socket.onEmit = (action, data, callback) ->
-        if action == messageAction.SAVE_FILE
+        if action == messageAction.SAVE_LOCAL_FILE
           unless data.fileId && data.contents
             callback errors.new errorType.MISSING_PARAM
             return
