@@ -10,7 +10,7 @@ sendErrorResponse = (res, err) ->
 
 class DementorController
   constructor: () ->
-    @minDementorVersion = '0.0.18'
+    @minDementorVersion = '0.0.21'
 
   checkVersion: (version) ->
     return version? && semver.gte version, @minDementorVersion
