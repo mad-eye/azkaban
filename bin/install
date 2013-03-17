@@ -8,9 +8,6 @@ else
     production=""
 fi
 
-basedir=`dirname $0`
-
-git submodule update --init --recursive
-
-$basedir/install $production
+npm install -q $production .madeye-common
+npm install -q $production
 
