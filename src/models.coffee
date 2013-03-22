@@ -55,7 +55,6 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
       if file.path of existingFileMap
         existingFile = existingFileMap[file.path]
         unless existingFile.mtime? and existingFile.mtime >= file.mtime
-          logger.debug "File has been updated on client.", projectId:projectId, fileId:existingFile._id
           _.extend existingFile, file
           existingFile.modified_locally = true
           existingFile.modified = true
