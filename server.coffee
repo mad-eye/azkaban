@@ -87,9 +87,15 @@ class Server
     process.on 'SIGTERM', =>
       @shutdown()
 
+    process.on 'uncaughtException', (err) =>
+      console.error "Exiting because of uncaught exception: " + err
+      logger.error "Exiting because of uncaught exception: #{err.message}", error:err
+      @shutdown(1)      
+    
     @azkaban.httpServer.listen @app.get('port'), =>
       logger.debug "Express server listening on port " + @app.get('port')
       callback?()
 
+    
 server = new Server
 module.exports = server 
