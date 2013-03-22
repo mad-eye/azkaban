@@ -111,12 +111,13 @@ describe 'File', ->
         assert.equal _.uniq(paths).length, paths.length
         done()
 
-  describe 'addFiles with mtime', ->
+  describe 'addFiles with mtime fweep', ->
     projectId = uuid.v4()
     fileId = otherFileId = null
     savedFile = otherSavedFile = null
-    now = new Date()
-    ago = new Date(now.getTime() - 60*1000)
+    now = Date.now()
+    ago = now - 60*1000
+    console.log "now: #{typeof now}, ago: #{typeof ago}"
     before (done) ->
       path = "a/path.txt"
       otherPath = "a/anotherpath.txt"
@@ -125,8 +126,10 @@ describe 'File', ->
       otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago}
       otherFileId = otherExistingFile._id
       async.parallel [(cb) ->
+        console.log "Saving", existingFile
         existingFile.save cb
       , (cb) ->
+        console.log "Saving", otherExistingFile
         otherExistingFile.save cb
       ], (err, savedFiles) ->
         assert.isNull err, "Found error #{err}"
@@ -144,8 +147,8 @@ describe 'File', ->
               done()
 
     it 'should update mtime only on new file', ->
-      assert.equal savedFile.mtime.getTime(), now.getTime()
-      assert.equal otherSavedFile.mtime.getTime(), ago.getTime()
+      assert.equal savedFile.mtime, now
+      assert.equal otherSavedFile.mtime, ago
 
     it 'should set modified=true only on the new file', ->
       assert.isTrue savedFile.modified

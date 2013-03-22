@@ -12,7 +12,7 @@ fileSchema = mongoose.Schema
   path: {type: String, required: true}
   isDir: {type: Boolean, required: true}
   isLink: {type: Boolean, default: false}
-  mtime: {type: Date, default: Date.now}
+  mtime: {type: Number, default: Date.now}
   modified: {type: Boolean, default: false}
   removed: {type: Boolean, default: false}
   modified_locally: {type: Boolean, default: false}
@@ -52,7 +52,6 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     existingFileMap = {}
     existingFileMap[file.path] = file for file in existingFiles
     for file in files
-      file.mtime = new Date(file.mtime) #Serialization leaves this as a string
       if file.path of existingFileMap
         existingFile = existingFileMap[file.path]
         unless existingFile.mtime? and existingFile.mtime >= file.mtime
