@@ -1,4 +1,4 @@
-assert = require 'assert'
+{assert} = require 'chai'
 async = require 'async'
 uuid = require 'node-uuid'
 _ = require 'underscore'
@@ -111,5 +111,47 @@ describe 'File', ->
         assert.equal _.uniq(paths).length, paths.length
         done()
 
+  describe 'addFiles with mtime', ->
+    projectId = uuid.v4()
+    fileId = otherFileId = null
+    savedFile = otherSavedFile = null
+    now = new Date()
+    ago = new Date(now.getTime() - 60*1000)
+    before (done) ->
+      path = "a/path.txt"
+      otherPath = "a/anotherpath.txt"
+      existingFile = new File {path, projectId, isDir:false, mtime:ago}
+      fileId = existingFile._id
+      otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago}
+      otherFileId = otherExistingFile._id
+      async.parallel [(cb) ->
+        existingFile.save cb
+      , (cb) ->
+        otherExistingFile.save cb
+      ], (err, savedFiles) ->
+        assert.isNull err, "Found error #{err}"
+        newFile  = {path, isDir:false, mtime: now}
+        otherNewFile  = {path:otherPath, isDir:false, mtime: ago}
+        deleteMissing = false
+        File.addFiles [newFile, otherNewFile], projectId, deleteMissing, (err, files) ->
+          assert.isNull err
+          File.findById fileId, (err, file) ->
+            assert.isNull err
+            savedFile = file
+            File.findById otherFileId, (err, file) ->
+              assert.isNull err
+              otherSavedFile = file
+              done()
 
+    it 'should update mtime only on new file', ->
+      assert.equal savedFile.mtime.getTime(), now.getTime()
+      assert.equal otherSavedFile.mtime.getTime(), ago.getTime()
+
+    it 'should set modified=true only on the new file', ->
+      assert.isTrue savedFile.modified
+      assert.isFalse otherSavedFile.modified
+
+    it 'should set modified_locally=true only on the new file', ->
+      assert.isTrue savedFile.modified_locally
+      assert.isFalse otherSavedFile.modified_locally
 

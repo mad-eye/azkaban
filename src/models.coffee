@@ -1,3 +1,5 @@
+_ = require 'underscore'
+_path = require 'path'
 mongoose = require 'mongoose'
 async = require 'async'
 uuid = require 'node-uuid'
@@ -8,6 +10,8 @@ fileSchema = mongoose.Schema
   projectId: {type: String, required: true}
   path: {type: String, required: true}
   isDir: {type: Boolean, required: true}
+  isLink: {type: Boolean, default: false}
+  mtime: {type: Date, default: Date.now}
   modified: {type: Boolean, default: false}
   removed: {type: Boolean, default: false}
   modified_locally: {type: Boolean, default: false}
@@ -28,8 +32,9 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
   parentsMap = {}
   for file in files
     path = file.path
-    while path.lastIndexOf('/') > -1
-      path = path.substr 0, path.lastIndexOf('/')
+    loop
+      path = _path.dirname path
+      break if path == '.' or path == '/' or !path?
       if (path of parentsMap) or (path of newFileMap)
         break
       else
@@ -46,9 +51,16 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     existingFileMap = {}
     existingFileMap[file.path] = file for file in existingFiles
     for file in files
+      file.mtime = new Date(file.mtime) #Serialization leaves this as a string
       if file.path of existingFileMap
-        #FIXME: we should extend existingFile with file, for when we add fields
-        filesToReturn.push existingFileMap[file.path]
+        existingFile = existingFileMap[file.path]
+        unless existingFile.mtime? and existingFile.mtime >= file.mtime
+          logger.debug "File has been updated on client.", projectId:projectId, fileId:existingFile._id
+          _.extend existingFile, file
+          existingFile.modified_locally = true
+          existingFile.modified = true
+          existingFile.save()
+        filesToReturn.push existingFile
         delete existingFileMap[file.path]
       else
         file.projectId = projectId

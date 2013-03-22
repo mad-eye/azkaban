@@ -12,6 +12,7 @@ wrapShareError = (err) ->
 class BolideClient
   constructor: ->
 
+  #callback: (error) ->
   setDocumentContents: (docId, contents, reset=false, callback) ->
     if 'function' == typeof reset
       callback = reset
