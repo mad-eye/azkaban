@@ -60,7 +60,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
           existingFile.modified_locally = true
           existingFile.modified = true
           existingFile.save()
-          logger.debug "File modified offline.", projectId: projectId, fileId:existingFile._id
+          logger.debug "File modified offline.", projectId: projectId, fileId:existingFile._id, existingMtime: existingFile.mtime, newMtime: file.mtime
         filesToReturn.push existingFile
         delete existingFileMap[file.path]
       else
