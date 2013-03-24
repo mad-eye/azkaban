@@ -20,6 +20,21 @@ class FileController
           if err
             logger.error "Error updating file", projectId: projectId, fileId: fileId, err: wrapDbError err
 
+  _cleanupLineEndings = (contents) ->
+    console.log "cleaning up line endings"
+    return contents unless /\r/.test contents
+    console.log "yup this file needs some serious cleaning"
+    lineBreakRegex = /(\r\n|\r|\n)/gm
+    hasDos = /\r\n/.test contents
+    hasUnix = /[^\r]\n/.test contents
+    hasOldMac = /\r(?!\n)/.test contents
+    if hasUnix
+      contents.replace lineBreakRegex, '\n'
+    else if hasDos and hasOldMac
+      contents.replace lineBreakRegex, '\r\n'
+    else
+      contents
+
   #TODO: Check for permissions
   getFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
@@ -30,9 +45,16 @@ class FileController
     @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
       logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
       return @sendErrorResponse(res, err) if err
-      @azkaban.bolideClient.setDocumentContents fileId, contents, reset, (err) =>
+      cleanContents = _cleanupLineEndings(contents)
+      console.log "clean contents", cleanContents
+      warning = null
+      unless cleanContents == contents
+        warning =
+          title: "Inconsistent line endings"
+          message: "We've converted them into one consistent ending."
+      @azkaban.bolideClient.setDocumentContents fileId, cleanContents, reset, (err) =>
         return @sendErrorResponse(res, err) if err
-        res.json projectId: projectId, fileId:fileId
+        res.json projectId: projectId, fileId:fileId, warning: warning
         _markLocallyUnmodified(projectId, fileId)
 
   saveFile: (req, res) ->
