@@ -58,7 +58,7 @@ class DementorChannel
           file.update {$set: {modified_locally:true}}, (err) ->
             callback err, {
               action : messageAction.WARNING
-              message : "The file #{file.path} was modified by other; if they save it, it will be overwritten."
+              message : "The file #{file.path} was modified on MadEye; if it is saved there, it will be overwritten here."
             }
         else
           @azkaban.bolideClient.setDocumentContents file._id, data.contents, true, (err) =>
