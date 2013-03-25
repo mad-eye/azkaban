@@ -26,6 +26,9 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     callback = deleteMissing
     deleteMissing = false
 
+  unless projectId?
+    return callback errors.new errorType.MISSING_PARAM, "No project id found for AddFiles", files:files
+
   files = files[..] #Prevent files mutation
   newFileMap = {}
   newFileMap[file.path] = file for file in files
@@ -34,6 +37,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
   parentsMap = {}
   for file in files
     path = file.path
+
     loop
       path = _path.dirname path
       break if path == '.' or path == '/' or !path?

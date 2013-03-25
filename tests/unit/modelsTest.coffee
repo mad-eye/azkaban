@@ -117,7 +117,6 @@ describe 'File', ->
     savedFile = otherSavedFile = unopenedSavedFile = null
     now = Date.now()
     ago = now - 60*1000
-    console.log "now: #{typeof now}, ago: #{typeof ago}"
     before (done) ->
       path = "a/path.txt"
       otherPath = "a/anotherpath.txt"
@@ -129,13 +128,10 @@ describe 'File', ->
       unopenedFile = new File {path:unopenedPath, projectId, isDir:false, mtime:ago}
       unopenedFileId = unopenedFile._id
       async.parallel [(cb) ->
-        console.log "Saving", existingFile
         existingFile.save cb
       , (cb) ->
-        console.log "Saving", otherExistingFile
         otherExistingFile.save cb
       , (cb) ->
-        console.log "Saving", unopenedFile
         unopenedFile.save cb
       ], (err, savedFiles) ->
         assert.isNull err, "Found error #{err}"

@@ -43,7 +43,8 @@ class DementorChannel
     #callback: (error, files) ->
     socket.on messageAction.LOCAL_FILES_ADDED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
-      logger.debug "Adding remote files", projectId:projectId
+      data.projectId ?= projectId
+      logger.debug "Adding remote files", projectId:data.projectId
       File.addFiles data.files, data.projectId, (err, files) ->
         if err then callback wrapDbError err; return
         callback null, files
