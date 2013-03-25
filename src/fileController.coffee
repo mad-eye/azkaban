@@ -20,6 +20,15 @@ class FileController
           if err
             logger.error "Error updating file", projectId: projectId, fileId: fileId, err: wrapDbError err
 
+  _markOpened = (projectId, fileId)->
+    File.findById fileId, (err, file) ->
+      if err
+        logger.error "Error finding file", projectId: projectId, fileId: fileId, err: wrapDbError err
+      else
+        file.update {$set: {lastOpened:new Date()}}, (err) ->
+          if err
+            logger.error "Error updating file", projectId: projectId, fileId: fileId, err: wrapDbError err
+
   _cleanupLineEndings = (contents) ->
     console.log "cleaning up line endings"
     return contents unless /\r/.test contents
@@ -46,7 +55,6 @@ class FileController
       logger.debug "Returned getFile", {hasError:err?, projectId:projectId, fileId:fileId}
       return @sendErrorResponse(res, err) if err
       cleanContents = _cleanupLineEndings(contents)
-      console.log "clean contents", cleanContents
       warning = null
       unless cleanContents == contents
         warning =
@@ -56,6 +64,7 @@ class FileController
         return @sendErrorResponse(res, err) if err
         res.json projectId: projectId, fileId:fileId, warning: warning
         _markLocallyUnmodified(projectId, fileId)
+        _markOpened projectId, fileId
 
   saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'

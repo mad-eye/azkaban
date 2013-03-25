@@ -16,6 +16,7 @@ fileSchema = mongoose.Schema
   modified: {type: Boolean, default: false}
   removed: {type: Boolean, default: false}
   modified_locally: {type: Boolean, default: false}
+  lastOpened: {type: Date}
 
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback
@@ -51,21 +52,26 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
     filesToSave = []
     existingFileMap = {}
     existingFileMap[file.path] = file for file in existingFiles
-    for file in files
-      if file.path of existingFileMap
-        existingFile = existingFileMap[file.path]
-        unless existingFile.mtime? and existingFile.mtime >= file.mtime
-          _.extend existingFile, file
-          existingFile.modified_locally = true
-          existingFile.modified = true
-          existingFile.save()
-          logger.debug "File modified offline.", projectId: projectId, fileId:existingFile._id, existingMtime: existingFile.mtime, newMtime: file.mtime
-        filesToReturn.push existingFile
-        delete existingFileMap[file.path]
-      else
-        file.projectId = projectId
-        newFile = new File file
-        filesToSave.push newFile
+    try
+      for file in files
+        if file.path of existingFileMap
+          existingFile = existingFileMap[file.path]
+          unless existingFile.mtime? and existingFile.mtime >= file.mtime
+            _.extend existingFile, file
+            if existingFile.lastOpened?
+              existingFile.modified_locally = true
+              existingFile.modified = true
+              logger.debug "File modified offline.", projectId: projectId, fileId:existingFile._id, existingMtime: existingFile.mtime, newMtime: file.mtime
+            existingFile.save()
+          filesToReturn.push existingFile
+          delete existingFileMap[file.path]
+        else
+          file.projectId = projectId
+          newFile = new File file
+          filesToSave.push newFile
+    catch err
+      return callback wrapDbError err
+      
 
     #Specifying 'File' is a little dangerous, but @ returns a Promise, not a true Model object.
     File.create filesToSave, (err) ->

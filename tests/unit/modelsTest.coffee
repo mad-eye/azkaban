@@ -114,47 +114,65 @@ describe 'File', ->
   describe 'addFiles with mtime fweep', ->
     projectId = uuid.v4()
     fileId = otherFileId = null
-    savedFile = otherSavedFile = null
+    savedFile = otherSavedFile = unopenedSavedFile = null
     now = Date.now()
     ago = now - 60*1000
     console.log "now: #{typeof now}, ago: #{typeof ago}"
     before (done) ->
       path = "a/path.txt"
       otherPath = "a/anotherpath.txt"
-      existingFile = new File {path, projectId, isDir:false, mtime:ago}
+      unopenedPath = "a/unopened.txt"
+      existingFile = new File {path, projectId, isDir:false, mtime:ago, lastOpened:new Date()}
       fileId = existingFile._id
-      otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago}
+      otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened:new Date()}
       otherFileId = otherExistingFile._id
+      unopenedFile = new File {path:unopenedPath, projectId, isDir:false, mtime:ago}
+      unopenedFileId = unopenedFile._id
       async.parallel [(cb) ->
         console.log "Saving", existingFile
         existingFile.save cb
       , (cb) ->
         console.log "Saving", otherExistingFile
         otherExistingFile.save cb
+      , (cb) ->
+        console.log "Saving", unopenedFile
+        unopenedFile.save cb
       ], (err, savedFiles) ->
         assert.isNull err, "Found error #{err}"
-        newFile  = {path, isDir:false, mtime: now}
-        otherNewFile  = {path:otherPath, isDir:false, mtime: ago}
+        newFile = {path, isDir:false, mtime: now}
+        otherNewFile = {path:otherPath, isDir:false, mtime: ago}
+        unopenedNewFile = {path:unopenedPath, isDir:false, mtime: now}
         deleteMissing = false
         File.addFiles [newFile, otherNewFile], projectId, deleteMissing, (err, files) ->
           assert.isNull err
-          File.findById fileId, (err, file) ->
-            assert.isNull err
-            savedFile = file
+          async.parallel [(cb) ->
+            File.findById fileId, (err, file) ->
+              savedFile = file
+              cb err
+          , (cb) ->
             File.findById otherFileId, (err, file) ->
-              assert.isNull err
               otherSavedFile = file
-              done()
+              cb err
+          , (cb) ->
+            File.findById unopenedFileId, (err, file) ->
+              unopenedSavedFile = file
+              cb err
+          ], (err) ->
+            assert.isNull err
+            done()
 
     it 'should update mtime only on new file', ->
       assert.equal savedFile.mtime, now
       assert.equal otherSavedFile.mtime, ago
+      assert.equal savedFile.mtime, now
 
     it 'should set modified=true only on the new file', ->
       assert.isTrue savedFile.modified
       assert.isFalse otherSavedFile.modified
+      assert.isFalse unopenedSavedFile.modified
 
     it 'should set modified_locally=true only on the new file', ->
       assert.isTrue savedFile.modified_locally
       assert.isFalse otherSavedFile.modified_locally
+      assert.isFalse unopenedSavedFile.modified_locally
 
