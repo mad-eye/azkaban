@@ -43,7 +43,7 @@ class MockResponse
           return @json body
 
     # respond
-    @end body
+    @_end body
     return this
 
   json : (obj) ->
@@ -78,6 +78,11 @@ class MockResponse
 
   get : (field) ->
     @headers[field]
+
+  _end: (body) ->
+    @statusCode ?= 200
+    @_body = body
+    @end body
 
   end: (body) ->
     #OVERRIDE THIS
