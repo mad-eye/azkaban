@@ -6,6 +6,7 @@ sinon = require 'sinon'
 FileController = require '../../src/fileController'
 MockResponse = require '../mock/mockResponse'
 {Project, File} = require '../../src/models'
+{crc32} = require 'madeye-common'
 
 describe 'fileController', ->
   Azkaban.initialize()
@@ -78,18 +79,21 @@ describe 'fileController', ->
   describe 'getFile', ->
     hitDementorChannel = false
     hitBolideClient = false
+    fakeContents = "FAKE CONTENTS"
+    response = null
     before (done) ->
       azkaban.setService "dementorChannel",
         getFileContents: (projectId, fileId, callback)->
           hitDementorChannel = true
-          callback null, "FAKE CONTENTS"
+          callback null, fakeContents
       azkaban.setService "bolideClient",
         setDocumentContents: (docId, contents, reset=false, callback) ->
           hitBolideClient = true
           callback null
 
-      res = new MockResponse
-      res.end = ->
+      response = new MockResponse
+      response.end = (_body) ->
+        this.body = JSON.parse _body
         done()
 
       projectId = uuid.v4()
@@ -105,12 +109,18 @@ describe 'fileController', ->
           params:
             fileId: fileId
             projectId: projectId
-          , res
+          , response
 
     it 'should send a getFile message to dementorChanel', ->
-        assert.isTrue hitDementorChannel
+      assert.isTrue hitDementorChannel
     it 'should send open a shareJS document', ->
-        assert.isTrue hitBolideClient
+      assert.isTrue hitBolideClient
 
-    it 'should return a 200 on success'
+    it 'should return a 200 on success', ->
+      assert.equal response.statusCode, 200
+
+    it 'should return correct checksum', ->
+      console.log "Found response body #{typeof response.body}", response.body
+      assert.equal response.body.checksum, crc32 fakeContents
+
     it 'should return a 500 if there is an error communicating with dementor'
