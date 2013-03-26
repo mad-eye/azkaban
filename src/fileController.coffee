@@ -66,14 +66,15 @@ class FileController
     fileId = req.params['fileId']
     projectId = req.params['projectId']
     contents = req.body.contents
-    logger.debug "Saving file contents", {projectId:projectId, fileId:fileId}
+    checksum = crc32 contents
+    logger.debug "Saving file contents", {projectId, fileId, checksum}
     @azkaban.dementorChannel.saveFile projectId, fileId, contents, (err) =>
       logger.debug "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
       if err
         @sendErrorResponse(res, err)
       else
         res.json {projectId: projectId, fileId:fileId, saved:true}
-        _updateFile projectId, fileId, modified_locally:false
+        _updateFile projectId, fileId, {modified_locally:false, checksum}
 
 
 module.exports = FileController
