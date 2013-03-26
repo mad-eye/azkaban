@@ -66,7 +66,7 @@ class FileController
     fileId = req.params['fileId']
     projectId = req.params['projectId']
     contents = req.body.contents
-    checksum = crc32 contents
+    checksum = crc32 contents if contents
     logger.debug "Saving file contents", {projectId, fileId, checksum}
     @azkaban.dementorChannel.saveFile projectId, fileId, contents, (err) =>
       logger.debug "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
