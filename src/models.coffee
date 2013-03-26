@@ -44,7 +44,7 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
       if (path of parentsMap) or (path of newFileMap)
         break
       else
-        parentsMap[path] = {path: path, projectId: @projectId, isDir: true}
+        parentsMap[path] = {path: path, projectId: projectId, isDir: true}
 
   for path, parent of parentsMap
     files.push parent unless newFileMap[path]
@@ -73,25 +73,25 @@ fileSchema.statics.addFiles = (files, projectId, deleteMissing=false, callback) 
           file.projectId = projectId
           newFile = new File file
           filesToSave.push newFile
-    catch err
-      return callback wrapDbError err
       
 
-    #Specifying 'File' is a little dangerous, but @ returns a Promise, not a true Model object.
-    File.create filesToSave, (err) ->
-      if err then callback wrapDbError err; return
-      savedFiles = Array.prototype.slice.call arguments, 1
-      filesToReturn = filesToReturn.concat savedFiles
-      unless deleteMissing
-        callback null, filesToReturn
-      else
-        filesToDelete = []
-        filesToDelete.push file for path, file of existingFileMap
-        async.each filesToDelete, ((file, cb) ->
-          file.remove cb
-        ), (err) ->
-          if err then callback wrapDbError err; return
+      #Specifying 'File' is a little dangerous, but @ returns a Promise, not a true Model object.
+      File.create filesToSave, (err) ->
+        if err then callback wrapDbError err; return
+        savedFiles = Array.prototype.slice.call arguments, 1
+        filesToReturn = filesToReturn.concat savedFiles
+        unless deleteMissing
           callback null, filesToReturn
+        else
+          filesToDelete = []
+          filesToDelete.push file for path, file of existingFileMap
+          async.each filesToDelete, ((file, cb) ->
+            file.remove cb
+          ), (err) ->
+            if err then callback wrapDbError err; return
+            callback null, filesToReturn
+    catch err
+      return callback wrapDbError err
 
 
 
