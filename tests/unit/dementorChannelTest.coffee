@@ -4,6 +4,7 @@ uuid = require 'node-uuid'
 {DementorChannel} = require '../../src/dementorChannel'
 {Azkaban} = require '../../src/azkaban'
 BolideClient = require '../../src/bolideClient'
+FileSyncer = require '../../src/fileSyncer'
 {Project, File} = require '../../src/models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
@@ -17,6 +18,7 @@ describe "DementorChannel", ->
   Azkaban.initialize()
   azkaban = Azkaban.instance()
   azkaban.setService 'bolideClient', new BolideClient
+  azkaban.setService 'fileSyncer', new FileSyncer
 
   setupProject = (projectName, objects, callback) ->
     if 'function' == typeof objects
@@ -34,7 +36,7 @@ describe "DementorChannel", ->
       channel.attach mockSocket
       mockSocket.trigger messageAction.HANDSHAKE, projectId
 
-      files = [
+      objects.files = files = [
         {path:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
         {path:'dir1', projectId: projectId, isDir:true },
         {path:'dir1/file2', projectId: projectId, isDir:false, lastOpened: Date.now() }
@@ -49,35 +51,18 @@ describe "DementorChannel", ->
         callback()
 
   describe "on receiving localFilesAdded message", ->
+    objects = {}
     channel = null
     data = null
-    mockSocket = null
-    projectId = null
 
     beforeEach (done) ->
-      channel = new DementorChannel()
-      project = new Project
-        name: 'swansa'
-
-      project.save (err, project) ->
-        assert.equal err, null
-        projectId = project._id
-
-        data =
-          projectId: projectId
-          files: [
-            {path:'foo/bar/file1', isDir:false },
-            {path:'foo/bar/dir1', isDir:true },
-            {path:'foo/bar/dir1/file2', isDir:false }
-          ]
-
-        mockSocket = new MockSocket
-        channel.attach mockSocket
-        mockSocket.trigger messageAction.HANDSHAKE, projectId
-        done()
+      setupProject 'swansa', objects, done
 
     it "should add _id field", (done) ->
-      mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, files) ->
+      data =
+        projectId: objects.projectId
+        files: objects.files
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, files) ->
         assert.equal null, err
         assert.ok files
         assert.ok file._id, "File should have been given _id" for file in files

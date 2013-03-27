@@ -3,6 +3,7 @@ _path = require 'path'
 {File, Project, wrapDbError} = require './models'
 {EventEmitter} = require 'events'
 {logger} = require './logger'
+async = require 'async'
 
 class FileSyncer extends EventEmitter
 

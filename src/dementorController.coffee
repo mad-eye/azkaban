@@ -19,7 +19,7 @@ class DementorController
   createProject: (req, res) =>
     unless @checkVersion req.body['version']
       sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
-    Project.create name: req.body['projectName'], (err, proj) ->
+    Project.create name: req.body['projectName'], (err, proj) =>
       if err then sendErrorResponse(res, err); return
       logger.debug "Project created", {projectId:proj._id}
       @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, (err, files) ->
@@ -33,7 +33,7 @@ class DementorController
     project =
       name: req.body['projectName']
       closed: false
-    Project.findOneAndUpdate {_id:projectId}, project, {new:true, upsert:true}, (err, proj) ->
+    Project.findOneAndUpdate {_id:projectId}, project, {new:true, upsert:true}, (err, proj) =>
       if err then sendErrorResponse(res, err); return
       logger.debug "Project refreshed", {projectId:proj._id}
       deleteMissing = true

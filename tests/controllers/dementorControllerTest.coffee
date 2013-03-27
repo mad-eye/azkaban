@@ -103,7 +103,7 @@ describe "DementorController (functional)", ->
       assert.ok file._id for file in returnedFiles
 
 
-  describe "init fweep", ->
+  describe "init", ->
     projectName = 'cleesh'
     objects = {}
     before (done) ->
