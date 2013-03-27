@@ -2,7 +2,7 @@ assert = require("chai").assert
 uuid = require 'node-uuid'
 sinon = require 'sinon'
 {Azkaban} = require '../../src/azkaban'
-
+FileSyncer = require '../../src/fileSyncer'
 FileController = require '../../src/fileController'
 MockResponse = require '../mock/mockResponse'
 {Project, File} = require '../../src/models'
@@ -11,6 +11,7 @@ MockResponse = require '../mock/mockResponse'
 describe 'fileController', ->
   Azkaban.initialize()
   azkaban = Azkaban.instance()
+  azkaban.setService 'fileSyncer', new FileSyncer
   fileController = undefined
 
   describe 'saveFile', ->

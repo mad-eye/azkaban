@@ -4,6 +4,7 @@ _path = require 'path'
 {EventEmitter} = require 'events'
 {logger} = require './logger'
 async = require 'async'
+{crc32} = require("madeye-common")
 
 class FileSyncer extends EventEmitter
 
@@ -102,5 +103,39 @@ class FileSyncer extends EventEmitter
               projectId: projectId
               fileId: file._id
       
-      
+  _cleanupLineEndings = (contents) ->
+    return contents unless /\r/.test contents
+    lineBreakRegex = /(\r\n|\r|\n)/gm
+    hasDos = /\r\n/.test contents
+    hasUnix = /[^\r]\n/.test contents
+    hasOldMac = /\r(?!\n)/.test contents
+    if hasUnix
+      contents.replace lineBreakRegex, '\n'
+    else if hasDos and hasOldMac
+      contents.replace lineBreakRegex, '\r\n'
+    else
+      contents
+
+  #callback: (err, contents) ->
+  loadFile: (projectId, fileId, reset, callback) ->
+    @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+      logger.debug "Returned file from dementor", {hasError:err?, projectId:projectId, fileId:fileId}
+      return callback err if err
+      cleanContents = _cleanupLineEndings(contents)
+      checksum = crc32 cleanContents if cleanContents?
+      warning = null
+      unless cleanContents == contents
+        warning =
+          title: "Inconsistent line endings"
+          message: "We've converted them all into one type."
+      if reset then logger.debug "Resetting file contents", {projectId:projectId, fileId:fileId}
+      @azkaban.bolideClient.setDocumentContents fileId, cleanContents, reset, (err) =>
+        callback err, checksum, warning
+      File.update {_id:fileId}, {$set: {
+        modified_locally: false
+        lastOpened: new Date()
+        checksum: checksum
+      }}
+
+
 module.exports = FileSyncer
