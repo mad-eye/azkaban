@@ -66,8 +66,8 @@ class FileSyncer extends EventEmitter
       async.each modifiedFiles, (file, cb) ->
         file.modified_locally = true if file.modified
         file.save cb
-    , async.each filesToRefresh, (file, cb) ->
-      console.log "TODO: load contents of filesToRefresh"
+    , async.each filesToRefresh, (file, cb) =>
+        @loadFile file.projectId, file._id, true, cb
     ], callback
 
   syncFiles : (files, projectId, deleteMissing=false, callback) ->
