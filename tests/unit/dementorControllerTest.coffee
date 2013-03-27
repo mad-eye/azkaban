@@ -8,13 +8,19 @@ DementorController = require '../../src/dementorController'
 MockResponse = require '../mock/mockResponse'
 testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
+{Azkaban} = require '../../src/azkaban'
+FileSyncer = require '../../src/fileSyncer'
 
 assertFilesCorrect = testUtils.assertFilesCorrect
 
 minDementorVersion = (new DementorController).minDementorVersion
 
 describe 'DementorController', ->
+  Azkaban.initialize()
+  azkaban = Azkaban.instance()
+  azkaban.setService 'fileSyncer', new FileSyncer()
   dementorController = new DementorController
+  azkaban.setService 'dementorController', dementorController
 
   newFiles = [
     { path: 'file1', isDir:false },
@@ -35,7 +41,6 @@ describe 'DementorController', ->
             version: minDementorVersion
 
         res = new MockResponse
-
         res.end = (_body) ->
           assert.ok _body
           body = _body

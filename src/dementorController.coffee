@@ -2,6 +2,7 @@
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
 semver = require 'semver'
+FileSyncer = require './fileSyncer'
 
 sendErrorResponse = (res, err) ->
   err = wrapDbError err
@@ -21,7 +22,7 @@ class DementorController
     Project.create name: req.body['projectName'], (err, proj) ->
       if err then sendErrorResponse(res, err); return
       logger.debug "Project created", {projectId:proj._id}
-      File.addFiles req.body['files'], proj._id, (err, files) ->
+      @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, (err, files) ->
         if err then sendErrorResponse(res, err); return
         res.json project:proj, files: files
 
@@ -36,7 +37,7 @@ class DementorController
       if err then sendErrorResponse(res, err); return
       logger.debug "Project refreshed", {projectId:proj._id}
       deleteMissing = true
-      File.addFiles req.body['files'], proj._id, deleteMissing, (err, files) ->
+      @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, deleteMissing, (err, files) ->
         if err then sendErrorResponse(res, err); return
         res.json project:proj, files: files
 
