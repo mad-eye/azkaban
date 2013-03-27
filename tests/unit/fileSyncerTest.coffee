@@ -96,9 +96,9 @@ describe 'FileSyncer', ->
       path = "a/path.txt"
       otherPath = "a/anotherpath.txt"
       unopenedPath = "a/unopened.txt"
-      existingFile = new File {path, projectId, isDir:false, mtime:ago, modified:true, lastOpened:new Date()}
+      existingFile = new File {path, projectId, isDir:false, mtime:ago, modified:true, lastOpened: Date.now()}
       fileId = existingFile._id
-      otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened:new Date()}
+      otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened: Date.now()}
       otherFileId = otherExistingFile._id
       unopenedFile = new File {path:unopenedPath, projectId, isDir:false, mtime:ago}
       unopenedFileId = unopenedFile._id
@@ -213,7 +213,7 @@ describe 'FileSyncer', ->
           {path: 'dir1/file1.txt', _id:uuid.v4(), isDir:true, mtime: ago, projectId},
           {path: 'dir1/file2.txt', _id:uuid.v4(), isDir:true, mtime: ago, projectId},
           {path: 'dir2/file1.txt', _id:uuid.v4(), isDir:false, mtime: ago, projectId},
-          {path: 'file3.txt', _id:uuid.v4(), isDir:true, lastOpened: new Date(), mtime: ago, projectId},
+          {path: 'file3.txt', _id:uuid.v4(), isDir:true, lastOpened: Date.now(), mtime: ago, projectId},
       ]
       [newFiles, unmodifiedFiles, modifiedFiles, orphanedFiles] = fileSyncer.partitionFiles files, existingFiles
 

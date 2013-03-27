@@ -62,6 +62,7 @@ class FileSyncer extends EventEmitter
   updateModifiedFiles: (modifiedFiles, callback) ->
     filesToRefresh = _.filter modifiedFiles, (file) ->
       file.lastOpened? && !file.modified
+    console.log "Found files to refresh:", filesToRefresh
     async.parallel [
       async.each modifiedFiles, (file, cb) ->
         file.modified_locally = true if file.modified
@@ -86,6 +87,8 @@ class FileSyncer extends EventEmitter
       if err then callback wrapDbError err; return
 
       [newFiles, unmodifiedFiles, modifiedFiles, orphanedFiles] = @partitionFiles files, existingFiles
+      #console.log "Found unmodifiedFiles:", _.pluck(unmodifiedFiles, 'path')
+      #console.log "Found modifiedFiles:", modifiedFiles
       
       #Save new files and return the project files
       File.create newFiles, (err) ->
@@ -94,8 +97,12 @@ class FileSyncer extends EventEmitter
         filesToReturn = savedFiles.concat unmodifiedFiles, modifiedFiles
         callback null, filesToReturn
 
-      @updateModifiedFiles modifiedFiles
+      @updateModifiedFiles modifiedFiles, (err) ->
+        logger.error "Error updating modified files", projectId:projectId, error:err
+
       if deleteMissing
+        if orphanedFiles.length > 0
+          logger.debug "Deleting #{orphanedFiles.length} files", projectId:projectId
         for file in orphanedFiles
           file.remove (err) ->
             logger.error "Error deleting file",
@@ -133,9 +140,10 @@ class FileSyncer extends EventEmitter
         callback err, checksum, warning
       File.update {_id:fileId}, {$set: {
         modified_locally: false
-        lastOpened: new Date()
+        lastOpened: Date.now()
         checksum: checksum
-      }}
+      }}, (err) ->
+        logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
 
 
 module.exports = FileSyncer

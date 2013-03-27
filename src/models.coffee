@@ -17,7 +17,7 @@ fileSchema = mongoose.Schema
   removed: {type: Boolean, default: false}
   modified_locally: {type: Boolean, default: false}
   checksum: Number
-  lastOpened: {type: Date}
+  lastOpened: Number
 
 fileSchema.statics.findByProjectId = (projectId, callback) ->
   @find {projectId: projectId}, callback

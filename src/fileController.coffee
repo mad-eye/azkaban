@@ -17,7 +17,7 @@ class FileController
     fileId = req.params['fileId']
     projectId = req.params['projectId']
     reset = req.query?['reset'] ? false
-    @azkaban.fileSyncer.loadFile projectId, fileId, reset, (err, checksum, warning) ->
+    @azkaban.fileSyncer.loadFile projectId, fileId, reset, (err, checksum, warning) =>
       if err
         @sendErrorResponse(res, err)
       else
