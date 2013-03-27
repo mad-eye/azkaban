@@ -1,5 +1,4 @@
 assert = require('chai').assert
-#assert = require 'assert'
 uuid = require 'node-uuid'
 {MockSocket} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
@@ -36,9 +35,10 @@ describe "DementorChannel", ->
       mockSocket.trigger messageAction.HANDSHAKE, projectId
 
       files = [
-        {path:'file1', projectId: projectId, isDir:false, modified: true},
+        {path:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
         {path:'dir1', projectId: projectId, isDir:true },
-        {path:'dir1/file2', projectId: projectId, isDir:false }
+        {path:'dir1/file2', projectId: projectId, isDir:false, lastOpened: Date.now() }
+        {path:'dir1/file3', projectId: projectId, isDir:false }
       ]
       fileMap = objects.fileMap = {}
       async.each files, (f, cb) ->
@@ -154,6 +154,7 @@ describe "DementorChannel", ->
         file: file
       objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
         assert.isNull err
+        assert.ok result, "Should return a result."
         assert.equal result.action, messageAction.WARNING
         assert.ok result.message
         File.findById file._id, (err, doc) ->
@@ -164,6 +165,19 @@ describe "DementorChannel", ->
             assert.notEqual doc.getText(), contents
             done()
 
+    it 'should do nothing when file is unopened', (done) ->
+      file = objects.fileMap['dir1/file3']
+      contents = "Rarrmustafafads"
+      data =
+        contents: contents
+        file: file
+      objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
+        assert.isNull err
+        assert.isNull result
+        File.findById file._id, (err, doc) ->
+          assert.isNull err
+          assert.isFalse doc.modified_locally
+          done()
 
 
   describe 'destroy', ->

@@ -4,6 +4,7 @@
 {logger} = require './logger'
 {dementorLogger} = require './logger'
 async = require 'async'
+{crc32} = require 'madeye-common'
 
 class DementorChannel
   constructor: () ->
@@ -55,13 +56,17 @@ class DementorChannel
       File.findById data.file._id, (err, file) =>
         return @handleError wrapDbError err, projectId, callback if err
         logger.debug "Saving remote file", projectId:projectId, fileId: data.file._id, fileModified:file.modified
+        return callback null, null unless file.lastOpened?
+        checksum = crc32 data.contents
+        return callback null, null if file.checksum? and checksum == file.checksum
         if file.modified
-          file.update {$set: {modified_locally:true}}, (err) ->
+          file.update {$set: {modified_locally:true, checksum}}, (err) ->
             callback err, {
               action : messageAction.WARNING
               message : "The file #{file.path} was modified on MadEye; if it is saved there, it will be overwritten here."
             }
         else
+          file.update {$set: {checksum}}
           @azkaban.bolideClient.setDocumentContents file._id, data.contents, true, (err) =>
             return @handleError err, projectId, callback if err
             callback null
