@@ -35,6 +35,9 @@ class FileController
     else
       contents
 
+  #callback: (err, contents) ->
+  loadFile: (projectId, fileId, callback) ->
+
   #TODO: Check for permissions
   getFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'

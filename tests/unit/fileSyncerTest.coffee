@@ -96,7 +96,7 @@ describe 'FileSyncer', ->
       path = "a/path.txt"
       otherPath = "a/anotherpath.txt"
       unopenedPath = "a/unopened.txt"
-      existingFile = new File {path, projectId, isDir:false, mtime:ago, lastOpened:new Date()}
+      existingFile = new File {path, projectId, isDir:false, mtime:ago, modified:true, lastOpened:new Date()}
       fileId = existingFile._id
       otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened:new Date()}
       otherFileId = otherExistingFile._id
@@ -137,13 +137,105 @@ describe 'FileSyncer', ->
       assert.equal otherSavedFile.mtime, ago
       assert.equal savedFile.mtime, now
 
-    it 'should set modified=true only on the new file', ->
-      assert.isTrue savedFile.modified
-      assert.isFalse otherSavedFile.modified
-      assert.isFalse unopenedSavedFile.modified
-
     it 'should set modified_locally=true only on the new file', ->
       assert.isTrue savedFile.modified_locally
       assert.isFalse otherSavedFile.modified_locally
       assert.isFalse unopenedSavedFile.modified_locally
+
+  describe 'completeParentFiles', ->
+    projectId = uuid.v4()
+    it 'should leave complete files alone', ->
+      files = [
+        {path: 'dir1', isDir:true, projectId},
+        {path: 'dir1/dir2', isDir:true, projectId},
+        {path: 'dir1/dir2/file.txt', isDir:true, projectId},
+      ]
+      oldFiles = files[..]
+      fileSyncer.completeParentFiles files
+      assert.deepEqual files, oldFiles
+
+    it 'should complete a file missing all parents', ->
+      files = [
+        {path: 'dir1/dir2/file.txt', isDir:false, projectId},
+      ]
+      completeFiles = files[..]
+      completeFiles.push {path: 'dir1/dir2', isDir:true, projectId}
+      completeFiles.push {path: 'dir1', isDir:true, projectId}
+      _.sortBy completeFiles, 'path'
+      fileSyncer.completeParentFiles files
+      _.sortBy files, 'path'
+      assert.deepEqual files, completeFiles
+      assert.ok file.projectId for file in files
+
+    it 'should complete a file missing only top parent', ->
+      files = [
+        {path: 'dir1/dir2/file.txt', isDir:false, projectId},
+        {path: 'dir1/dir2', isDir:true, projectId}
+      ]
+      completeFiles = files[..]
+      completeFiles.push {path: 'dir1', isDir:true, projectId}
+      _.sortBy completeFiles, 'path'
+      fileSyncer.completeParentFiles files
+      _.sortBy files, 'path'
+      assert.deepEqual files, completeFiles
+      assert.ok file.projectId for file in files
+
+    it 'should not duplicate missing parents', ->
+      files = [
+        {path: 'dir1/file1.txt', isDir:false, projectId},
+        {path: 'dir1/file2.txt', isDir:false, projectId},
+      ]
+      completeFiles = files[..]
+      completeFiles.push {path: 'dir1', isDir:true, projectId}
+      _.sortBy completeFiles, 'path'
+      fileSyncer.completeParentFiles files
+      _.sortBy files, 'path'
+      assert.deepEqual files, completeFiles
+      assert.ok file.projectId for file in files
+
+  describe 'partitionFiles', ->
+    newFiles = unmodifiedFiles = modifiedFiles = orphanedFiles = null
+    existingFiles = null
+    projectId = uuid.v4()
+    now = Date.now()
+    ago = now - 20*60*1000
+
+    before ->
+      files = [
+          {path: 'dir1', isDir:true, mtime:ago, projectId},
+          {path: 'dir1/file1.txt', isDir:true, mtime: now, projectId},
+          {path: 'dir1/file2.txt', isDir:true, mtime: ago, projectId},
+          {path: 'file3.txt', isDir:true, mtime: now, projectId},
+          {path: 'file4.txt', isDir:true, mtime: ago, projectId},
+      ]
+      existingFiles = [
+          {path: 'dir1', _id:uuid.v4(), isDir:true, mtime:ago, projectId},
+          {path: 'dir1/file1.txt', _id:uuid.v4(), isDir:true, mtime: ago, projectId},
+          {path: 'dir1/file2.txt', _id:uuid.v4(), isDir:true, mtime: ago, projectId},
+          {path: 'dir2/file1.txt', _id:uuid.v4(), isDir:false, mtime: ago, projectId},
+          {path: 'file3.txt', _id:uuid.v4(), isDir:true, lastOpened: new Date(), mtime: ago, projectId},
+      ]
+      [newFiles, unmodifiedFiles, modifiedFiles, orphanedFiles] = fileSyncer.partitionFiles files, existingFiles
+
+    it 'should have the right newFiles', ->
+      newFiles = _.sortBy newFiles, 'path'
+      assert.deepEqual newFiles, [{path: 'file4.txt', isDir:true, mtime: ago, projectId}]
+
+    it 'should have the right unmodifiedFiles', ->
+      unmodifiedFiles = _.sortBy unmodifiedFiles, 'path'
+      f1 = _.find existingFiles, (f) -> f.path == 'dir1'
+      f2 = _.find existingFiles, (f) -> f.path == 'dir1/file2.txt'
+      assert.deepEqual unmodifiedFiles, [f1, f2]
+
+    it 'should have the right modifiedFiles', ->
+      modifiedFiles = _.sortBy modifiedFiles, 'path'
+      f1 = _.find existingFiles, (f) -> f.path == 'dir1/file1.txt'
+      f2 = _.find existingFiles, (f) -> f.path == 'file3.txt'
+      f1.mtime = f2.mtime = now
+      assert.deepEqual modifiedFiles, [f1, f2]
+
+    it 'should have the right orphanedFiles', ->
+      orphanedFiles = _.sortBy orphanedFiles, 'path'
+      f1 = _.find existingFiles, (f) -> f.path == 'dir2/file1.txt'
+      assert.deepEqual orphanedFiles, [f1]
 
