@@ -239,3 +239,25 @@ describe 'FileSyncer', ->
       f1 = _.find existingFiles, (f) -> f.path == 'dir2/file1.txt'
       assert.deepEqual orphanedFiles, [f1]
 
+  describe 'updateModifiedFiles', ->
+    projectId = uuid.v4()
+    modifiedFiles = [
+      {path:'file1.txt', isDir: false, projectId}
+      {path:'file2.txt', isDir: false, lastOpened: Date.now(), projectId}
+      {path:'file3.txt', isDir: false, lastOpened: Date.now(), modified:true, projectId}
+    ]
+    before (done) ->
+      File.create modifiedFiles, (err) ->
+        assert.isNull err
+        modifiedFiles = Array.prototype.slice.call arguments, 1
+        fileSyncer.updateModifiedFiles modifiedFiles, done
+
+    it 'should set modified_locally correctly', (done) ->
+      File.findByProjectId projectId, (err, files) ->
+        fileMap = {}
+        fileMap[file.path] = file for file in files
+        assert.ok !fileMap['file1.txt'].modified_locally
+        assert.isTrue fileMap['file2.txt'].modified_locally
+        assert.isTrue fileMap['file3.txt'].modified_locally
+        done()
+

@@ -60,16 +60,17 @@ class FileSyncer extends EventEmitter
 
   #callback: (error, savedModifiedFiles) ->
   updateModifiedFiles: (modifiedFiles, callback) ->
-    filesToRefresh = _.filter modifiedFiles, (file) ->
-      file.lastOpened? && !file.modified
-    console.log "Found files to refresh:", filesToRefresh
-    async.parallel [
-      async.each modifiedFiles, (file, cb) ->
-        file.modified_locally = true if file.modified
-        file.save cb
-    , async.each filesToRefresh, (file, cb) =>
-        @loadFile file.projectId, file._id, true, cb
-    ], callback
+    #filesToRefresh = _.filter modifiedFiles, (file) ->
+      #file.lastOpened? && !file.modified
+    #console.log "Found files to refresh:", filesToRefresh
+    #async.parallel [
+    async.each modifiedFiles, (file, cb) ->
+      file.modified_locally = true if file.modified or file.lastOpened?
+      file.save cb
+    , callback
+    #, async.each filesToRefresh, (file, cb) =>
+        #@loadFile file.projectId, file._id, true, cb
+    #], callback
 
   syncFiles : (files, projectId, deleteMissing=false, callback) ->
     if 'function' == typeof deleteMissing
@@ -98,7 +99,9 @@ class FileSyncer extends EventEmitter
         callback null, filesToReturn
 
       @updateModifiedFiles modifiedFiles, (err) ->
-        logger.error "Error updating modified files", projectId:projectId, error:err
+        console.log "Returning from updateModifiedFiles"
+        if err
+          logger.error "Error updating modified files", projectId:projectId, error:err
 
       if deleteMissing
         if orphanedFiles.length > 0
