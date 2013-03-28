@@ -9,6 +9,18 @@ async = require 'async'
 class FileSyncer extends EventEmitter
 
 
+  cleanupFiles: (files, projectId) ->
+    cleanFiles = []
+    for file in files
+      unless file
+        logger.error "Null file found in cleanupFiles", files:files
+        continue
+      file.projectId = projectId
+      cleanFiles.push file
+    @completeParentFiles cleanFiles
+    return cleanFiles
+    
+
   #Add missing parent dirs to files
   #Modifies files, returns null
   completeParentFiles: (files) ->
@@ -80,9 +92,7 @@ class FileSyncer extends EventEmitter
     unless projectId?
       return callback errors.new errorType.MISSING_PARAM, "No project id found for AddFiles", files:files
 
-    files = files[..] #Prevent files mutation
-    file.projectId = projectId for file in files
-    @completeParentFiles files
+    files = @cleanupFiles files, projectId
 
     File.findByProjectId projectId, (err, existingFiles) =>
       if err then callback wrapDbError err; return
@@ -99,7 +109,6 @@ class FileSyncer extends EventEmitter
         callback null, filesToReturn
 
       @updateModifiedFiles modifiedFiles, (err) ->
-        console.log "Returning from updateModifiedFiles"
         if err
           logger.error "Error updating modified files", projectId:projectId, error:err
 
@@ -108,7 +117,7 @@ class FileSyncer extends EventEmitter
           logger.debug "Deleting #{orphanedFiles.length} files", projectId:projectId
         for file in orphanedFiles
           file.remove (err) ->
-            logger.error "Error deleting file",
+            if err then logger.error "Error deleting file",
               error: wrapDbError err
               projectId: projectId
               fileId: file._id

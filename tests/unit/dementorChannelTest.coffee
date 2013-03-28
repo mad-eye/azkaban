@@ -70,6 +70,24 @@ describe "DementorChannel", ->
 
     it 'should not overwrite existing files'
 
+    #Seems better to log and not error out in this case...
+    it 'should ignore nulls in files', (done) ->
+      data =
+        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        files : [null]
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, result) ->
+        assert.isNull err
+        done()
+
+    it 'should respond with error when files=null is given', (done) ->
+      data =
+        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        files : null
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.MISSING_PARAM
+        done()
+
     #TODO commented out until we can mock mongoose to give errors.
     it "should callback error if Mongo returns an error"
     #it "should callback error if Mongo returns an error", (done) ->
@@ -110,6 +128,25 @@ describe "DementorChannel", ->
           assert.equal doc.path, file.path
           assert.isTrue doc.modified
           done()
+    
+    it 'should respond with error when files=[null] is given', (done) ->
+      data =
+        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        files : [null]
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_REMOVED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.INVALID_PARAM
+        done()
+
+    it 'should respond with error when files=null is given', (done) ->
+      data =
+        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        files : null
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_REMOVED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.MISSING_PARAM
+        done()
+
 
   describe "on receiving localFileSaved message", ->
     objects = {}

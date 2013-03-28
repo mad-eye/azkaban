@@ -1,3 +1,4 @@
+_ = require 'underscore'
 {Project, File, wrapDbError} = require './models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
@@ -43,11 +44,31 @@ class DementorChannel
       @openProject projectId, (err) ->
         callback? err
 
+    #NB: This will modify data.files, converting it to an array if approprate.
+    #returns an error if data has a problem
+    validateData = (data) ->
+      error = null
+      unless data.files?
+        error = errors.new errorType.MISSING_PARAM, param:'files', value:data.files
+      else unless _.isObject data
+        error = errors.new errorType.INVALID_PARAM, param:'files', value:data.files
+      else if not _.isArray data.files
+        #is this a single object?
+        if data.files.path?
+          data.files = [data.files]
+        else
+          error = errors.new errorType.INVALID_PARAM, param:'files', value:data.files
+      return error
+
     #callback: (error, files) ->
     socket.on messageAction.LOCAL_FILES_ADDED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       data.projectId ?= projectId
       logger.debug "Adding remote files", projectId:data.projectId
+      error = validateData data
+      if error
+        logger.error "Bad data in LOCAL_FILES_ADDED", {projectId, data, error}
+        return callback error
       @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) ->
         if err then callback wrapDbError err; return
         callback null, files
@@ -55,6 +76,12 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.LOCAL_FILE_SAVED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
+      projectId ?= data.projectId
+      unless data?.file?._id
+        error = errors.new errorType.INVALID_PARAM, param:'file', value:data.file
+        logger.error "Bad data in LOCAL_FILES_SAVED", {projectId, data, error}
+        return callback error
+      #TODO: Also accept paths if there is no _id
       File.findById data.file._id, (err, file) =>
         return @handleError wrapDbError err, projectId, callback if err
         logger.debug "Saving remote file", projectId:projectId, fileId: data.file._id, fileModified:file.modified
@@ -77,9 +104,17 @@ class DementorChannel
     #callback: (error) ->
     socket.on messageAction.LOCAL_FILES_REMOVED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
-      logger.debug "Removing remote files", projectId:projectId, files: data.files
+      projectId ?= data.projectId
+      logger.debug "Removing remote files", projectId: projectId, files: data.files
+      error = validateData data
+      if error
+        logger.error "Bad data in LOCAL_FILES_REMOVED", {projectId, data, error}
+        return callback error
+
       message = null
       async.each data.files, (f, cb) ->
+        unless f?._id
+          return cb error = errors.new errorType.INVALID_PARAM, param:'file', value:f
         File.findById f._id, (err, file) ->
           return cb err if err
           unless file.modified
@@ -90,13 +125,13 @@ class DementorChannel
             message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
             file.update {$set: {removed:true}}, cb
       , (err) ->
-        if err then callback err; return
+        if err then callback? err; return
         response = null
         if message
           response =
             action: messageAction.WARNING
             message: message
-        callback null, response
+        callback? null, response
 
     #callback: (error) ->
     socket.on messageAction.METRIC, (data, callback) =>
