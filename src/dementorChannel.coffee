@@ -5,6 +5,8 @@
 {dementorLogger} = require './logger'
 async = require 'async'
 {crc32} = require 'madeye-common'
+FileSyncer = require './fileSyncer'
+
 
 class DementorChannel
   constructor: () ->
@@ -46,7 +48,7 @@ class DementorChannel
       projectId = @socketProjectIds[socket.id]
       data.projectId ?= projectId
       logger.debug "Adding remote files", projectId:data.projectId
-      File.addFiles data.files, data.projectId, (err, files) ->
+      @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) ->
         if err then callback wrapDbError err; return
         callback null, files
 

@@ -20,6 +20,7 @@ describe 'FileController (functional)', ->
 
   dementorChannel = Azkaban.instance().dementorChannel
 
+  #TODO: Vestigial code, can be removed.
   fileController = undefined
   beforeEach ->
     fileController = new FileController

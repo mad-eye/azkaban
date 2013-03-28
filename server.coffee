@@ -11,6 +11,7 @@ DementorController = require('./src/dementorController')
 cors = require './cors'
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
+FileSyncer = require './src/fileSyncer'
 
 class Server
   constructor: ->
@@ -54,6 +55,7 @@ class Server
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
 
+    console.log "initializing azkaban"
     Azkaban.initialize
       socketServer: socketServer
       httpServer: httpServer
@@ -63,6 +65,7 @@ class Server
       bolideClient: new BolideClient
       mongoose: mongoose
       apogeeLogProcessor: new ApogeeLogProcessor 1000 #interval to check metrics db
+      fileSyncer: new FileSyncer
 
     @azkaban = Azkaban.instance()
       
@@ -87,10 +90,10 @@ class Server
     process.on 'SIGTERM', =>
       @shutdown()
 
-    process.on 'uncaughtException', (err) =>
-      console.error "Exiting because of uncaught exception: " + err
-      logger.error "Exiting because of uncaught exception: #{err.message}", error:err
-      @shutdown(1)      
+    #process.on 'uncaughtException', (err) =>
+      #console.error "Exiting because of uncaught exception: " + err
+      #logger.error "Exiting because of uncaught exception: #{err.message}", error:err
+      #@shutdown(1)      
     
     @azkaban.httpServer.listen @app.get('port'), =>
       logger.debug "Express server listening on port " + @app.get('port')
