@@ -1,4 +1,4 @@
-assert = require 'assert'
+{assert} = require 'chai'
 sinon = require 'sinon'
 uuid = require 'node-uuid'
 url = require 'url'
@@ -95,9 +95,28 @@ describe 'DementorController', ->
           assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
-          assert.ok result.error, "Body #{body} doesn't have error property."
+          assert.ok result.error, "Body #{_body} doesn't have error property."
           assert.equal result.error.type, errorType.OUT_OF_DATE
-          done()
+          done() 
+        dementorController.createProject req, res
+        
+      it "should return warning on too old nodejs version", (done) ->
+        req =
+          params: {projectName: projectName}
+          body:
+            files: newFiles
+            projectName: projectName
+            version: minDementorVersion
+            nodeVersion: '0.4.0'
+        
+        res.end = (_body) ->
+          assert.equal res.statusCode, 200
+          assert.ok _body
+          result = JSON.parse _body
+          assert.isFalse result.error?, "Should not return an error."
+          assert.ok result.warning, "Body #{_body} doesn't have warning property."
+          done() 
+
         dementorController.createProject req, res
 
       #Commenting out and making pending until we can mock mongoose to throw errors.
@@ -191,6 +210,24 @@ describe 'DementorController', ->
           done()
         dementorController.createProject req, res
 
+      it "should return warning on too old nodejs version", (done) ->
+        req =
+          params: {projectName: projectName}
+          body:
+            files: newFiles
+            projectName: projectName
+            version: minDementorVersion
+            nodeVersion: '0.4.0'
+        
+        res.end = (_body) ->
+          assert.equal res.statusCode, 200
+          assert.ok _body
+          result = JSON.parse _body
+          assert.isFalse result.error?, "Should not return an error."
+          assert.ok result.warning, "Body #{_body} doesn't have warning property."
+          done() 
+
+        dementorController.createProject req, res
 
       #Making tests pending until we can mock Mongoose and test errors.
       it "returns an error"
