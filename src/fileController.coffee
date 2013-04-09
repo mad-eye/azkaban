@@ -4,7 +4,6 @@
 
 class FileController
   constructor: () ->
-    @request = require "request"
     @Settings = require("madeye-common").Settings
 
   sendErrorResponse: (res, err) ->

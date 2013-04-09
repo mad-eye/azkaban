@@ -7,6 +7,7 @@ FileController = require '../../src/fileController'
 MockResponse = require '../mock/mockResponse'
 {Project, File} = require '../../src/models'
 {crc32} = require 'madeye-common'
+{errors, errorType} = require 'madeye-common'
 
 describe 'fileController', ->
   Azkaban.initialize()
@@ -59,11 +60,6 @@ describe 'fileController', ->
         saveFile: (projectId, fileId, contents, callback)->
           callback null
 
-      fileController.request =
-        get: (url, callback)->
-#         TODO use process.nextTick here
-          callback(null, {}, FILE_CONTENTS)
-
       fakeResponse = new MockResponse
       fakeResponse.end = (body)->
         message = JSON.parse body
@@ -74,7 +70,21 @@ describe 'fileController', ->
 
       fileController.saveFile req, fakeResponse
 
-    it "should return a 500 if there is an error communicating with dementor"
+    it "should return a 500 and error if there is an error communicating with dementor", (done) ->
+      azkaban.setService 'dementorChannel',
+        saveFile: (projectId, fileId, contents, callback)->
+          process.nextTick ->
+            callback errors.new errorType.NO_FILE
+
+      fakeResponse = new MockResponse
+      fakeResponse.end = (body)->
+        assert.equal fakeResponse.statusCode, 500
+        message = JSON.parse body
+        assert.ok message.error
+        assert.equal message.error.type, errorType.NO_FILE
+        done()
+
+      fileController.saveFile req, fakeResponse
 
 
   describe 'getFile', ->
@@ -82,11 +92,17 @@ describe 'fileController', ->
     hitBolideClient = false
     fakeContents = "FAKE CONTENTS"
     response = null
+    errorFileId = uuid.v4()
+    errType = errorType.NO_FILE
+    projectId = uuid.v4()
     before (done) ->
       azkaban.setService "dementorChannel",
         getFileContents: (projectId, fileId, callback)->
           hitDementorChannel = true
-          callback null, fakeContents
+          unless fileId == errorFileId
+            callback null, fakeContents
+          else
+            callback errors.new errorType.NO_FILE
       azkaban.setService "bolideClient",
         setDocumentContents: (docId, contents, reset=false, callback) ->
           hitBolideClient = true
@@ -97,7 +113,6 @@ describe 'fileController', ->
         this.body = JSON.parse _body
         done()
 
-      projectId = uuid.v4()
       file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
       fileId = file._id
 
@@ -124,4 +139,18 @@ describe 'fileController', ->
       console.log "Found response body #{typeof response.body}", response.body
       assert.equal response.body.checksum, crc32 fakeContents
 
-    it 'should return a 500 if there is an error communicating with dementor'
+    it 'should return a 500 if there is an error communicating with dementor', (done) ->
+      fakeResponse = new MockResponse
+      fakeResponse.end = (body)->
+        assert.equal fakeResponse.statusCode, 500
+        message = JSON.parse body
+        assert.ok message.error
+        assert.equal message.error.type, errType
+        done()
+
+      fileController.getFile
+          params:
+            fileId: errorFileId
+            projectId: projectId
+          , fakeResponse
+      
