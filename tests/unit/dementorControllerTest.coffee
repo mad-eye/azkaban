@@ -27,7 +27,7 @@ describe 'DementorController', ->
     { path: 'dir1', isDir:true},
     { path: 'dir1/file2', isDir:false }
   ]
-  
+
   describe 'createProject', ->
     describe 'without error', ->
       result = body = null
@@ -97,9 +97,9 @@ describe 'DementorController', ->
           result = JSON.parse _body
           assert.ok result.error, "Body #{_body} doesn't have error property."
           assert.equal result.error.type, errorType.OUT_OF_DATE
-          done() 
+          done()
         dementorController.createProject req, res
-        
+
       it "should return warning on too old nodejs version", (done) ->
         req =
           params: {projectName: projectName}
@@ -108,14 +108,14 @@ describe 'DementorController', ->
             projectName: projectName
             version: minDementorVersion
             nodeVersion: '0.4.0'
-        
+
         res.end = (_body) ->
           assert.equal res.statusCode, 200
           assert.ok _body
           result = JSON.parse _body
           assert.isFalse result.error?, "Should not return an error."
           assert.ok result.warning, "Body #{_body} doesn't have warning property."
-          done() 
+          done()
 
         dementorController.createProject req, res
 
@@ -218,14 +218,14 @@ describe 'DementorController', ->
             projectName: projectName
             version: minDementorVersion
             nodeVersion: '0.4.0'
-        
+
         res.end = (_body) ->
           assert.equal res.statusCode, 200
           assert.ok _body
           result = JSON.parse _body
           assert.isFalse result.error?, "Should not return an error."
           assert.ok result.warning, "Body #{_body} doesn't have warning property."
-          done() 
+          done()
 
         dementorController.createProject req, res
 
