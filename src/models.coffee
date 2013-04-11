@@ -10,6 +10,7 @@ fileSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
   projectId: {type: String, required: true}
   path: {type: String, required: true}
+  orderingPath: {type: String, required: true}
   isDir: {type: Boolean, required: true}
   isLink: {type: Boolean, default: false}
   mtime: {type: Number, default: Date.now}

@@ -16,6 +16,7 @@ class FileSyncer extends EventEmitter
         logger.error "Null file found in cleanupFiles", files:files
         continue
       file.projectId = projectId
+      file.orderingPath = file.path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
       cleanFiles.push file
     @completeParentFiles cleanFiles
     return cleanFiles
