@@ -37,10 +37,10 @@ describe "DementorChannel", ->
       mockSocket.trigger messageAction.HANDSHAKE, projectId
 
       objects.files = files = [
-        {path:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
-        {path:'dir1', projectId: projectId, isDir:true },
-        {path:'dir1/file2', projectId: projectId, isDir:false, lastOpened: Date.now() }
-        {path:'dir1/file3', projectId: projectId, isDir:false }
+        {path:'file1', orderingPath:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
+        {path:'dir1', orderingPath:'dir1', projectId: projectId, isDir:true },
+        {path:'dir1/file2', orderingPath:'dir1 file2', projectId: projectId, isDir:false, lastOpened: Date.now() }
+        {path:'dir1/file3', orderingPath:'dir1 file3', projectId: projectId, isDir:false }
       ]
       fileMap = objects.fileMap = {}
       async.each files, (f, cb) ->

@@ -10,11 +10,21 @@ makeExistingFiles = (projectId, callback) ->
   files.push new File {path:'path1', isDir:false, projectId:projectId}
   files.push new File {path:'path2', isDir:false, projectId:projectId}
   files.push new File {path:'path3', isDir:true, projectId:projectId}
+  addOrderingPath files
   async.each files, ((file, cb) ->
     file.save cb
   ), (err) ->
-    assert.equal err, null
+    assert.isNull err
     callback files
+
+addOrderingPath = (files) ->
+  array = true
+  unless Array.isArray files
+    array = false
+    files = [files]
+  for file in files
+    file.orderingPath = file.path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
+  if array then return files else return files[0]
 
 describe 'File', ->
   describe 'insert', ->

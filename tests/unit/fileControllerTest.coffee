@@ -25,7 +25,7 @@ describe 'fileController', ->
     res = new MockResponse
 
     before (done) ->
-      file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
+      file = new File path:'foo/bar.txt', orderingPath:'foo bar.txt', projectId:projectId, isDir:false
       fileId = file._id
 
       req =
@@ -113,7 +113,7 @@ describe 'fileController', ->
         this.body = JSON.parse _body
         done()
 
-      file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
+      file = new File path:'foo/bar.txt', orderingPath:'foo bar.txt', projectId:projectId, isDir:false
       fileId = file._id
 
       fileController = new FileController

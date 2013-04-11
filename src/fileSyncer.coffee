@@ -8,6 +8,8 @@ async = require 'async'
 
 class FileSyncer extends EventEmitter
 
+  makeOrderingPath = (path) ->
+    path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
 
   cleanupFiles: (files, projectId) ->
     cleanFiles = []
@@ -16,7 +18,7 @@ class FileSyncer extends EventEmitter
         logger.error "Null file found in cleanupFiles", files:files
         continue
       file.projectId = projectId
-      file.orderingPath = file.path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
+      file.orderingPath = makeOrderingPath file.path
       cleanFiles.push file
     @completeParentFiles cleanFiles
     return cleanFiles
@@ -37,7 +39,7 @@ class FileSyncer extends EventEmitter
         if (path of parentsMap) or (path of newFileMap)
           break
         else
-          parentsMap[path] = {path: path, projectId: file.projectId, isDir: true}
+          parentsMap[path] = {path: path, orderingPath: makeOrderingPath(path), projectId: file.projectId, isDir: true}
 
     for path, parent of parentsMap
       files.push parent unless newFileMap[path]

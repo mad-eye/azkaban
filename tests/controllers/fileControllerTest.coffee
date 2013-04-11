@@ -48,7 +48,7 @@ describe 'FileController (functional)', ->
       dementorChannel.attach socket
       socket.trigger messageAction.HANDSHAKE, projectId
 
-      file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
+      file = new File path:'foo/bar.txt', orderingPath:'foo bar.txt', projectId:projectId, isDir:false
       fileId = file._id
       File.create file, (err) ->
         assert.isNull err
@@ -132,7 +132,7 @@ describe 'FileController (functional)', ->
       dementorChannel.attach socket
       socket.trigger messageAction.HANDSHAKE, projectId
 
-      file = new File path:'foo/bar.txt', projectId:projectId, isDir:false
+      file = new File path:'foo/bar.txt', orderingPath:'foo bar.txt', projectId:projectId, isDir:false
       fileId = file._id
       File.create file, (err) ->
         assert.isNull err

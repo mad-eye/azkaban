@@ -8,14 +8,23 @@ FileSyncer = require '../../src/fileSyncer'
 #callback: (files) ->
 makeExistingFiles = (projectId, callback) ->
   files = []
-  files.push new File {path:'path1', isDir:false, projectId:projectId}
-  files.push new File {path:'path2', isDir:false, projectId:projectId}
-  files.push new File {path:'path3', isDir:true, projectId:projectId}
+  files.push new File {path:'path1', orderingPath:'path1', isDir:false, projectId:projectId}
+  files.push new File {path:'path2', orderingPath:'path2', isDir:false, projectId:projectId}
+  files.push new File {path:'path3', orderingPath:'path3', isDir:true, projectId:projectId}
   async.each files, ((file, cb) ->
     file.save cb
   ), (err) ->
     assert.equal err, null
     callback files
+
+addOrderingPath = (files) ->
+  array = true
+  unless Array.isArray files
+    array = false
+    files = [files]
+  for file in files
+    file.orderingPath = file.path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
+  if array then return files else return files[0]
 
 
 describe 'FileSyncer', ->
@@ -55,14 +64,14 @@ describe 'FileSyncer', ->
       makeExistingFiles projectId, (fs) ->
         existingFiles = fs
         newFiles = []
-        newFiles.push path:'path1', isDir:false
-        newFiles.push path:'anotherPath1', isDir:true
-        newFiles.push path:'dir1/dir2/dir3/README', isDir:false
-        newFiles.push path:'dir1/dir2/dir3/blah', isDir:false
+        newFiles.push addOrderingPath path:'path1', isDir:false
+        newFiles.push addOrderingPath path:'anotherPath1', isDir:true
+        newFiles.push addOrderingPath path:'dir1/dir2/dir3/README', isDir:false
+        newFiles.push addOrderingPath path:'dir1/dir2/dir3/blah', isDir:false
 
         deleteMissing = true
         fileSyncer.syncFiles newFiles, projectId, deleteMissing, (err, files) ->
-          assert.equal err, null
+          assert.isNull err
           addedFiles = files
           done()
 
@@ -96,11 +105,11 @@ describe 'FileSyncer', ->
       path = "a/path.txt"
       otherPath = "a/anotherpath.txt"
       unopenedPath = "a/unopened.txt"
-      existingFile = new File {path, projectId, isDir:false, mtime:ago, modified:true, lastOpened: Date.now()}
+      existingFile = new File addOrderingPath {path, projectId, isDir:false, mtime:ago, modified:true, lastOpened: Date.now()}
       fileId = existingFile._id
-      otherExistingFile = new File {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened: Date.now()}
+      otherExistingFile = new File addOrderingPath {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened: Date.now()}
       otherFileId = otherExistingFile._id
-      unopenedFile = new File {path:unopenedPath, projectId, isDir:false, mtime:ago}
+      unopenedFile = new File addOrderingPath {path:unopenedPath, projectId, isDir:false, mtime:ago}
       unopenedFileId = unopenedFile._id
       async.parallel [(cb) ->
         existingFile.save cb
@@ -150,6 +159,7 @@ describe 'FileSyncer', ->
         {path: 'dir1/dir2', isDir:true, projectId},
         {path: 'dir1/dir2/file.txt', isDir:true, projectId},
       ]
+      addOrderingPath files
       oldFiles = files[..]
       fileSyncer.completeParentFiles files
       assert.deepEqual files, oldFiles
@@ -158,9 +168,10 @@ describe 'FileSyncer', ->
       files = [
         {path: 'dir1/dir2/file.txt', isDir:false, projectId},
       ]
+      addOrderingPath files
       completeFiles = files[..]
-      completeFiles.push {path: 'dir1/dir2', isDir:true, projectId}
-      completeFiles.push {path: 'dir1', isDir:true, projectId}
+      completeFiles.push addOrderingPath {path: 'dir1/dir2', isDir:true, projectId}
+      completeFiles.push addOrderingPath {path: 'dir1', isDir:true, projectId}
       _.sortBy completeFiles, 'path'
       fileSyncer.completeParentFiles files
       _.sortBy files, 'path'
@@ -172,8 +183,9 @@ describe 'FileSyncer', ->
         {path: 'dir1/dir2/file.txt', isDir:false, projectId},
         {path: 'dir1/dir2', isDir:true, projectId}
       ]
+      addOrderingPath files
       completeFiles = files[..]
-      completeFiles.push {path: 'dir1', isDir:true, projectId}
+      completeFiles.push addOrderingPath {path: 'dir1', isDir:true, projectId}
       _.sortBy completeFiles, 'path'
       fileSyncer.completeParentFiles files
       _.sortBy files, 'path'
@@ -185,8 +197,9 @@ describe 'FileSyncer', ->
         {path: 'dir1/file1.txt', isDir:false, projectId},
         {path: 'dir1/file2.txt', isDir:false, projectId},
       ]
+      addOrderingPath files
       completeFiles = files[..]
-      completeFiles.push {path: 'dir1', isDir:true, projectId}
+      completeFiles.push addOrderingPath {path: 'dir1', isDir:true, projectId}
       _.sortBy completeFiles, 'path'
       fileSyncer.completeParentFiles files
       _.sortBy files, 'path'
@@ -246,6 +259,7 @@ describe 'FileSyncer', ->
       {path:'file2.txt', isDir: false, lastOpened: Date.now(), projectId}
       {path:'file3.txt', isDir: false, lastOpened: Date.now(), modified:true, projectId}
     ]
+    addOrderingPath modifiedFiles
     before (done) ->
       File.create modifiedFiles, (err) ->
         assert.isNull err
