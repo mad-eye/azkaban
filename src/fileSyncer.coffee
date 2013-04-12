@@ -5,6 +5,7 @@ _path = require 'path'
 {logger} = require './logger'
 async = require 'async'
 {crc32} = require("madeye-common")
+{normalizePath} = require("madeye-common")
 
 class FileSyncer extends EventEmitter
 
@@ -19,6 +20,7 @@ class FileSyncer extends EventEmitter
         continue
       file.projectId = projectId
       file.orderingPath = makeOrderingPath file.path
+      file.orderingPath = normalizePath file.path
       cleanFiles.push file
     @completeParentFiles cleanFiles
     return cleanFiles
