@@ -37,7 +37,7 @@ class FileSyncer extends EventEmitter
         if (path of parentsMap) or (path of newFileMap)
           break
         else
-          parentsMap[path] = {path: path, orderingPath: makeOrderingPath(path), projectId: file.projectId, isDir: true}
+          parentsMap[path] = {path: path, orderingPath: normalizePath(path), projectId: file.projectId, isDir: true}
 
     for path, parent of parentsMap
       files.push parent unless newFileMap[path]
