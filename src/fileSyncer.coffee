@@ -9,9 +9,6 @@ async = require 'async'
 
 class FileSyncer extends EventEmitter
 
-  makeOrderingPath = (path) ->
-    path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
-
   cleanupFiles: (files, projectId) ->
     cleanFiles = []
     for file in files
@@ -19,7 +16,6 @@ class FileSyncer extends EventEmitter
         logger.error "Null file found in cleanupFiles", files:files
         continue
       file.projectId = projectId
-      file.orderingPath = makeOrderingPath file.path
       file.orderingPath = normalizePath file.path
       cleanFiles.push file
     @completeParentFiles cleanFiles
