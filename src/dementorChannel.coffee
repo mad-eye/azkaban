@@ -83,7 +83,8 @@ class DementorChannel
         return callback error
       #TODO: Also accept paths if there is no _id
       File.findById data.file._id, (err, file) =>
-        return @handleError wrapDbError err, projectId, callback if err
+        return @handleError wrapDbError(err), projectId, callback if err
+        return @handleError errors.new(errorType.NO_FILE), projectId, callback unless file
         logger.debug "Saving remote file", projectId:projectId, fileId: data.file._id, fileModified:file.modified
         return callback null, null unless file.lastOpened?
         checksum = crc32 data.contents
@@ -116,7 +117,8 @@ class DementorChannel
         unless f?._id
           return cb error = errors.new errorType.INVALID_PARAM, param:'file', value:f
         File.findById f._id, (err, file) ->
-          return cb err if err
+          return @handleError wrapDbError(err), projectId, cb if err
+          return @handleError errors.new(errorType.NO_FILE), projectId, cb unless file
           unless file.modified
             file.remove cb
           else
