@@ -99,8 +99,8 @@ class FileSyncer extends EventEmitter
       if err then callback wrapDbError err; return
 
       [newFiles, unmodifiedFiles, modifiedFiles, orphanedFiles] = @partitionFiles files, existingFiles
-      #console.log "Found unmodifiedFiles:", _.pluck(unmodifiedFiles, 'path')
-      #console.log "Found modifiedFiles:", modifiedFiles
+      #console.log "Found unmodifiedFiles:", unmodifiedFiles
+      #console.log "Found modifiedFiles:", _.pluck(modifiedFiles, 'path')
       
       #Save new files and return the project files
       File.create newFiles, (err) ->

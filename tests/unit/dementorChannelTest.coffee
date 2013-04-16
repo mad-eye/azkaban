@@ -1,3 +1,4 @@
+_ = require 'underscore'
 assert = require('chai').assert
 uuid = require 'node-uuid'
 {MockSocket} = require 'madeye-common'
@@ -34,21 +35,22 @@ describe "DementorChannel", ->
 
       mockSocket = objects.mockSocket = new MockSocket
       channel.attach mockSocket
-      mockSocket.trigger messageAction.HANDSHAKE, projectId
+      mockSocket.trigger messageAction.HANDSHAKE, projectId, (err) ->
+        assert.isNull err#, "Error should be null: #{err.message}"
 
-      objects.files = files = [
-        {path:'file1', orderingPath:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
-        {path:'dir1', orderingPath:'dir1', projectId: projectId, isDir:true },
-        {path:'dir1/file2', orderingPath:'dir1 file2', projectId: projectId, isDir:false, lastOpened: Date.now() }
-        {path:'dir1/file3', orderingPath:'dir1 file3', projectId: projectId, isDir:false }
-      ]
-      fileMap = objects.fileMap = {}
-      async.each files, (f, cb) ->
-        File.create f, (err, file) ->
-          fileMap[file.path] = file
-          cb (err)
-      , (err) ->
-        callback()
+        objects.files = files = [
+          {path:'file1', orderingPath:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
+          {path:'dir1', orderingPath:'dir1', projectId: projectId, isDir:true },
+          {path:'dir1/file2', orderingPath:'dir1 file2', projectId: projectId, isDir:false, lastOpened: Date.now() }
+          {path:'dir1/file3', orderingPath:'dir1 file3', projectId: projectId, isDir:false }
+        ]
+        fileMap = objects.fileMap = {}
+        async.each files, (f, cb) ->
+          File.create f, (err, file) ->
+            fileMap[file.path] = file
+            cb (err)
+        , (err) ->
+          callback()
 
   describe "on receiving localFilesAdded message", ->
     objects = {}
@@ -68,12 +70,25 @@ describe "DementorChannel", ->
         assert.ok file._id, "File should have been given _id" for file in files
         done()
 
-    it 'should not overwrite existing files'
+    it 'should not overwrite existing files', (done) ->
+      file = objects.fileMap['file1']
+      newFile = _.pick file, 'path', 'orderingPath', 'projectId', 'isDir', 'mtime', 'modified'
+      data =
+        projectId: objects.projectId
+        files: [newFile]
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, files) ->
+        assert.equal null, err
+        assert.ok files
+        savedFile = files[0]
+        assert.ok savedFile
+        assert.equal savedFile._id, file._id, "File should keep original file id"
+        done()
+
 
     #Seems better to log and not error out in this case...
     it 'should ignore nulls in files', (done) ->
       data =
-        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        projectId : objects.projectId
         files : [null]
       objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, result) ->
         assert.isNull err
@@ -81,7 +96,7 @@ describe "DementorChannel", ->
 
     it 'should respond with error when files=null is given', (done) ->
       data =
-        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        projectId : objects.projectId
         files : null
       objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, result) ->
         assert.ok err
@@ -147,6 +162,15 @@ describe "DementorChannel", ->
         assert.equal err.type, errorType.MISSING_PARAM
         done()
 
+    it 'should respond with correct error when unknown fileId is given', (done) ->
+      data =
+        projectId : 'abf231b8-8344-43d9-89b6-9b4df627fab6'
+        files : [{_id:uuid.v4(), projectId:objects.projectId}]
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_REMOVED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.NO_FILE
+        done()
+
 
   describe "on receiving localFileSaved message", ->
     objects = {}
@@ -200,6 +224,34 @@ describe "DementorChannel", ->
           assert.isNull err
           assert.isFalse doc.modified_locally
           done()
+
+    it 'should respond with correct error when unknown fileId is given', (done) ->
+      data =
+        projectId : objects.projectId
+        contents: 'whatever#$!'
+        file : [{_id:uuid.v4(), projectId:objects.projectId}]
+      objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.INVALID_PARAM
+        done()
+
+    it 'should respond with correct error when no file is given', (done) ->
+      data =
+        projectId : objects.projectId
+        contents: 'whatever#$!'
+      objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.INVALID_PARAM
+        done()
+
+    it 'should respond with correct error when no contents is given', (done) ->
+      data =
+        projectId : objects.projectId
+        file : [{_id:uuid.v4(), projectId:objects.projectId}]
+      objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
+        assert.ok err
+        assert.equal err.type, errorType.INVALID_PARAM
+        done()
 
 
   describe 'destroy', ->

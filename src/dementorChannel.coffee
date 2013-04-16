@@ -113,16 +113,16 @@ class DementorChannel
         return callback error
 
       message = null
-      async.each data.files, (f, cb) ->
+      async.each data.files, (f, cb) =>
         unless f?._id
           return cb error = errors.new errorType.INVALID_PARAM, param:'file', value:f
-        File.findById f._id, (err, file) ->
+        File.findById f._id, (err, file) =>
           return @handleError wrapDbError(err), projectId, cb if err
           return @handleError errors.new(errorType.NO_FILE), projectId, cb unless file
           unless file.modified
             file.remove cb
           else
-            logger.debug "Removing modified file", projectId:projectId, fileId:file._id
+            logger.debug "Removing modified file", projectId:projectId, fileId:file._id, path:file.path
             message ?= ''
             message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
             file.update {$set: {removed:true}}, cb
