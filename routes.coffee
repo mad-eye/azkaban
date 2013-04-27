@@ -1,9 +1,15 @@
 {Azkaban} = require './src/azkaban'
+fs = require "fs"
 
 routes = (app) ->
   azkaban = Azkaban.instance()
   fileController = azkaban.fileController
   dementorController = azkaban.dementorController
+
+  app.post '/file-upload/:projectId', (req, res)->
+    fs.readFile req.files.file.path, {encoding: "utf-8"}, (err,data)->
+      azkaban.bolideClient.setDocumentContents req.params.projectId, data, false, (error)->
+        res.write "success"
 
   app.post '/project', (req, res)->
     dementorController.createProject(req, res)
