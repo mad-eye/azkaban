@@ -8,7 +8,7 @@ FileController = require('./src/fileController')
 BolideClient = require "./src/bolideClient"
 ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
-cors = require './cors'
+{cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
 FileSyncer = require './src/fileSyncer'
@@ -101,4 +101,4 @@ class Server
 
     
 server = new Server
-module.exports = server 
+module.exports = server

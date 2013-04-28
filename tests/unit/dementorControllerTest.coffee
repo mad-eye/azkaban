@@ -5,7 +5,7 @@ url = require 'url'
 _ = require 'underscore'
 {errors, errorType} = require 'madeye-common'
 DementorController = require '../../src/dementorController'
-MockResponse = require '../mock/mockResponse'
+{MockResponse} = require 'madeye-common'
 testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
 {Azkaban} = require '../../src/azkaban'
@@ -41,7 +41,7 @@ describe 'DementorController', ->
             version: minDementorVersion
 
         res = new MockResponse
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.ok _body
           body = _body
           result = JSON.parse _body
@@ -74,7 +74,7 @@ describe 'DementorController', ->
             files: newFiles
             projectName: projectName
 
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
@@ -91,7 +91,7 @@ describe 'DementorController', ->
             projectName: projectName
             version: '0.0.10'
 
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
@@ -109,7 +109,7 @@ describe 'DementorController', ->
             version: minDementorVersion
             nodeVersion: '0.4.0'
 
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.equal res.statusCode, 200
           assert.ok _body
           result = JSON.parse _body
@@ -148,7 +148,7 @@ describe 'DementorController', ->
               projectName: projectName
               version: minDementorVersion
           res = new MockResponse
-          res.end = (_body) ->
+          res.onEnd = (_body) ->
             assert.ok _body
             body = _body
             result = JSON.parse _body
@@ -184,7 +184,7 @@ describe 'DementorController', ->
             files: newFiles
             projectName: projectName
 
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
@@ -201,7 +201,7 @@ describe 'DementorController', ->
             projectName: projectName
             version: '0.0.10'
 
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.equal res.statusCode, 500
           assert.ok _body
           result = JSON.parse _body
@@ -219,7 +219,7 @@ describe 'DementorController', ->
             version: minDementorVersion
             nodeVersion: '0.4.0'
 
-        res.end = (_body) ->
+        res.onEnd = (_body) ->
           assert.equal res.statusCode, 200
           assert.ok _body
           result = JSON.parse _body

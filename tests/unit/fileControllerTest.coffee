@@ -4,7 +4,7 @@ sinon = require 'sinon'
 {Azkaban} = require '../../src/azkaban'
 FileSyncer = require '../../src/fileSyncer'
 FileController = require '../../src/fileController'
-MockResponse = require '../mock/mockResponse'
+{MockResponse} = require 'madeye-common'
 {Project, File} = require '../../src/models'
 {crc32} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
@@ -61,7 +61,7 @@ describe 'fileController', ->
           callback null
 
       fakeResponse = new MockResponse
-      fakeResponse.end = (body)->
+      fakeResponse.onEnd = (body)->
         message = JSON.parse body
         assert.equal message.projectId, projectId
         assert.equal message.fileId, fileId
@@ -77,7 +77,7 @@ describe 'fileController', ->
             callback errors.new errorType.NO_FILE
 
       fakeResponse = new MockResponse
-      fakeResponse.end = (body)->
+      fakeResponse.onEnd = (body)->
         assert.equal fakeResponse.statusCode, 500
         message = JSON.parse body
         assert.ok message.error
@@ -109,7 +109,7 @@ describe 'fileController', ->
           callback null
 
       response = new MockResponse
-      response.end = (_body) ->
+      response.onEnd = (_body) ->
         this.body = JSON.parse _body
         done()
 
@@ -141,7 +141,7 @@ describe 'fileController', ->
 
     it 'should return a 500 if there is an error communicating with dementor', (done) ->
       fakeResponse = new MockResponse
-      fakeResponse.end = (body)->
+      fakeResponse.onEnd = (body)->
         assert.equal fakeResponse.statusCode, 500
         message = JSON.parse body
         assert.ok message.error
