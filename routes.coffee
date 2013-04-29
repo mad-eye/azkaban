@@ -7,7 +7,9 @@ routes = (app) ->
   dementorController = azkaban.dementorController
 
   app.post '/file-upload/:fileId', (req, res)->
-    fs.readFile req.files.file.path, {encoding: "utf-8"}, (err,data)->
+
+    # for node 0.10: fs.readFile req.files.file.path, {encoding: "utf-8"}, (err,data)->
+    fs.readFile req.files.file.path, "utf-8", (err,data)->
       azkaban.bolideClient.setDocumentContents req.params.fileId, data, false, (error)->
         res.json {success :true}
 
