@@ -6,10 +6,10 @@ routes = (app) ->
   fileController = azkaban.fileController
   dementorController = azkaban.dementorController
 
-  app.post '/file-upload/:projectId', (req, res)->
+  app.post '/file-upload/:fileId', (req, res)->
     fs.readFile req.files.file.path, {encoding: "utf-8"}, (err,data)->
-      azkaban.bolideClient.setDocumentContents req.params.projectId, data, false, (error)->
-        res.write "success"
+      azkaban.bolideClient.setDocumentContents req.params.fileId, data, false, (error)->
+        res.json {success :true}
 
   app.post '/project', (req, res)->
     dementorController.createProject(req, res)
