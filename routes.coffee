@@ -26,4 +26,7 @@ routes = (app) ->
   app.get "/", (req, res)->
     res.json {success: true}
 
+  app.put '/hangout/:hangoutId', (req, res) ->
+    hangoutController.registerHangout(req, res)
+
 module.exports = routes
