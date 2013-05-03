@@ -18,4 +18,17 @@ class HangoutController
       logger.debug "Hangout registered", {projectId, hangoutId}
       res.end()
 
+  gotoHangout: (req, res) =>
+    projectId = req.params['projectId']
+    project = Project.findById projectId, 'hangoutId', (err, project) =>
+      hangoutId = project?.hangoutId
+      if hangoutId
+        url = '' #Fill this out
+      else
+        url = '' #File this out
+      #redirect to url
+
+
+
+
 module.exports = HangoutController
