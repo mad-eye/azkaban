@@ -5,6 +5,7 @@ routes = (app) ->
   azkaban = Azkaban.instance()
   fileController = azkaban.fileController
   dementorController = azkaban.dementorController
+  hangoutController = azkaban.hangoutController
 
   app.post '/file-upload/:fileId', (req, res)->
 

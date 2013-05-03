@@ -1,6 +1,9 @@
 {Project, wrapDbError} = require './models'
+{Settings} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
+
+console.log Settings
 
 sendErrorResponse = (res, err) ->
   err = wrapDbError err
@@ -25,8 +28,9 @@ class HangoutController
       if hangoutUrl
         url = hangoutUrl + "?gid=" + Settings.hangoutAppId
       else
-        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{dementor.projectId}"
-        url = Settings.hangoutUrlPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
+        url = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+      console.log "Redirecting to", url
       res.redirect url
 
 
