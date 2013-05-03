@@ -11,22 +11,23 @@ class HangoutController
   constructor: () ->
 
   registerHangout: (req, res) =>
-    hangoutId = req.params['hangoutId']
-    projectId = req.body['projectId']
-    Project.update {_id:projectId}, {hangoutId:hangoutId}, (err) =>
+    projectId = req.params['projectId']
+    hangoutUrl = req.body['hangoutUrl']
+    Project.update {_id:projectId}, {hangoutUrl}, (err) =>
       if err then sendErrorResponse(res, err); return
-      logger.debug "Hangout registered", {projectId, hangoutId}
+      logger.debug "Hangout registered", {projectId, hangoutUrl}
       res.end()
 
   gotoHangout: (req, res) =>
     projectId = req.params['projectId']
-    project = Project.findById projectId, 'hangoutId', (err, project) =>
-      hangoutId = project?.hangoutId
-      if hangoutId
-        url = '' #Fill this out
+    project = Project.findById projectId, 'hangoutUrl', (err, project) =>
+      hangoutUrl = project?.hangoutUrl
+      if hangoutUrl
+        url = hangoutUrl + "?gid=" + Settings.hangoutAppId
       else
-        url = '' #File this out
-      #redirect to url
+        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{dementor.projectId}"
+        url = Settings.hangoutUrlPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+      res.redirect url
 
 
 
