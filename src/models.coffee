@@ -32,6 +32,7 @@ projectSchema = mongoose.Schema
   name: {type: String, required: true}
   closed: {type: Boolean, default: false}
   created: {type: Date, default: Date.now}
+  hangoutUrl: String
   #files: [fileSchema]
 
 Project = mongoose.model 'Project', projectSchema, 'projects'

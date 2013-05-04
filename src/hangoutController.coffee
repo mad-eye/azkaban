@@ -14,15 +14,14 @@ class HangoutController
   registerHangout: (req, res) =>
     projectId = req.params['projectId']
     hangoutUrl = req.body['hangoutUrl']
-    console.log "Registering hangout with projId #{projectId} and hangoutUrl #{hangoutUrl}"
-    Project.update {_id:projectId}, {hangoutUrl}, (err) =>
+    Project.update {_id:projectId}, {hangoutUrl}, (err, count) =>
       if err then sendErrorResponse(res, err); return
       logger.debug "Hangout registered", {projectId, hangoutUrl}
       res.end()
 
   gotoHangout: (req, res) =>
     projectId = req.params['projectId']
-    project = Project.findById projectId, 'hangoutUrl', (err, project) =>
+    Project.findById projectId, 'hangoutUrl', (err, project) =>
       hangoutUrl = project?.hangoutUrl
       if hangoutUrl
         url = hangoutUrl + "?gid=" + Settings.hangoutAppId
