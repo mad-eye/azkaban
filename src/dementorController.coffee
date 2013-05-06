@@ -22,10 +22,12 @@ class DementorController
       return "Your NodeJs is less than required (#{@minNodeVersion}).  Please upgrade to avoid any funny business."
     return null
 
+  firefoxPerformanceWarning = "Firefox is currently experiencing performance issues with MadEye in Hangouts.\n" +
+    "For Hangout mode, please use Chrome or Safari for the best performance."
   createProject: (req, res) =>
     unless @checkVersion req.body['version']
       sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
-    warning = @nodeVersionWarning req.body['nodeVersion']
+    warning = @nodeVersionWarning(req.body['nodeVersion']) ? firefoxPerformanceWarning
 
     Project.create name: req.body['projectName'], (err, proj) =>
       if err then sendErrorResponse(res, err); return
@@ -37,7 +39,7 @@ class DementorController
   refreshProject: (req, res) =>
     unless @checkVersion req.body['version']
       sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
-    warning = @nodeVersionWarning req.body['nodeVersion']
+    warning = @nodeVersionWarning(req.body['nodeVersion']) ? firefoxPerformanceWarning
 
     projectId = req.params['projectId']
     project =
