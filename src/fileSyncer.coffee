@@ -158,5 +158,13 @@ class FileSyncer extends EventEmitter
       }}, (err) ->
         logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
 
+  #callback: (err, scratchFile) ->
+  addScratchFile: (projectId, callback) ->
+    SCRATCH_PATH = "__SCRATCH_BUFFER"
+    scratch = new File {path:SCRATCH_PATH, projectId:projectId,\
+      isDir:false, scratch:true, orderingPath:SCRATCH_PATH}
+    scratch.save (err, doc) ->
+      err = wrapDbError err if err
+      callback err, doc
 
 module.exports = FileSyncer

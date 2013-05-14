@@ -7,7 +7,7 @@ _ = require 'underscore'
 DementorController = require '../../src/dementorController'
 {MockResponse} = require 'madeye-common'
 testUtils = require '../util/testUtils'
-{Project} = require '../../src/models'
+{Project, File} = require '../../src/models'
 {Azkaban} = require '../../src/azkaban'
 FileSyncer = require '../../src/fileSyncer'
 
@@ -60,6 +60,13 @@ describe 'DementorController', ->
         returnedFiles = result.files
         assert.ok returnedFiles
         assertFilesCorrect returnedFiles, newFiles, projectId
+      #This completes in the background, not in time for this test
+      #it "creates a scratch file", (done) ->
+        #File.findOne {projectId: projectId, scratch:true}, (err, dbFile) ->
+          #assert.isNotNull dbFile
+          #assert.equal dbFile._id, scratchFile.id
+          #done()
+
 
     describe "with error", ->
       res = body = statusCode = null

@@ -274,4 +274,21 @@ describe 'FileSyncer', ->
         assert.isTrue fileMap['file2.txt'].modified_locally
         assert.isTrue fileMap['file3.txt'].modified_locally
         done()
-
+        
+        
+  describe 'addScratchFile', ->
+    projectId = uuid.v4()
+    
+    it 'should make a scratch file', (done) ->
+      fileSyncer.addScratchFile projectId, (err, scratchFile) ->
+        assert.isNotNull scratchFile
+        assert.isNull err
+        assert.isTrue scratchFile.scratch, "scratch should be set"
+        assert.ok scratchFile._id
+        assert.ok scratchFile.path
+        assert.ok scratchFile.orderingPath
+        assert.isFalse scratchFile.isDir
+        File.findOne {projectId: projectId, scratch:true}, (err, dbFile) ->
+          assert.isNotNull dbFile
+          assert.equal dbFile._id, scratchFile.id
+          done()
