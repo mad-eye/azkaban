@@ -2,8 +2,9 @@
 async = require 'async'
 uuid = require 'node-uuid'
 _ = require 'underscore'
-{File, Project} = require '../../src/models.coffee'
+{File, Project} = require '../../src/models'
 FileSyncer = require '../../src/fileSyncer'
+{assertFilesCorrect} = require '../util/testUtils'
 
 #callback: (files) ->
 makeExistingFiles = (projectId, callback) ->
@@ -25,7 +26,6 @@ addOrderingPath = (files) ->
   for file in files
     file.orderingPath = file.path.replace(/\ /g, "!").replace(/\//g, " ").toLowerCase()
   if array then return files else return files[0]
-
 
 describe 'FileSyncer', ->
   fileSyncer = new FileSyncer()
@@ -57,15 +57,45 @@ describe 'FileSyncer', ->
 
   describe 'syncFiles with deleteMissing=true', ->
     projectId = uuid.v4()
-    existingFiles = null
+    addedFiles = null
+    newFiles = null
+    scratchFile = null
+    before (done) ->
+      makeExistingFiles projectId, (fs) ->
+        fileSyncer.addScratchFile projectId, (err, doc) ->
+          assert.ok !err?
+          scratchFile = doc
+          newFiles = []
+          newFiles.push addOrderingPath path:'path1', isDir:false
+          newFiles.push addOrderingPath path:'anotherPath1', isDir:true
+
+          deleteMissing = true
+          fileSyncer.syncFiles newFiles, projectId, deleteMissing, (err, files) ->
+            assert.isNull err
+            addedFiles = files
+            done()
+
+    it 'should not duplicate files', (done) ->
+      File.findByProjectId projectId, (err, files) ->
+        assert.isNull err
+        assertFilesCorrect files, newFiles
+        done()
+
+    it 'should not delete the scratch file', (done) ->
+      File.findById scratchFile._id, (err, doc) ->
+        assert.isNull err
+        assert.ok doc
+        assertFilesCorrect [doc], [scratchFile]
+        done()
+
+
+  describe 'syncFiles with incomplete parent dirs', ->
+    projectId = uuid.v4()
     addedFiles = null
     newFiles = null
     before (done) ->
       makeExistingFiles projectId, (fs) ->
-        existingFiles = fs
         newFiles = []
-        newFiles.push addOrderingPath path:'path1', isDir:false
-        newFiles.push addOrderingPath path:'anotherPath1', isDir:true
         newFiles.push addOrderingPath path:'dir1/dir2/dir3/README', isDir:false
         newFiles.push addOrderingPath path:'dir1/dir2/dir3/blah', isDir:false
 
@@ -79,22 +109,21 @@ describe 'FileSyncer', ->
       assert.equal addedFiles.length, newFiles.length + 3 #dir1, dir2, dir3
 
     it "should create the parent directories", (done)->
-      fileExists = (path)->
       async.forEach ["dir1", "dir1/dir2", "dir1/dir2/dir3"], (path, callback) ->
-        File.findOne {path: path}, (err, result)->
-          assert result, "no file found for path #{path}"
-          assert result.isDir, "#{path} is a directory"
+        File.findOne {projectId, path}, (err, result)->
+          assert.ok result, "no file found for path #{path}"
+          assert.ok result.isDir, "#{path} is a directory"
           callback()
       , done
 
-    it 'should not duplicate files', (done) ->
-      File.findByProjectId projectId, (err, files) ->
-        assert.equal err, null
-        assert.equal files.length, newFiles.length + 3 #dir1, dir2, dir3
-        paths = _.map newFiles, (file)->file.path
-        assert.equal _.uniq(paths).length, paths.length
-        done()
-
+    it 'should not create a parent dir twice', (done) ->
+      async.forEach ["dir1", "dir1/dir2", "dir1/dir2/dir3"], (path, callback) ->
+        File.find {projectId, path}, (err, results)->
+          assert.ok results, "no files found for path #{path}"
+          assert.equal results.length, 1, "#{path} has #{results.length} entries, should be one"
+          callback()
+      , done
+    
   describe 'syncFiles with mtime', ->
     projectId = uuid.v4()
     fileId = otherFileId = null

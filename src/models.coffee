@@ -21,8 +21,14 @@ fileSchema = mongoose.Schema
   checksum: Number
   lastOpened: Number
 
-fileSchema.statics.findByProjectId = (projectId, callback) ->
-  @find {projectId: projectId}, callback
+fileSchema.statics.findByProjectId = (projectId, options, callback) ->
+  if 'function' == typeof options
+    callback = options
+    options = {}
+  selector = {projectId}
+  unless options.scratch
+    selector['scratch'] = {$ne: true}
+  @find selector, callback
 
 
 
