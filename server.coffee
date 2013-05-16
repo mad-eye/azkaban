@@ -8,6 +8,7 @@ FileController = require('./src/fileController')
 BolideClient = require "./src/bolideClient"
 ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
+DDPClient = require('./src/ddpClient')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
@@ -55,6 +56,11 @@ class Server
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
 
+    ddpUrl = "ws://#{Settings.apogeeHost}:#{Settings.apogeePort}/websocket"
+    ddpClient = new DDPClient ddpUrl
+    ddpClient.on 'ready', ->
+      console.log "Connected to DDP server at", ddpUrl
+      
     console.log "initializing azkaban"
     Azkaban.initialize
       socketServer: socketServer
@@ -66,9 +72,10 @@ class Server
       mongoose: mongoose
       apogeeLogProcessor: new ApogeeLogProcessor 1000 #interval to check metrics db
       fileSyncer: new FileSyncer
+      ddpClient: ddpClient
 
     @azkaban = Azkaban.instance()
-      
+
     require('./routes')(@app)
     
   shutdown: (returnVal=0) ->
@@ -93,6 +100,8 @@ class Server
     unless process.env.MADEYE_TEST
       process.on 'uncaughtException', (err) =>
         console.error "Exiting because of uncaught exception: " + err
+        if err.stack
+          console.error err.stack
         logger.error "Exiting because of uncaught exception: #{err.message}", error:err
         @shutdown(1)
 

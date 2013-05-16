@@ -69,8 +69,11 @@ class DementorChannel
       if error
         logger.error "Bad data in LOCAL_FILES_ADDED", {projectId, data, error}
         return callback error
-      @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) ->
+      @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) =>
         if err then callback wrapDbError err; return
+        args = ['files'].concat _.pluck files, '_id'
+        @azkaban.ddpClient.invokeMethod 'markDirty', args unless err
+
         callback null, files
 
     #callback: (error) ->
@@ -90,13 +93,15 @@ class DementorChannel
         checksum = crc32 data.contents
         return callback null, null if file.checksum? and checksum == file.checksum
         if file.modified
-          file.update {$set: {modified_locally:true, checksum}}, (err) ->
+          file.update {$set: {modified_locally:true, checksum}}, (err) =>
+            @azkaban.ddpClient.invokeMethod 'markDirty', ['files', file._id] unless err
             callback err, {
               action : messageAction.WARNING
               message : "The file #{file.path} was modified on MadEye; if it is saved there, it will be overwritten here."
             }
         else
-          file.update {$set: {checksum}}
+          file.update {$set: {checksum}}, (err) =>
+            @azkaban.ddpClient.invokeMethod 'markDirty', ['files', file._id] unless err
           @azkaban.bolideClient.setDocumentContents file._id, data.contents, true, (err) =>
             return @handleError err, projectId, callback if err
             callback null
