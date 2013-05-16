@@ -71,7 +71,8 @@ class DementorChannel
         return callback error
       @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) =>
         if err then callback wrapDbError err; return
-        args = ['files'].concat _.pluck files, '_id'
+        args = ['files']
+        args.push f._id for f in files when f
         @azkaban.ddpClient.invokeMethod 'markDirty', args unless err
 
         callback null, files
@@ -131,7 +132,7 @@ class DementorChannel
             message ?= ''
             message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
             file.update {$set: {removed:true}}, cb
-      , (err) ->
+      , (err) =>
         if err then callback? err; return
         response = null
         if message
@@ -139,6 +140,9 @@ class DementorChannel
             action: messageAction.WARNING
             message: message
         callback? null, response
+        args = ['files']
+        args.push f._id for f in data.files when f
+        @azkaban.ddpClient.invokeMethod 'markDirty', args
 
     #callback: (error) ->
     socket.on messageAction.METRIC, (data, callback) =>
