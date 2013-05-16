@@ -160,7 +160,7 @@ class FileSyncer extends EventEmitter
 
   #callback: (err, scratchFile) ->
   addScratchFile: (projectId, callback) ->
-    SCRATCH_PATH = "__SCRATCH_BUFFER"
+    SCRATCH_PATH = "*SCRATCH*"
     scratch = new File {path:SCRATCH_PATH, projectId:projectId,\
       isDir:false, scratch:true, orderingPath:SCRATCH_PATH}
     scratch.save (err, doc) ->
