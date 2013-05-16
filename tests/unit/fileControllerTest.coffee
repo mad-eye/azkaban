@@ -13,6 +13,7 @@ describe 'fileController', ->
   Azkaban.initialize()
   azkaban = Azkaban.instance()
   azkaban.setService 'fileSyncer', new FileSyncer
+  azkaban.setService 'ddpClient', {invokeMethod: ->}
   fileController = undefined
 
   describe 'saveFile', ->

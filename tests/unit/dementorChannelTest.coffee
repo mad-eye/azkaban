@@ -12,6 +12,7 @@ FileSyncer = require '../../src/fileSyncer'
 async = require 'async'
 sharejs = require('share').client
 {Settings} = require 'madeye-common'
+sinon = require 'sinon'
 
 
 
@@ -27,6 +28,8 @@ describe "DementorChannel", ->
       objects = {}
     channel = new DementorChannel()
     azkaban.setService 'dementorChannel', channel
+    objects.ddpSpy = sinon.spy()
+    azkaban.setService 'ddpClient', {invokeMethod: objects.ddpSpy}
     project = new Project name: projectName
 
     project.save (err) ->
@@ -84,6 +87,16 @@ describe "DementorChannel", ->
         assert.equal savedFile._id, file._id, "File should keep original file id"
         done()
 
+    it 'should call ddpClient markDirty', (done) ->
+      file = objects.fileMap['file1']
+      newFile = _.pick file, 'path', 'orderingPath', 'projectId', 'isDir', 'mtime', 'modified'
+      data =
+        projectId: objects.projectId
+        files: [newFile]
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, files) ->
+        assert.isTrue objects.ddpSpy.calledOnce
+        assert.isTrue objects.ddpSpy.calledWith 'markDirty', ['files', file._id]
+        done()
 
     #Seems better to log and not error out in this case...
     it 'should ignore nulls in files', (done) ->
@@ -104,6 +117,7 @@ describe "DementorChannel", ->
         done()
 
     #TODO commented out until we can mock mongoose to give errors.
+    #Use sinon.stub
     it "should callback error if Mongo returns an error"
     #it "should callback error if Mongo returns an error", (done) ->
       #mockDb.openError = new Error "Cannot open DB"
@@ -252,6 +266,20 @@ describe "DementorChannel", ->
         assert.ok err
         assert.equal err.type, errorType.INVALID_PARAM
         done()
+
+    #This seems to fail for async reasons.
+    #it 'should call ddpClient markDirty', (done) ->
+      #file = objects.fileMap['file1']
+      #newFile = _.pick file, 'path', 'orderingPath', 'projectId', 'isDir', 'mtime', 'modified'
+      #data =
+        #projectId: objects.projectId
+        #file: newFile
+        #contents: 'doesnt matter'
+
+      #objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
+        #assert.isTrue objects.ddpSpy.calledOnce
+        #assert.isTrue objects.ddpSpy.calledWith 'markDirty', ['files', file._id]
+        #done()
 
 
   describe 'destroy', ->
