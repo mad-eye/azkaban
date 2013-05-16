@@ -51,7 +51,7 @@ class DDPClient extends events.EventEmitter
 
   #callback(err)
   invokeMethod: (method, params, callback) ->
-    return callback 'not ready' unless @ready
+    return callback? 'not ready' unless @ready
     @sendMessage {msg: "method", params: params, method: method}, callback
 
 module.exports = DDPClient

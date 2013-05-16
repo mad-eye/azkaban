@@ -160,6 +160,7 @@ class DementorChannel
     Project.update {_id:projectId}, {closed:false}, (err) =>
       return callback?(err) if err
       @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+      callback?()
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->
@@ -167,6 +168,7 @@ class DementorChannel
     Project.update {_id:projectId}, {closed:true}, (err) =>
       return callback?(err) if err
       @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+      callback?()
 
 
   #####
