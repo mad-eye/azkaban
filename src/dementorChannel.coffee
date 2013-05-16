@@ -157,14 +157,16 @@ class DementorChannel
     logger.debug "Opening project", {projectId:projectId}
     clearTimeout @closeProjectTimers[projectId]
     @closeProjectTimers[projectId] = null
-    Project.update {_id:projectId}, {closed:false}, (err) ->
-      callback? err
+    Project.update {_id:projectId}, {closed:false}, (err) =>
+      return callback?(err) if err
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->
     logger.debug "Closing project", {projectId:projectId}
-    Project.update {_id:projectId}, {closed:true}, (err) ->
-      callback? err
+    Project.update {_id:projectId}, {closed:true}, (err) =>
+      return callback?(err) if err
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
 
 
   #####
