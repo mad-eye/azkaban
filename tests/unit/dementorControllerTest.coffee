@@ -21,6 +21,7 @@ describe 'DementorController', ->
   azkaban.setService 'fileSyncer', new FileSyncer()
   dementorController = new DementorController
   azkaban.setService 'dementorController', dementorController
+  azkaban.setService 'ddpClient', invokeMethod: ->
 
   newFiles = [
     { path: 'file1', isDir:false },

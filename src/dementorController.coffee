@@ -50,6 +50,7 @@ class DementorController
       closed: false
     Project.findOneAndUpdate {_id:projectId}, project, {new:true, upsert:true}, (err, proj) =>
       if err then sendErrorResponse(res, err); return
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
       logger.debug "Project refreshed", {projectId:proj._id}
       deleteMissing = true
       @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, deleteMissing, (err, files) ->
