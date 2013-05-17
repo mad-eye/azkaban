@@ -1,48 +1,57 @@
+events = require 'events'
+uuid = require 'node-uuid'
+WebSocket = require "ws"
+{logger} = require './logger'
+
 #TODO
 #should probably turn this into a singleton to ensure that multiple web sockets aren't created
 #should onReady be exported?
 
+class DDPClient extends events.EventEmitter
+  constructor: (url) ->
+    #TODO think about whehter we need a pool of connections here
+    @ready = false
+    @callbacks = {}
+    @ws = new WebSocket url
+    @activateSocket()
 
-uuid = require 'node-uuid'
-{Settings} = require "madeye-common"
-WebSocket = require "ws"
+  shutdown: ->
+    @ws?.close()
 
-#TODO think about whehter we need a pool of connections here
-ready = false
-callbacks = {}
+  sendMessage: (obj, callback)->
+    obj.id = uuid.v4()
+    @ws.send JSON.stringify(obj)
+    @callbacks[obj.id] = callback
 
-console.log Settings.apogeeHost, Settings.apogeePort
-ws = new WebSocket "ws://#{Settings.apogeeHost}:#{Settings.apogeePort}/websocket"
+  activateSocket: ->
+    @ws.on "open", =>
+      @sendMessage {msg: "connect", version: "pre1", support: "pre1"}
 
-onReady = ->
+    @ws.on "message", (message) =>
+      response = JSON.parse(message)
+      #Sometimes an initial empty message is sent.  We should ignore.
+      return unless response.msg
+      switch response.msg
+        when "connected"
+          #message received during initial handshake
+          @ready = true
+          @emit 'ready'
+        when 'failed'
+          #TODO: Make this a MadEye error
+          errorMessage = "Failed to connect to DDP server.  It suggests using version " + response.version
+          err = {type:"DDP_FAILED", message:errorMessage, version:response.version}
+          @emit 'error', err
+        when 'result'
+          @callbacks[response.id]?(null, response.result)
+        when 'updated'
+          #this is sent after markDirty.  ignore
+        else
+          #Should get this, ignore but log
+          logger.info "Got unexpected message from DDP server: #{message}", message: response
 
-sendMessage = (obj, callback)->
-  obj.id = uuid.v4()
-  ws.send JSON.stringify(obj)
-  callbacks[obj.id] = callback
+  #callback(err)
+  invokeMethod: (method, params, callback) ->
+    return callback? 'not ready' unless @ready
+    @sendMessage {msg: "method", params: params, method: method}, callback
 
-ws.on "open", ->
-  sendMessage {msg: "connect", version: "pre1", support: "pre1"}
-
-ws.on "message", (message) ->
-  response = JSON.parse(message)
-  console.log response
-  #message received during initial handshake
-  if response.msg == "connected"
-    ready = true
-    console.log "CONNECTED"
-    onReady()
-  else
-    callbacks[response.id]?(null, response.result)
-
-#callback(err)
-invokeMethod = (method, params, callback) ->
-#  callback "not ready" unless ready      
-  sendMessage {msg: "method", params: params, method: method}, callback
-
-exports.invokeMethod = invokeMethod
-exports.onReady = invokeMethod
-
-onReady = ->
-  invokeMethod "getFileCount", [4], (err, result)->
-    console.log "RESULT", result
+module.exports = DDPClient

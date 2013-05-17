@@ -21,6 +21,7 @@ class Azkaban_ extends events.EventEmitter
 
   shutdownGracefully: (callback) ->
     logger.debug "Shutting down gracefully."
+    @ddpClient.shutdown()
     @dementorChannel.destroy ->
       @httpServer.close ->
         @mongoose.disconnect ->
