@@ -82,6 +82,9 @@ class Server
     #Multiple ^C will allow exit in haste
     process.exit(returnVal || 1) if @SHUTTING_DOWN # || not ?, because we don't want 0
     @SHUTTING_DOWN = true
+    process.on 'uncaughtException', (err) ->
+      console.warn "Error in shutting down", err
+      returnVal = returnVal || 1
     @azkaban.shutdownGracefully ->
       process.exit returnVal ? 0
     setTimeout ->

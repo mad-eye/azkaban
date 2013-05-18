@@ -2,10 +2,7 @@ events = require 'events'
 uuid = require 'node-uuid'
 WebSocket = require "ws"
 {logger} = require './logger'
-
-#TODO
-#should probably turn this into a singleton to ensure that multiple web sockets aren't created
-#should onReady be exported?
+{errors, errorType} = require 'madeye-common'
 
 class DDPClient extends events.EventEmitter
   constructor: (url) ->
@@ -18,10 +15,24 @@ class DDPClient extends events.EventEmitter
   shutdown: ->
     @ws?.close()
 
+  wrapSocketError : (err) ->
+    return err unless err
+    return err if err.madeye
+    if err.message == 'not open'
+      @ready = false
+    return errors.new errorType.SOCKET_ERROR
+
+
   sendMessage: (obj, callback)->
     obj.id = uuid.v4()
-    @ws.send JSON.stringify(obj)
-    @callbacks[obj.id] = callback
+    @ws.send JSON.stringify(obj), (err) =>
+      if err
+        err = wrapSocketError err
+        if callback
+          return callback err
+        else
+          @emit 'error', err
+      @callbacks[obj.id] = callback
 
   activateSocket: ->
     @ws.on "open", =>
