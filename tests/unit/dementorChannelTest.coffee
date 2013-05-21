@@ -282,7 +282,7 @@ describe "DementorChannel", ->
         #done()
 
 
-  describe 'destroy', ->
+  describe 'shutdown', ->
     it 'should disconnect all live sockets'
     it 'should close all live projects'
 
