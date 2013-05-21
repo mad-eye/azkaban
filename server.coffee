@@ -90,7 +90,7 @@ class Server
     setTimeout ->
       logger.error "Could not close connections in time, forcefully shutting down"
       process.exit returnVal || 1
-    , 30*1000
+    , 10*1000
 
 
   listen: (callback)->
