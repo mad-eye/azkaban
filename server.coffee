@@ -56,12 +56,12 @@ class Server
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
 
-    ddpUrl = "ws://#{Settings.apogeeHost}/websocket"
+    ddpUrl = "ws://#{Settings.apogeeDDPHost}/websocket"
     ddpClient = new DDPClient ddpUrl
     ddpClient.on 'ready', ->
-      console.log "Connected to DDP server at", ddpUrl
+      logger.debug "Connected to DDP server at", ddpUrl
       
-    console.log "initializing azkaban"
+    logger.debug "initializing azkaban"
     Azkaban.initialize
       socketServer: socketServer
       httpServer: httpServer
