@@ -59,7 +59,7 @@ class Server
     ddpUrl = "ws://#{Settings.apogeeDDPHost}/websocket"
     ddpClient = new DDPClient ddpUrl
     ddpClient.on 'ready', ->
-      logger.debug "Connected to DDP server at", ddpUrl
+      logger.debug "Connected to DDP server at #{ddpUrl}"
       
     logger.debug "initializing azkaban"
     Azkaban.initialize
