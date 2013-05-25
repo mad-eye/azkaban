@@ -306,7 +306,7 @@ describe "DementorChannel", ->
         projectId = project._id
         done()
 
-    it 'should open project fweep', (done) ->
+    it 'should open project', (done) ->
       mockSocket.trigger messageAction.HANDSHAKE, projectId, ->
         Project.findOne {_id: projectId}, (err, proj) ->
           assert.equal err, null

@@ -13,7 +13,7 @@ else
 fs.mkdirSync logDir unless fs.existsSync logDir
 
 consoleOptions = (app) ->
-  level: 'info'
+  level: 'debug'
   silent: false
   colorize: true
   timestamp: (app == 'azkaban')

@@ -3,7 +3,7 @@ HangoutController = require '../../src/hangoutController'
 {assert} = require 'chai'
 {MockResponse} = require 'madeye-common'
 {Settings} = require 'madeye-common'
-{Project} = require '../../src/models'
+{Project, ProjectStatus} = require '../../src/models'
 uuid = require 'node-uuid'
 
 describe 'HangoutController', ->
@@ -37,7 +37,7 @@ describe 'HangoutController', ->
 
   describe 'gotoHangout', ->
     project = null
-    before (done) ->
+    beforeEach (done) ->
       project = new Project
         name: "GOTOPROJECT"
       project.save (err, result) ->
@@ -55,7 +55,7 @@ describe 'HangoutController', ->
 
       hangoutController.gotoHangout req, res
 
-    it "should give existing hangout url if project is registered", (done) ->
+    it "should give existing hangout url if project is registered and there is a hangout projectStatus", (done) ->
       req = {params: {projectId: project._id}}
       existingHangoutUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
       res = new MockResponse
@@ -66,5 +66,38 @@ describe 'HangoutController', ->
 
       Project.update {_id:project._id}, {hangoutUrl:existingHangoutUrl}, (err, count) ->
         assert.isNull err
+        ProjectStatus.create {projectId:project._id, userId:uuid.v4(), isHangout:true}, (err, doc) ->
+          console.log "Got status doc", doc
+          assert.isNull err
+          hangoutController.gotoHangout req, res
+
+    it "should give a new hangout url if project is registered and there is no projectStatus", (done) ->
+      req = {params: {projectId: project._id}}
+      existingHangoutUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
+      res = new MockResponse
+      res.redirect = (url) ->
+        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{project._id}"
+        expectedUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+        assert.equal url, expectedUrl
+        done()
+
+      Project.update {_id:project._id}, {hangoutUrl:existingHangoutUrl}, (err, count) ->
+        assert.isNull err
         hangoutController.gotoHangout req, res
+
+    it "should give a new hangout url if project is registered and there is only non-hangout projectStatus", (done) ->
+      req = {params: {projectId: project._id}}
+      existingHangoutUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
+      res = new MockResponse
+      res.redirect = (url) ->
+        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{project._id}"
+        expectedUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+        assert.equal url, expectedUrl
+        done()
+
+      Project.update {_id:project._id}, {hangoutUrl:existingHangoutUrl}, (err, count) ->
+        assert.isNull err
+        ProjectStatus.create {projectId:project._id, userId:uuid.v4(), isHangout:false}, (err, doc) ->
+          assert.isNull err
+          hangoutController.gotoHangout req, res
 

@@ -30,8 +30,6 @@ fileSchema.statics.findByProjectId = (projectId, options, callback) ->
     selector['scratch'] = {$ne: true}
   @find selector, callback
 
-
-
 File = mongoose.model 'File', fileSchema, 'files'
 
 projectSchema = mongoose.Schema
@@ -45,6 +43,17 @@ projectSchema = mongoose.Schema
 
 Project = mongoose.model 'Project', projectSchema, 'projects'
 
+projectStatusSchema = mongoose.Schema
+  projectId: {type:String, required:true}
+  userId: {type:String, required:true}
+  isHangout: Boolean
+  connectionId: String
+  filePath: String
+  heartbeat: Number
+  iconId: Number #XXX: This will probably change, and maybe break?
+
+ProjectStatus = mongoose.model 'ProjectStatus', projectStatusSchema, 'projectStatus'
+
 wrapDbError = (err) ->
   return err unless err?
   return err if err.madeye
@@ -52,4 +61,5 @@ wrapDbError = (err) ->
 
 exports.File = File
 exports.Project = Project
+exports.ProjectStatus = ProjectStatus
 exports.wrapDbError = wrapDbError
