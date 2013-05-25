@@ -31,12 +31,13 @@ class DDPClient extends events.EventEmitter
         if callback
           return callback err
         else
-          @emit 'error', err
+          logger.error "Error sending message", message:obj, error:err
       @callbacks[obj.id] = callback
 
   activateSocket: ->
     @ws.on "open", =>
-      @sendMessage {msg: "connect", version: "pre1", support: "pre1"}
+      @sendMessage {msg: "connect", version: "pre1", support: "pre1"}, (err) =>
+        @emit 'error', err if err
 
     @ws.on "message", (message) =>
       response = JSON.parse(message)
