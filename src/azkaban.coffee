@@ -1,5 +1,6 @@
 events = require 'events'
 {logger} = require './logger'
+async = require 'async'
 
 class Azkaban_ extends events.EventEmitter
   constructor: (services) ->
@@ -21,10 +22,21 @@ class Azkaban_ extends events.EventEmitter
 
   shutdownGracefully: (callback) ->
     logger.debug "Shutting down gracefully."
-    @dementorChannel.destroy ->
-      @httpServer.close ->
+    @ddpClient.shutdown()
+    async.parallel
+      http: (cb) =>
+        @httpServer.close ->
+          logger.debug "Http server shut down"
+          cb()
+      mongoose: (cb) =>
         @mongoose.disconnect ->
-          callback?()
+          logger.debug "Mongoose shut down"
+          cb()
+      dementor: (cb) =>
+        @dementorChannel.shutdown ->
+          logger.debug "DementorChannel shut down"
+          cb()
+    , callback
 
 class Azkaban
   _instance = undefined

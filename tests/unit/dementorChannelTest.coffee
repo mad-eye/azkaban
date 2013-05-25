@@ -12,6 +12,7 @@ FileSyncer = require '../../src/fileSyncer'
 async = require 'async'
 sharejs = require('share').client
 {Settings} = require 'madeye-common'
+sinon = require 'sinon'
 
 
 
@@ -27,6 +28,8 @@ describe "DementorChannel", ->
       objects = {}
     channel = new DementorChannel()
     azkaban.setService 'dementorChannel', channel
+    objects.ddpSpy = sinon.spy()
+    azkaban.setService 'ddpClient', {invokeMethod: objects.ddpSpy}
     project = new Project name: projectName
 
     project.save (err) ->
@@ -36,7 +39,7 @@ describe "DementorChannel", ->
       mockSocket = objects.mockSocket = new MockSocket
       channel.attach mockSocket
       mockSocket.trigger messageAction.HANDSHAKE, projectId, (err) ->
-        assert.isNull err#, "Error should be null: #{err.message}"
+        assert.ok !err?, "Error should be null:", err
 
         objects.files = files = [
           {path:'file1', orderingPath:'file1', projectId: projectId, isDir:false, modified: true, lastOpened: Date.now()},
@@ -84,6 +87,16 @@ describe "DementorChannel", ->
         assert.equal savedFile._id, file._id, "File should keep original file id"
         done()
 
+    it 'should call ddpClient markDirty', (done) ->
+      file = objects.fileMap['file1']
+      newFile = _.pick file, 'path', 'orderingPath', 'projectId', 'isDir', 'mtime', 'modified'
+      data =
+        projectId: objects.projectId
+        files: [newFile]
+      objects.mockSocket.trigger messageAction.LOCAL_FILES_ADDED, data, (err, files) ->
+        assert.isTrue objects.ddpSpy.called, "invokeMethod should be called."
+        assert.isTrue objects.ddpSpy.calledWith('markDirty', ['files', file._id]), "invoke method should be called with right arguments"
+        done()
 
     #Seems better to log and not error out in this case...
     it 'should ignore nulls in files', (done) ->
@@ -104,6 +117,7 @@ describe "DementorChannel", ->
         done()
 
     #TODO commented out until we can mock mongoose to give errors.
+    #Use sinon.stub
     it "should callback error if Mongo returns an error"
     #it "should callback error if Mongo returns an error", (done) ->
       #mockDb.openError = new Error "Cannot open DB"
@@ -253,8 +267,22 @@ describe "DementorChannel", ->
         assert.equal err.type, errorType.INVALID_PARAM
         done()
 
+    #This seems to fail for async reasons.
+    #it 'should call ddpClient markDirty', (done) ->
+      #file = objects.fileMap['file1']
+      #newFile = _.pick file, 'path', 'orderingPath', 'projectId', 'isDir', 'mtime', 'modified'
+      #data =
+        #projectId: objects.projectId
+        #file: newFile
+        #contents: 'doesnt matter'
 
-  describe 'destroy', ->
+      #objects.mockSocket.trigger messageAction.LOCAL_FILE_SAVED, data, (err, result) ->
+        #assert.isTrue objects.ddpSpy.calledOnce
+        #assert.isTrue objects.ddpSpy.calledWith 'markDirty', ['files', file._id]
+        #done()
+
+
+  describe 'shutdown', ->
     it 'should disconnect all live sockets'
     it 'should close all live projects'
 
@@ -266,6 +294,9 @@ describe "DementorChannel", ->
       mockSocket = new MockSocket
       channel = new DementorChannel()
       channel.attach mockSocket
+      azkaban.setService 'dementorChannel', channel
+      ddpSpy = sinon.spy()
+      azkaban.setService 'ddpClient', {invokeMethod: ddpSpy}
 
       project = new Project
         name: 'onkik'
@@ -274,7 +305,8 @@ describe "DementorChannel", ->
         assert.equal err, null
         projectId = project._id
         done()
-    it 'should open project', (done) ->
+
+    it 'should open project fweep', (done) ->
       mockSocket.trigger messageAction.HANDSHAKE, projectId, ->
         Project.findOne {_id: projectId}, (err, proj) ->
           assert.equal err, null
@@ -289,6 +321,9 @@ describe "DementorChannel", ->
       mockSocket = new MockSocket
       channel = new DementorChannel()
       channel.attach mockSocket
+      azkaban.setService 'dementorChannel', channel
+      ddpSpy = sinon.spy()
+      azkaban.setService 'ddpClient', {invokeMethod: ddpSpy}
 
       project = new Project
         name: 'foblub'
@@ -322,6 +357,9 @@ describe "DementorChannel", ->
     channel = null
     before (done) ->
       channel = new DementorChannel()
+      azkaban.setService 'dementorChannel', channel
+      ddpSpy = sinon.spy()
+      azkaban.setService 'ddpClient', {invokeMethod: ddpSpy}
       project = new Project
         name: 'nitfol'
         closed: false

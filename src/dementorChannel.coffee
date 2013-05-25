@@ -15,11 +15,17 @@ class DementorChannel
     @socketProjectIds = {}
     @closeProjectTimers = {}
 
-  destroy: (callback) ->
-    for projectId, socket in @liveSockets
-      socket.disconnect()
-      @closeProject projectId
-      callback?()
+  shutdown: (callback) ->
+    numSockets = _.keys(@liveSockets).length
+    logger.debug "Shutting down #{numSockets} sockets"
+    return callback() if numSockets == 0
+    shutdowns = []
+    for projectId, socket of @liveSockets
+      shutdowns.push (cb) =>
+        socket.disconnect()
+        @closeProject projectId, cb
+    async.each shutdowns, (err) ->
+      callback()
 
   handleError: (err, projectId, callback) ->
     logger.error "Error in dementorChannel", projectId: projectId, err
@@ -69,8 +75,12 @@ class DementorChannel
       if error
         logger.error "Bad data in LOCAL_FILES_ADDED", {projectId, data, error}
         return callback error
-      @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) ->
+      @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) =>
         if err then callback wrapDbError err; return
+        args = ['files']
+        args.push f._id for f in files when f
+        @azkaban.ddpClient.invokeMethod 'markDirty', args unless err
+
         callback null, files
 
     #callback: (error) ->
@@ -90,13 +100,15 @@ class DementorChannel
         checksum = crc32 data.contents
         return callback null, null if file.checksum? and checksum == file.checksum
         if file.modified
-          file.update {$set: {modified_locally:true, checksum}}, (err) ->
+          file.update {$set: {modified_locally:true, checksum}}, (err) =>
+            @azkaban.ddpClient.invokeMethod 'markDirty', ['files', file._id] unless err
             callback err, {
               action : messageAction.WARNING
               message : "The file #{file.path} was modified on MadEye; if it is saved there, it will be overwritten here."
             }
         else
-          file.update {$set: {checksum}}
+          file.update {$set: {checksum}}, (err) =>
+            @azkaban.ddpClient.invokeMethod 'markDirty', ['files', file._id] unless err
           @azkaban.bolideClient.setDocumentContents file._id, data.contents, true, (err) =>
             return @handleError err, projectId, callback if err
             callback null
@@ -126,7 +138,7 @@ class DementorChannel
             message ?= ''
             message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
             file.update {$set: {removed:true}}, cb
-      , (err) ->
+      , (err) =>
         if err then callback? err; return
         response = null
         if message
@@ -134,6 +146,9 @@ class DementorChannel
             action: messageAction.WARNING
             message: message
         callback? null, response
+        args = ['files']
+        args.push f._id for f in data.files when f
+        @azkaban.ddpClient.invokeMethod 'markDirty', args
 
     #callback: (error) ->
     socket.on messageAction.METRIC, (data, callback) =>
@@ -152,14 +167,18 @@ class DementorChannel
     logger.debug "Opening project", {projectId:projectId}
     clearTimeout @closeProjectTimers[projectId]
     @closeProjectTimers[projectId] = null
-    Project.update {_id:projectId}, {closed:false}, (err) ->
-      callback? err
+    Project.update {_id:projectId}, {closed:false}, (err) =>
+      return callback?(err) if err
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+      callback?()
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->
     logger.debug "Closing project", {projectId:projectId}
-    Project.update {_id:projectId}, {closed:true}, (err) ->
-      callback? err
+    Project.update {_id:projectId}, {closed:true}, (err) =>
+      return callback?(err) if err
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+      callback?()
 
 
   #####

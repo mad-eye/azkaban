@@ -11,6 +11,7 @@ fileSchema = mongoose.Schema
   projectId: {type: String, required: true}
   path: {type: String, required: true}
   orderingPath: {type: String, required: true}
+  scratch: Boolean
   isDir: {type: Boolean, required: true}
   isLink: {type: Boolean, default: false}
   mtime: {type: Number, default: Date.now}
@@ -20,8 +21,14 @@ fileSchema = mongoose.Schema
   checksum: Number
   lastOpened: Number
 
-fileSchema.statics.findByProjectId = (projectId, callback) ->
-  @find {projectId: projectId}, callback
+fileSchema.statics.findByProjectId = (projectId, options, callback) ->
+  if 'function' == typeof options
+    callback = options
+    options = {}
+  selector = {projectId}
+  unless options.scratch
+    selector['scratch'] = {$ne: true}
+  @find selector, callback
 
 
 

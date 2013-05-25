@@ -124,7 +124,7 @@ class FileSyncer extends EventEmitter
               fileId: file._id
       
   _cleanupLineEndings = (contents) ->
-    return contents unless /\r/.test contents
+    return contents unless (/\r/.test contents)
     lineBreakRegex = /(\r\n|\r|\n)/gm
     hasDos = /\r\n/.test contents
     hasUnix = /[^\r]\n/.test contents
@@ -155,8 +155,18 @@ class FileSyncer extends EventEmitter
         modified_locally: false
         lastOpened: Date.now()
         checksum: checksum
-      }}, (err) ->
+      }}, (err) =>
+        @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
         logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
 
+  #callback: (err, scratchFile) ->
+  addScratchFile: (projectId, callback) ->
+    SCRATCH_PATH = "%SCRATCH%"
+    ORDERING_PATH = "!!SCRATCH"
+    scratch = new File {path:SCRATCH_PATH, projectId:projectId,\
+      isDir:false, scratch:true, orderingPath:ORDERING_PATH}
+    scratch.save (err, doc) ->
+      err = wrapDbError err if err
+      callback err, doc
 
 module.exports = FileSyncer

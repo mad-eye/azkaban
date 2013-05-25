@@ -4,7 +4,6 @@
 
 class FileController
   constructor: () ->
-    @Settings = require("madeye-common").Settings
 
   sendErrorResponse: (res, err) ->
     logger.error err.message, err
@@ -36,6 +35,7 @@ class FileController
       else
         res.json {projectId: projectId, fileId:fileId, saved:true}
         File.update {_id:fileId}, {modified_locally:false, checksum}
+        @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
 
 module.exports = FileController

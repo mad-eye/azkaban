@@ -13,6 +13,7 @@ describe 'fileController', ->
   Azkaban.initialize()
   azkaban = Azkaban.instance()
   azkaban.setService 'fileSyncer', new FileSyncer
+  azkaban.setService 'ddpClient', {invokeMethod: ->}
   fileController = undefined
 
   describe 'saveFile', ->
@@ -136,7 +137,6 @@ describe 'fileController', ->
       assert.equal response.statusCode, 200
 
     it 'should return correct checksum', ->
-      console.log "Found response body #{typeof response.body}", response.body
       assert.equal response.body.checksum, crc32 fakeContents
 
     it 'should return a 500 if there is an error communicating with dementor', (done) ->
