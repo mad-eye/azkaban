@@ -15,11 +15,17 @@ class DementorChannel
     @socketProjectIds = {}
     @closeProjectTimers = {}
 
-  destroy: (callback) ->
-    for projectId, socket in @liveSockets
-      socket.disconnect()
-      @closeProject projectId
-      callback?()
+  shutdown: (callback) ->
+    numSockets = _.keys(@liveSockets).length
+    logger.debug "Shutting down #{numSockets} sockets"
+    return callback() if numSockets == 0
+    shutdowns = []
+    for projectId, socket of @liveSockets
+      shutdowns.push (cb) =>
+        socket.disconnect()
+        @closeProject projectId, cb
+    async.each shutdowns, (err) ->
+      callback()
 
   handleError: (err, projectId, callback) ->
     logger.error "Error in dementorChannel", projectId: projectId, err

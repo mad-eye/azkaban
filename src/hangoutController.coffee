@@ -1,4 +1,4 @@
-{Project, wrapDbError} = require './models'
+{Project, ProjectStatus, wrapDbError} = require './models'
 {Settings} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
@@ -23,13 +23,23 @@ class HangoutController
     projectId = req.params['projectId']
     Project.findById projectId, 'hangoutUrl', (err, project) =>
       hangoutUrl = project?.hangoutUrl
-      if hangoutUrl
-        url = hangoutUrl + "?gid=" + Settings.hangoutAppId
+      activeHangoutUrl = hangoutUrl + "?gid=" + Settings.hangoutAppId
+
+      apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
+      inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+      unless hangoutUrl
+        console.log "Redirecting to", inactiveHangoutUrl
+        res.redirect inactiveHangoutUrl
       else
-        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
-        url = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
-      console.log "Redirecting to", url
-      res.redirect url
+        #Is this still active?  Check for projectStatuses
+        ProjectStatus.find {projectId, isHangout:true}, (err, results) ->
+          logger.error "Error checking project status", error: wrapDbError err if err
+          if err or !results or results.length == 0
+            console.log "Redirecting to", inactiveHangoutUrl
+            res.redirect inactiveHangoutUrl
+          else
+            console.log "Redirecting to", activeHangoutUrl
+            res.redirect activeHangoutUrl
 
 
 
