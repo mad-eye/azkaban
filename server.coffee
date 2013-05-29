@@ -9,6 +9,7 @@ BolideClient = require "./src/bolideClient"
 ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
 DDPClient = require('./src/ddpClient')
+HangoutController = require('./src/hangoutController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
@@ -67,6 +68,7 @@ class Server
       httpServer: httpServer
       dementorChannel: dementorChannel
       dementorController: new DementorController
+      hangoutController: new HangoutController
       fileController: new FileController
       bolideClient: new BolideClient
       mongoose: mongoose

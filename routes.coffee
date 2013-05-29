@@ -5,6 +5,7 @@ routes = (app) ->
   azkaban = Azkaban.instance()
   fileController = azkaban.fileController
   dementorController = azkaban.dementorController
+  hangoutController = azkaban.hangoutController
 
   app.post '/file-upload/:fileId', (req, res)->
 
@@ -27,5 +28,11 @@ routes = (app) ->
 
   app.get "/", (req, res)->
     res.json {success: true}
+
+  app.get '/hangout/:projectId', (req, res) ->
+    hangoutController.gotoHangout(req, res)
+
+  app.put '/hangout/:projectId', (req, res) ->
+    hangoutController.registerHangout(req, res)
 
 module.exports = routes
