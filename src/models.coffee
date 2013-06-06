@@ -9,7 +9,7 @@ uuid = require 'node-uuid'
 fileSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
   projectId: {type: String, required: true}
-  path: {type: String, required: true}
+  path: {type: String, required: true, unique: true}
   orderingPath: {type: String, required: true}
   scratch: Boolean
   isDir: {type: Boolean, required: true}
@@ -20,6 +20,8 @@ fileSchema = mongoose.Schema
   modified_locally: {type: Boolean, default: false}
   checksum: Number
   lastOpened: Number
+
+fileSchema.index ({projectId: 1, type: -1})
 
 fileSchema.statics.findByProjectId = (projectId, options, callback) ->
   if 'function' == typeof options
