@@ -1,5 +1,7 @@
 {Azkaban} = require './src/azkaban'
+{Settings} = require("madeye-common")
 fs = require "fs"
+handlebars = require 'handlebars'
 
 routes = (app) ->
   azkaban = Azkaban.instance()
@@ -35,4 +37,9 @@ routes = (app) ->
   app.put '/hangout/:projectId', (req, res) ->
     hangoutController.registerHangout(req, res)
 
+  simpleHangoutTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/simpleHangoutApp.xml.hbs", "utf-8"))
+  simpleHangoutXml = simpleHangoutTemplate {apogeeUrl: Settings.apogeeUrl}
+  app.get "/simpleHangoutApp.xml", (req, res) ->
+    res.write simpleHangoutXml
+    res.end()
 module.exports = routes
