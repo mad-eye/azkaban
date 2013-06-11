@@ -21,10 +21,13 @@ class BolideClient
       return callback wrapShareError error if error
       if doc.version > 0 and !reset
         return callback errors.new errorType.INITIALIZED_FILE_NOT_EMPTY
-      if doc.getText()?.length > 0
-        doc.del 0, doc.getText().length, (error, appliedOp)->
-          logger.error "Error delete document contents.", wrapShareError error if error
-      doc.insert 0, contents, (error, appliedOp)->
+      try #ShareJS throws errors, very frustrating
+        if doc.getText()?.length > 0
+          doc.del 0, doc.getText().length, (error, appliedOp)->
+            logger.error "Error delete document contents.", wrapShareError error if error
+        doc.insert 0, contents, (error, appliedOp)->
+          callback wrapShareError error
+      catch error
         callback wrapShareError error
 
 module.exports = BolideClient

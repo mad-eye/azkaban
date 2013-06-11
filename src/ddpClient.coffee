@@ -27,6 +27,7 @@ class DDPClient extends events.EventEmitter
     obj.id = uuid.v4()
     @ws.send JSON.stringify(obj), (err) =>
       if err
+        console.log "Error sending message", obj, err
         err = @wrapSocketError err
         if callback
           return callback err
