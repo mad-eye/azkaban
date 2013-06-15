@@ -1,4 +1,5 @@
 assert = require("chai").assert
+fs = require "fs"
 uuid = require 'node-uuid'
 sinon = require 'sinon'
 {Azkaban} = require '../../src/azkaban'
@@ -154,3 +155,29 @@ describe 'fileController', ->
             projectId: projectId
           , fakeResponse
       
+  describe 'createImpressJSProject fweep', ->
+    #TODO should put this into a callback..
+
+    projectId = undefined
+    tmpWorkDirectory = "/tmp/fileControllerTestWorkspace_#{uuid.v4()}"
+    fs.mkdirSync tmpWorkDirectory
+
+    it "returns the projectId", (done)->
+      fakeResponse = new MockResponse
+      fakeResponse.onEnd = (body)->
+        message = JSON.parse body
+        projectId = message.projectId
+        assert.ok projectId
+        done()
+
+      fileController = new FileController userStaticFiles: tmpWorkDirectory
+      fileController.createImpressJSProject({}, fakeResponse)
+
+    it 'should create a project on the filesystem', (done)->
+      fs.stat "#{tmpWorkDirectory}/#{projectId}", (err, stats)->
+        assert.isNull err
+        fs.stat "#{tmpWorkDirectory}/#{projectId}/index.html", (err, stats)->
+          assert.isNull err
+          done()
+
+    it 'should create projects and files in the db', ->

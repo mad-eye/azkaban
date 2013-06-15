@@ -1,9 +1,13 @@
 {logger} = require './logger'
 {Project, File, wrapDbError} = require './models'
 {crc32} = require("madeye-common")
+fs = require "fs"
+{Settings} = require 'madeye-common'
+uuid = require 'node-uuid'
+wrench = require 'wrench'
 
 class FileController
-  constructor: () ->
+  constructor: (@settings=Settings) ->
 
   sendErrorResponse: (res, err) ->
     logger.error err.message, err
@@ -36,6 +40,34 @@ class FileController
         res.json {projectId: projectId, fileId:fileId, saved:true}
         File.update {_id:fileId}, {modified_locally:false, checksum}
         @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
+
+  #TODO maybe this and impressJS should be broken out into another file?
+  #TODO add test for saveStaticFile
+  saveStaticFile: (req, res) ->
+    res.header 'Access-Control-Allow-Origin', '*'
+    fileId = req.params['fileId']
+    projectId = req.params['projectId']
+    contents = req.body.contents
+
+    fs.writeFile file.path, contents, (err)->
+      if err
+        @sendErrorResponse(res, err)
+      else
+        res.json {projectId, fileId, saved:true}
+        File.update {_id:fileId}, {modified_locally:false, checksum}
+        @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
+
+  createImpressJSProject: (req, res) ->
+    res.header 'Access-Control-Allow-Origin', '*'
+    projectId = uuid.v4()
+    projectDir = "#{@settings.userStaticFiles}/#{projectId}"
+
+    #TODO ignore git directory
+    wrench.copyDirRecursive "#{__dirname}/../template_projects/impress.js", projectDir, {}, (err)->
+      #create the project in the db
+      #create files for each of the files that was copied over
+
+      res.json {projectId}
 
 
 module.exports = FileController
