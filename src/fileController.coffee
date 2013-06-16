@@ -110,14 +110,17 @@ class FileController
             createFileInDb = (fileObject, callback)->
               relativePath = path.relative projectDir, fileObject.path
               dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: fileObject.isDir}
-              dbFile.save (err)->
-                unless isBinary fileObject.path
-                  fs.readFile fileObject.path, 'utf-8', (err, data)->
+              if isBinary(fileObject.path) or fileObject.isDir
+                dbFile.save (err)->
+                  callback()
+              else
+                fs.readFile fileObject.path, 'utf-8', (err, data)->
+                  dbFile.checksum = crc32 data
+                  dbFile.save (err)->
                     azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
                       console.error err if err
                       callback()
-                else
-                  callback()
+
             async.map files, createFileInDb, (err)->
               res.json {projectId}
 
