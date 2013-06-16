@@ -162,7 +162,7 @@ class FileSyncer extends EventEmitter
         @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
         logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
 
-    project = Project.findOne _id: projectId, (err, project)->
+    project = Project.findOne _id: projectId, (err, project)=>
       unless project.impressJS
         @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
           updateContents(err, contents)
