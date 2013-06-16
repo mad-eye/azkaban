@@ -9,6 +9,7 @@ FileController = require '../../src/fileController'
 {Project, File} = require '../../src/models'
 {crc32} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
+_ = require "underscore"
 
 describe 'fileController', ->
   Azkaban.initialize()
@@ -180,4 +181,13 @@ describe 'fileController', ->
           assert.isNull err
           done()
 
-    it 'should create projects and files in the db', ->
+    it 'should create projects and files in the db', (done)->
+      project = Project.findOne {_id: projectId}, (err, doc)->
+        assert.ok doc
+        files = File.find {projectId}, (err, docs)->
+          expectedPath = "#{tmpWorkDirectory}/#{projectId}/index.html" 
+          indexDoc = _.find docs, (doc)->
+            doc.path == expectedPath
+          assert.ok indexDoc, "expected to find path #{expectedPath}"
+          done()
+          #TODO make sure there is a file named index.html, index.css...
