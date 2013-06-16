@@ -5,11 +5,15 @@ async = require 'async'
 fs = require "fs"
 {Settings} = require 'madeye-common'
 uuid = require 'node-uuid'
+path = require "path"
 wrench = require 'wrench'
+
 _ = require 'underscore'
 
 class FileController
   constructor: (@settings=Settings) ->
+    unless fs.existsSync @settings.userStaticFiles
+      fs.mkdir @settings.userStaticFiles
 
   sendErrorResponse: (res, err) ->
     logger.error err.message, err
@@ -81,22 +85,39 @@ class FileController
             allFiles = allFiles.concat result
           callback null, allFiles
 
+
+
+  isBinary = (path)->
+    /\.(bmp|gif|jpg|jpeg|png|psd|ai|ps|svg|pdf|exe|jar|dwg|dxf|7z|deb|gz|zip|dmg|iso|avi|mov|mp4|mpg|wmb|vob)$/.exec(path)?
+
   createImpressJSProject: (req, res) ->
+    azkaban = @azkaban
+
     res.header 'Access-Control-Allow-Origin', '*'
-    Project.create {name: "impress.js", isImpressJS: true}, (err, proj) =>
+    Project.create {name: "impress.js", impressJS: true}, (err, proj) =>
       projectId = proj.id
       projectDir = "#{@settings.userStaticFiles}/#{projectId}"
 
       #maybe clearer/faster to just shell out?
       wrench.copyDirRecursive "#{__dirname}/../template_projects/impress.js", projectDir, {}, (err)->
+        #TODO better handle error here
+        console.error err if err
+
         #delete .git file that is copied over
         fs.unlink "#{projectDir}/.git", ->
           #create files for each of the files that was copied over
           recursiveRead projectDir, (error, files)->
             createFileInDb = (fileObject, callback)->
-              File.create {orderingPath: fileObject.path, path: fileObject.path, projectId, saved:true, isDir: fileObject.isDir}, (err)->
-                console.error err if err
-                callback(err)
+              relativePath = path.relative projectDir, fileObject.path
+              dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: fileObject.isDir}
+              dbFile.save (err)->
+                unless isBinary fileObject.path
+                  fs.readFile fileObject.path, 'utf-8', (err, data)->
+                    azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
+                      console.error err if err
+                      callback()
+                else
+                  callback()
             async.map files, createFileInDb, (err)->
               res.json {projectId}
 

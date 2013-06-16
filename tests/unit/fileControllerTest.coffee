@@ -161,7 +161,17 @@ describe 'fileController', ->
 
     projectId = undefined
     tmpWorkDirectory = "/tmp/fileControllerTestWorkspace_#{uuid.v4()}"
-    fs.mkdirSync tmpWorkDirectory
+
+    controller = new FileController {userStaticFiles: tmpWorkDirectory}
+
+    azkaban = Azkaban.instance()
+    azkaban.setService "fileController", controller
+    mockBolide =
+      setDocumentContents: (docId, contents, reset=false, callback) ->
+        hitBolideClient = true
+        callback null
+
+    azkaban.setService "bolideClient", mockBolide
 
     it "returns the projectId", (done)->
       fakeResponse = new MockResponse
@@ -171,8 +181,7 @@ describe 'fileController', ->
         assert.ok projectId
         done()
 
-      fileController = new FileController userStaticFiles: tmpWorkDirectory
-      fileController.createImpressJSProject({}, fakeResponse)
+      controller.createImpressJSProject({}, fakeResponse)
 
     it 'should create a project on the filesystem', (done)->
       fs.stat "#{tmpWorkDirectory}/#{projectId}", (err, stats)->
@@ -185,9 +194,10 @@ describe 'fileController', ->
       project = Project.findOne {_id: projectId}, (err, doc)->
         assert.ok doc
         files = File.find {projectId}, (err, docs)->
-          expectedPath = "#{tmpWorkDirectory}/#{projectId}/index.html" 
+          expectedPath = "index.html"
           indexDoc = _.find docs, (doc)->
             doc.path == expectedPath
           assert.ok indexDoc, "expected to find path #{expectedPath}"
           done()
-          #TODO make sure there is a file named index.html, index.css...
+
+    it "should ensure the files are created in bolide"

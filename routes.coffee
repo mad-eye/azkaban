@@ -19,6 +19,9 @@ routes = (app) ->
   app.post '/project', (req, res)->
     dementorController.createProject(req, res)
 
+  app.post '/newImpressJSProject', (req, res)->
+    fileController.createImpressJSProject(req, res)
+
   app.put '/project/:projectId', (req, res)->
     dementorController.refreshProject(req, res)
 
