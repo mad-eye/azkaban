@@ -29,7 +29,10 @@ routes = (app) ->
     fileController.getFile(req, res)
 
   app.put '/project/:projectId/file/:fileId', (req, res)->
-    fileController.saveFile(req, res)
+    unless req.body["static"]
+      fileController.saveFile(req, res)
+    else
+      fileController.saveStaticFile(req, res)
 
   app.get "/", (req, res)->
     res.json {success: true}
