@@ -156,7 +156,7 @@ describe 'fileController', ->
             projectId: projectId
           , fakeResponse
       
-  describe 'createImpressJSProject fweep', ->
+  describe 'createImpressJSProject', ->
     #TODO should put this into a callback..
 
     projectId = undefined
@@ -201,3 +201,35 @@ describe 'fileController', ->
           done()
 
     it "should ensure the files are created in bolide"
+
+  describe "saveStaticFile fweep", ->
+    projectId = uuid.v4()
+    tmpWorkDirectory = "/tmp/fileControllerTestWorkspace_#{projectId}"
+    projectDirectory = "/tmp/fileControllerTestWorkspace_#{projectId}/#{projectId}"
+
+    fs.mkdirSync tmpWorkDirectory
+    fs.mkdirSync projectDirectory
+    controller = new FileController {userStaticFiles: tmpWorkDirectory}
+
+    it "should write contents to disk on save", (done)->
+      controller.saveStaticFile
+
+      azkaban.setService "fileController", controller
+
+      azkaban.setService "ddpClient",
+        invokeMethod: ->
+
+      novelContents = "a tale"
+
+      fakeResponse = new MockResponse
+      fakeResponse.onEnd = (body)->
+        message = JSON.parse body
+        #console.log "MESSAGE", message
+        contents = fs.readFileSync "#{projectDirectory}/novel.txt", "utf-8"
+        assert.equal contents, novelContents
+        done()
+
+      file = new File {path: "novel.txt", isDir: false, orderingPath: "novel.txt", projectId}
+      file.save (err)->
+        console.error err if err
+        controller.saveStaticFile {params: {fileId: file._id}, body: {contents: novelContents}}, fakeResponse

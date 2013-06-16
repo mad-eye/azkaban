@@ -52,16 +52,18 @@ class FileController
   saveStaticFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
-    projectId = req.params['projectId']
     contents = req.body.contents
 
-    fs.writeFile file.path, contents, (err)->
-      if err
-        @sendErrorResponse(res, err)
-      else
-        res.json {projectId, fileId, saved:true}
-        File.update {_id:fileId}, {modified_locally:false, checksum}
-        @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
+    file = File.findOne {_id: fileId}, (err, file)=>
+      projectId = file.projectId
+      fs.writeFile "#{@settings.userStaticFiles}/#{projectId}/#{file.path}", contents, (err)=>
+        if err
+          @sendErrorResponse(res, err)
+        else
+          res.json {projectId, fileId, saved:true}
+          checksum = crc32 contents
+          File.update {_id:fileId}, {modified_locally:false, checksum}
+          @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
   recursiveRead = (dir, callback)->
     allFiles = []
