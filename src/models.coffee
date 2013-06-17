@@ -9,7 +9,7 @@ uuid = require 'node-uuid'
 fileSchema = mongoose.Schema
   _id: {type: String, default: uuid.v4}
   projectId: {type: String, required: true}
-  path: {type: String, required: true, unique: true}
+  path: {type: String, required: true}
   orderingPath: {type: String, required: true}
   scratch: Boolean
   isDir: {type: Boolean, required: true}
@@ -21,7 +21,8 @@ fileSchema = mongoose.Schema
   checksum: Number
   lastOpened: Number
 
-fileSchema.index ({projectId: 1, type: -1})
+fileSchema.index ({projectId: 1})
+fileSchema.index {projectId: 1, path: 1}, unique: true
 
 fileSchema.statics.findByProjectId = (projectId, options, callback) ->
   if 'function' == typeof options
