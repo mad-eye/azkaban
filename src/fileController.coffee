@@ -47,8 +47,7 @@ class FileController
         File.update {_id:fileId}, {modified_locally:false, checksum}
         @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
-  #TODO maybe this and impressJS should be broken out into another file?
-  #TODO add test for saveStaticFile
+  #TODO maybe this and createImpressJSProject should be broken out into another file?
   saveStaticFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
