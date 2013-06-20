@@ -5,7 +5,7 @@ async = require 'async'
 fs = require "fs"
 {Settings} = require 'madeye-common'
 uuid = require 'node-uuid'
-path = require "path"
+_path = require "path"
 {ncp} = require "ncp"
 ncp.limit = 16
 _ = require 'underscore'
@@ -64,29 +64,26 @@ class FileController
           File.update {_id:fileId}, {modified_locally:false, checksum}
           @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
-  recursiveRead = (dir, callback)->
-    allFiles = []
-    dirCount = 0
+  #callback: (err) ->
+  _applyAction = (path, action, callback) ->
+    fs.stat path, (err, stat) ->
+      return callback err if err
+      action path, stat, (err) ->
+        return callback err if err
+        if stat.isDirectory()
+          recursiveRead path, action, callback
+        else
+          callback null
+
+  #action: (path, stat, cb) ->, called for each file found.
+  #callback: (err) ->, called when done
+  recursiveRead = (dir, action, callback)->
     fs.readdir dir, (err, files)->
-      fullPathFiles = _.map files, (file)-> "#{dir}/#{file}"
-      allFiles = allFiles.concat _.map fullPathFiles, (path)-> {path, isDir: false}
-      directories = []
-      async.map fullPathFiles, fs.stat, (err, stats)->
-        for stat, i in stats
-          if stat.isDirectory()
-            allFiles[i].isDir = true
-            directories.push("#{dir}/#{files[i]}")
-        uncrawledDirCount = directories.length
-        return callback(null, allFiles) if uncrawledDirCount == 0
-
-        fullPathFiles = _.map files, (file)-> {path: "#{dir}/#{file}", isDir: false}
-
-        async.map directories, recursiveRead, (err, results)->
-          for result in results
-            allFiles = allFiles.concat result
-          callback null, allFiles
-
-
+      return callback err if err
+      fullPaths = _.map files, (file)-> "#{dir}/#{file}"
+      async.each fullPaths, (path, cb) ->
+        _applyAction path, action, cb
+      , callback
 
   isBinary = (path)->
     /\.(bmp|gif|jpg|jpeg|png|psd|ai|ps|svg|pdf|exe|jar|dwg|dxf|7z|deb|gz|zip|dmg|iso|avi|mov|mp4|mpg|wmb|vob)$/.exec(path)?
@@ -102,28 +99,31 @@ class FileController
       #ignore the .git file
       filter = (path)->
         not /\.git$/.test path
-      ncp "#{__dirname}/../template_projects/impress.js", projectDir, {filter}, (err)->
-        #TODO better handle error here
-        console.error err if err
+
+      #callback: (err) ->
+      createFileInDb = (path, stat, callback) ->
+        relativePath = _path.relative projectDir, path
+        dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: stat.isDirectory()}
+        if isBinary(path) or stat.isDirectory()
+          dbFile.save (err) ->
+            callback err
+        else
+          fs.readFile path, 'utf-8', (err, data) ->
+            return callback err if err
+            dbFile.checksum = crc32 data
+            dbFile.save (err) ->
+              return callback err if err
+              azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
+                callback err
+
+
+      ncp "#{__dirname}/../template_projects/impress.js", projectDir, {filter}, (err) =>
+        return @sendErrorResponse(res, err) if err
 
         #create files for each of the files that was copied over
-        recursiveRead projectDir, (error, files)->
-          createFileInDb = (fileObject, callback)->
-            relativePath = path.relative projectDir, fileObject.path
-            dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: fileObject.isDir}
-            if isBinary(fileObject.path) or fileObject.isDir
-              dbFile.save (err)->
-                callback()
-            else
-              fs.readFile fileObject.path, 'utf-8', (err, data)->
-                dbFile.checksum = crc32 data
-                dbFile.save (err)->
-                  azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
-                    console.error err if err
-                    callback()
-
-          async.map files, createFileInDb, (err)->
-            res.json {projectId}
+        recursiveRead projectDir, createFileInDb, (error) =>
+          return @sendErrorResponse(res, error) if error
+          res.json {projectId}
 
 
 module.exports = FileController
