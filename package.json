@@ -22,7 +22,7 @@
     "async": "~0.2.5",
     "ws": "~0.4.25",
     "handlebars": "~1.0.12",
-    "wrench": "~1.5.1"
+    "ncp": "~0.4.2"
   },
   "devDependencies": {
     "sinon": "~1.6.0",

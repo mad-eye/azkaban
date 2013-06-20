@@ -202,7 +202,7 @@ describe 'fileController', ->
 
     it "should ensure the files are created in bolide"
 
-  describe "saveStaticFile fweep", ->
+  describe "saveStaticFile", ->
     projectId = uuid.v4()
     tmpWorkDirectory = "/tmp/fileControllerTestWorkspace_#{projectId}"
     projectDirectory = "/tmp/fileControllerTestWorkspace_#{projectId}/#{projectId}"

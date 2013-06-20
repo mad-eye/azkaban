@@ -6,8 +6,8 @@ fs = require "fs"
 {Settings} = require 'madeye-common'
 uuid = require 'node-uuid'
 path = require "path"
-wrench = require 'wrench'
-
+{ncp} = require "ncp"
+ncp.limit = 16
 _ = require 'underscore'
 
 class FileController
@@ -99,31 +99,31 @@ class FileController
       projectId = proj.id
       projectDir = "#{@settings.userStaticFiles}/#{projectId}"
 
-      #maybe clearer/faster to just shell out?
-      wrench.copyDirRecursive "#{__dirname}/../template_projects/impress.js", projectDir, {}, (err)->
+      #ignore the .git file
+      filter = (path)->
+        not /\.git$/.test path
+      ncp "#{__dirname}/../template_projects/impress.js", projectDir, {filter}, (err)->
         #TODO better handle error here
         console.error err if err
 
-        #delete .git file that is copied over
-        fs.unlink "#{projectDir}/.git", ->
-          #create files for each of the files that was copied over
-          recursiveRead projectDir, (error, files)->
-            createFileInDb = (fileObject, callback)->
-              relativePath = path.relative projectDir, fileObject.path
-              dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: fileObject.isDir}
-              if isBinary(fileObject.path) or fileObject.isDir
+        #create files for each of the files that was copied over
+        recursiveRead projectDir, (error, files)->
+          createFileInDb = (fileObject, callback)->
+            relativePath = path.relative projectDir, fileObject.path
+            dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: fileObject.isDir}
+            if isBinary(fileObject.path) or fileObject.isDir
+              dbFile.save (err)->
+                callback()
+            else
+              fs.readFile fileObject.path, 'utf-8', (err, data)->
+                dbFile.checksum = crc32 data
                 dbFile.save (err)->
-                  callback()
-              else
-                fs.readFile fileObject.path, 'utf-8', (err, data)->
-                  dbFile.checksum = crc32 data
-                  dbFile.save (err)->
-                    azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
-                      console.error err if err
-                      callback()
+                  azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
+                    console.error err if err
+                    callback()
 
-            async.map files, createFileInDb, (err)->
-              res.json {projectId}
+          async.map files, createFileInDb, (err)->
+            res.json {projectId}
 
 
 module.exports = FileController
