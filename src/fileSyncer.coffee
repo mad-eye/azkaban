@@ -163,7 +163,7 @@ class FileSyncer extends EventEmitter
         logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
 
     project = Project.findOne _id: projectId, (err, project)=>
-      unless project.impressJS
+      unless project and project.impressJS
         @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
           updateContents(err, contents)
       else
