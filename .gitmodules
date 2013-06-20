@@ -1,3 +1,6 @@
 [submodule ".madeye-common"]
 	path = .madeye-common
 	url = git@github.com:mad-eye/madeye-common.git
+[submodule "template_projects/impress.js"]
+	path = template_projects/impress.js
+	url = git://github.com/bartaz/impress.js.git
