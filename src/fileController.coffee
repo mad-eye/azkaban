@@ -64,6 +64,7 @@ class FileController
           File.update {_id:fileId}, {modified_locally:false, checksum}
           @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
+  #helper function for recursiveRead
   #callback: (err) ->
   _applyAction = (path, action, callback) ->
     fs.stat path, (err, stat) ->
@@ -105,16 +106,14 @@ class FileController
         relativePath = _path.relative projectDir, path
         dbFile = new File {orderingPath: relativePath, path: relativePath, projectId, saved:true, isDir: stat.isDirectory()}
         if isBinary(path) or stat.isDirectory()
-          dbFile.save (err) ->
-            callback err
+          dbFile.save callback
         else
           fs.readFile path, 'utf-8', (err, data) ->
             return callback err if err
             dbFile.checksum = crc32 data
             dbFile.save (err) ->
               return callback err if err
-              azkaban.bolideClient.setDocumentContents dbFile._id, data, false, (err)->
-                callback err
+              azkaban.bolideClient.setDocumentContents dbFile._id, data, false, callback
 
 
       ncp "#{__dirname}/../template_projects/impress.js", projectDir, {filter}, (err) =>
