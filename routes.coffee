@@ -19,6 +19,9 @@ routes = (app) ->
   app.post '/project', (req, res)->
     dementorController.createProject(req, res)
 
+  app.post '/newImpressJSProject', (req, res)->
+    fileController.createImpressJSProject(req, res)
+
   app.put '/project/:projectId', (req, res)->
     dementorController.refreshProject(req, res)
 
@@ -26,7 +29,10 @@ routes = (app) ->
     fileController.getFile(req, res)
 
   app.put '/project/:projectId/file/:fileId', (req, res)->
-    fileController.saveFile(req, res)
+    unless req.body["static"]
+      fileController.saveFile(req, res)
+    else
+      fileController.saveStaticFile(req, res)
 
   app.get "/", (req, res)->
     res.json {success: true}

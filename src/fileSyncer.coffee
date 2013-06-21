@@ -6,6 +6,8 @@ _path = require 'path'
 async = require 'async'
 {crc32} = require("madeye-common")
 {normalizePath} = require("madeye-common")
+{Settings} = require 'madeye-common'
+fs = require "fs"
 
 class FileSyncer extends EventEmitter
 
@@ -136,9 +138,10 @@ class FileSyncer extends EventEmitter
     else
       contents
 
+
   #callback: (err, contents) ->
   loadFile: (projectId, fileId, reset, callback) ->
-    @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+    updateContents = (err, contents)=>
       logger.debug "Returned file from dementor", {hasError:err?, projectId:projectId, fileId:fileId}
       return callback err if err
       cleanContents = _cleanupLineEndings(contents)
@@ -158,6 +161,15 @@ class FileSyncer extends EventEmitter
       }}, (err) =>
         @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
         logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
+
+    project = Project.findOne _id: projectId, (err, project)=>
+      unless project and project.impressJS
+        @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
+          updateContents(err, contents)
+      else
+        File.findOne _id: fileId, (err,file)->
+          fs.readFile "#{Settings.userStaticFiles}/#{projectId}/#{file.path}", "utf-8", (err, contents)->
+            updateContents(err, contents)
 
   #callback: (err, scratchFile) ->
   addScratchFile: (projectId, callback) ->

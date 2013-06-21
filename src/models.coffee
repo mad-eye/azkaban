@@ -41,6 +41,7 @@ projectSchema = mongoose.Schema
   closed: {type: Boolean, default: false}
   created: {type: Date, default: Date.now}
   interview: Boolean
+  impressJS: Boolean
   hangoutUrl: String
   #files: [fileSchema]
 
