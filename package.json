@@ -22,7 +22,8 @@
     "async": "~0.2.5",
     "ws": "~0.4.25",
     "handlebars": "~1.0.12",
-    "ncp": "~0.4.2"
+    "ncp": "~0.4.2",
+    "redis": "~0.8.3"
   },
   "devDependencies": {
     "sinon": "~1.6.0",
