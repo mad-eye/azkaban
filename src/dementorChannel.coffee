@@ -7,6 +7,7 @@ _ = require 'underscore'
 async = require 'async'
 {crc32} = require 'madeye-common'
 FileSyncer = require './fileSyncer'
+redisClient = require("redis").createClient()
 
 
 class DementorChannel
@@ -175,10 +176,17 @@ class DementorChannel
   #callback: (err) ->
   closeProject : (projectId, callback) ->
     logger.debug "Closing project", {projectId:projectId}
-    Project.update {_id:projectId}, {closed:true}, (err) =>
-      return callback?(err) if err
-      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
-      callback?()
+
+    #TODO get project, if project has tunnel attribute close the tunnel
+
+    Project.findOne {_id: projectId}, (err, project)=>
+      if project.port
+        redisClient.smove "unavailablePorts", "availablePorts", project.port, (err, results)->
+          return callback?(err) if err
+      Project.update {_id:projectId}, {closed:true, port: null}, (err) =>
+        return callback?(err) if err
+        @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+        callback?()
 
 
   #####
