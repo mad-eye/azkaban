@@ -55,8 +55,8 @@ class DementorController
     warning = @nodeVersionWarning(req.body['nodeVersion']) ? firefoxPerformanceWarning
     tunnel = req.body.tunnel
 
+    projectId = req.params['projectId']
     updateProject = (port)=>
-      projectId = req.params['projectId']
       project =
         name: req.body['projectName']
         closed: false
@@ -71,11 +71,17 @@ class DementorController
           if err then sendErrorResponse(res, err); return
           res.json project:proj, files: files, warning: warning
 
-    if tunnel
-      @findOpenPort (port)->
-        updateProject(port)
-    else
-      updateProject()
+    Project.findOne {_id: projectId}, (err, proj)=>
+      if err then sendErrorResponse(res, err); return
+      console.log proj
+      if proj.tunnel
+        if proj.port
+          updateProject(proj.port)
+        else
+          @findOpenPort (port)->
+            updateProject(port)
+      else
+        updateProject()
 
   findOpenPort: (callback)=>
     redisClient.srandmember "availablePorts", 1, (err, availablePorts)->
