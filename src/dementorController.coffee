@@ -13,7 +13,7 @@ sendErrorResponse = (res, err) ->
 class DementorController
   constructor: () ->
     @minDementorVersion = '0.1.0'
-    @minNodeVersion = '0.8.21'
+    @minNodeVersion = '0.8.18'
     @initRedisPortsCollections()
 
   checkVersion: (dementorVersion) ->
