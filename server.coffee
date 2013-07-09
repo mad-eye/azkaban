@@ -62,7 +62,7 @@ class Server
     ddpClient.on 'ready', ->
       logger.debug "Connected to DDP server at #{ddpUrl}"
       
-    logger.debug "initializing azkaban"
+    logger.info "Initializing azkaban"
     Azkaban.initialize
       socketServer: socketServer
       httpServer: httpServer
@@ -111,7 +111,7 @@ class Server
         @shutdown(1)
 
     @azkaban.httpServer.listen @app.get('port'), =>
-      logger.debug "Express server listening on port " + @app.get('port')
+      logger.info "Express server listening on port " + @app.get('port')
       callback?()
 
     
