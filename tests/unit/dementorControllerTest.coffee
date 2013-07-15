@@ -15,7 +15,7 @@ assertFilesCorrect = testUtils.assertFilesCorrect
 
 minDementorVersion = (new DementorController).minDementorVersion
 
-describe 'DementorController', ()->
+describe 'DementorController', ->
   Azkaban.initialize()
   azkaban = Azkaban.instance()
   azkaban.setService 'fileSyncer', new FileSyncer()
