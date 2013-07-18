@@ -245,3 +245,11 @@ describe 'DementorController', ->
       #it "returns an error with the correct type", ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
+  describe "findOpenPort", ->
+    it "should return a valid port", (done)->
+      dementorController.findOpenPort (port)->
+        assert.ok port
+        assert port >= 7000
+        assert port <= 8000
+        console.log "PORT IS, #{port}"
+        done()  
