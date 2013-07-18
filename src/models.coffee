@@ -43,6 +43,8 @@ projectSchema = mongoose.Schema
   interview: Boolean
   impressJS: Boolean
   hangoutUrl: String
+  port: Number
+  tunnel: Boolean
   #files: [fileSchema]
 
 Project = mongoose.model 'Project', projectSchema, 'projects'
