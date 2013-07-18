@@ -176,17 +176,18 @@ class DementorChannel
   #callback: (err) ->
   closeProject : (projectId, callback) ->
     logger.debug "Closing project", {projectId:projectId}
-
-    #TODO get project, if project has tunnel attribute close the tunnel
-
-    Project.findOne {_id: projectId}, (err, project)=>
-      if project.port
-        redisClient.smove "unavailablePorts", "availablePorts", project.port, (err, results)->
-          return callback?(err) if err
-      Project.update {_id:projectId}, {closed:true, port: null}, (err) =>
-        return callback?(err) if err
+    Project.findById projectId, (err, project)=>
+      port = project.port
+      project.closed = true
+      project.port = null
+      project.save (err) =>
+        return callback?(err) if err        
         @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
-        callback?()
+        if port
+          redisClient.smove "unavailablePorts", "availablePorts", port, (err, results)->
+            callback? err
+        else
+          callback?()
 
 
   #####

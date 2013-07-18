@@ -52,32 +52,28 @@ class DementorController
     warning = @nodeVersionWarning(req.body['nodeVersion'])
     tunnel = req.body.tunnel
     projectId = req.params['projectId']
-    updateProject = (port)=>
-      project =
-        name: req.body['projectName']
-        closed: false
-        tunnel: tunnel
-      project.port = port if port
-      Project.findOneAndUpdate {_id:projectId}, project, {new:true, upsert:true}, (err, proj) =>
+    
+    saveCallback = (err, proj) =>
+      if err then sendErrorResponse(res, err); return
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', proj._id]
+      logger.debug "Project refreshed", {projectId:proj._id}
+      deleteMissing = true
+      @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, deleteMissing, (err, files) ->
         if err then sendErrorResponse(res, err); return
-        @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
-        logger.debug "Project refreshed", {projectId:proj._id}
-        deleteMissing = true
-        @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, deleteMissing, (err, files) ->
-          if err then sendErrorResponse(res, err); return
-          res.json project:proj, files: files, warning: warning
+        res.json project:proj, files: files, warning: warning
 
-    Project.findOne {_id: projectId}, (err, proj)=>
+    Project.findById projectId, (err, proj)=>
       if err then sendErrorResponse(res, err); return
       console.log proj
-      if proj.tunnel
-        if proj.port
-          updateProject(proj.port)
-        else
-          @findOpenPort (port)->
-            updateProject(port)
+      proj.closed = false
+      proj.tunnel = req.body.tunnel
+      if proj.tunnel and not proj.port
+        @findOpenPort (port) ->
+          proj.port = port
+          proj.save saveCallback
       else
-        updateProject()
+        proj.save saveCallback
+        
 
   findOpenPort: (callback)=>
     redisClient.srandmember "availablePorts", 1, (err, availablePorts)->
