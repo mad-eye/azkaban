@@ -88,42 +88,6 @@ describe 'FileSyncer', ->
         assertFilesCorrect [doc], [scratchFile]
         done()
 
-
-  describe 'syncFiles with incomplete parent dirs', ->
-    projectId = uuid.v4()
-    addedFiles = null
-    newFiles = null
-    before (done) ->
-      makeExistingFiles projectId, (fs) ->
-        newFiles = []
-        newFiles.push addOrderingPath path:'dir1/dir2/dir3/README', isDir:false
-        newFiles.push addOrderingPath path:'dir1/dir2/dir3/blah', isDir:false
-
-        deleteMissing = true
-        fileSyncer.syncFiles newFiles, projectId, deleteMissing, (err, files) ->
-          assert.isNull err
-          addedFiles = files
-          done()
-
-    it 'should return the files correctly', ->
-      assert.equal addedFiles.length, newFiles.length + 3 #dir1, dir2, dir3
-
-    it "should create the parent directories", (done)->
-      async.forEach ["dir1", "dir1/dir2", "dir1/dir2/dir3"], (path, callback) ->
-        File.findOne {projectId, path}, (err, result)->
-          assert.ok result, "no file found for path #{path}"
-          assert.ok result.isDir, "#{path} is a directory"
-          callback()
-      , done
-
-    it 'should not create a parent dir twice', (done) ->
-      async.forEach ["dir1", "dir1/dir2", "dir1/dir2/dir3"], (path, callback) ->
-        File.find {projectId, path}, (err, results)->
-          assert.ok results, "no files found for path #{path}"
-          assert.equal results.length, 1, "#{path} has #{results.length} entries, should be one"
-          callback()
-      , done
-    
   describe 'syncFiles with mtime', ->
     projectId = uuid.v4()
     fileId = otherFileId = null
@@ -131,10 +95,10 @@ describe 'FileSyncer', ->
     now = Date.now()
     ago = now - 60*1000
     before (done) ->
-      path = "a/path.txt"
-      otherPath = "a/anotherpath.txt"
-      unopenedPath = "a/unopened.txt"
-      existingFile = new File addOrderingPath {path, projectId, isDir:false, mtime:ago, modified:true, lastOpened: Date.now()}
+      path = "path.txt"
+      otherPath = "anotherpath.txt"
+      unopenedPath = "unopened.txt"
+      existingFile = new File addOrderingPath {path:path, projectId, isDir:false, mtime:ago, modified:true, lastOpened: Date.now()}
       fileId = existingFile._id
       otherExistingFile = new File addOrderingPath {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened: Date.now()}
       otherFileId = otherExistingFile._id
@@ -148,7 +112,7 @@ describe 'FileSyncer', ->
         unopenedFile.save cb
       ], (err, savedFiles) ->
         assert.isNull err, "Found error #{err}"
-        newFile = {path, isDir:false, mtime: now}
+        newFile = {path:path, isDir:false, mtime: now}
         otherNewFile = {path:otherPath, isDir:false, mtime: ago}
         unopenedNewFile = {path:unopenedPath, isDir:false, mtime: now}
         deleteMissing = false
@@ -171,69 +135,14 @@ describe 'FileSyncer', ->
             done()
 
     it 'should update mtime only on new file', ->
-      assert.equal savedFile.mtime, now
-      assert.equal otherSavedFile.mtime, ago
-      assert.equal savedFile.mtime, now
+      assert.equal savedFile.mtime, now, "savedFile should have new time"
+      assert.equal otherSavedFile.mtime, ago, "otherSavedFile should have old time"
+      assert.equal unopenedSavedFile.mtime, now, "unopenedSaved file should have new time"
 
     it 'should set modified_locally=true only on the new file', ->
       assert.isTrue savedFile.modified_locally
       assert.isFalse otherSavedFile.modified_locally
       assert.isFalse unopenedSavedFile.modified_locally
-
-  describe 'completeParentFiles', ->
-    projectId = uuid.v4()
-    it 'should leave complete files alone', ->
-      files = [
-        {path: 'dir1', isDir:true, projectId},
-        {path: 'dir1/dir2', isDir:true, projectId},
-        {path: 'dir1/dir2/file.txt', isDir:true, projectId},
-      ]
-      addOrderingPath files
-      oldFiles = files[..]
-      fileSyncer.completeParentFiles files
-      assert.deepEqual files, oldFiles
-
-    it 'should complete a file missing all parents', ->
-      files = [
-        {path: 'dir1/dir2/file.txt', isDir:false, projectId},
-      ]
-      addOrderingPath files
-      completeFiles = files[..]
-      completeFiles.push addOrderingPath {path: 'dir1/dir2', isDir:true, projectId}
-      completeFiles.push addOrderingPath {path: 'dir1', isDir:true, projectId}
-      _.sortBy completeFiles, 'path'
-      fileSyncer.completeParentFiles files
-      _.sortBy files, 'path'
-      assert.deepEqual files, completeFiles
-      assert.ok file.projectId for file in files
-
-    it 'should complete a file missing only top parent', ->
-      files = [
-        {path: 'dir1/dir2/file.txt', isDir:false, projectId},
-        {path: 'dir1/dir2', isDir:true, projectId}
-      ]
-      addOrderingPath files
-      completeFiles = files[..]
-      completeFiles.push addOrderingPath {path: 'dir1', isDir:true, projectId}
-      _.sortBy completeFiles, 'path'
-      fileSyncer.completeParentFiles files
-      _.sortBy files, 'path'
-      assert.deepEqual files, completeFiles
-      assert.ok file.projectId for file in files
-
-    it 'should not duplicate missing parents', ->
-      files = [
-        {path: 'dir1/file1.txt', isDir:false, projectId},
-        {path: 'dir1/file2.txt', isDir:false, projectId},
-      ]
-      addOrderingPath files
-      completeFiles = files[..]
-      completeFiles.push addOrderingPath {path: 'dir1', isDir:true, projectId}
-      _.sortBy completeFiles, 'path'
-      fileSyncer.completeParentFiles files
-      _.sortBy files, 'path'
-      assert.deepEqual files, completeFiles
-      assert.ok file.projectId for file in files
 
   describe 'partitionFiles', ->
     newFiles = unmodifiedFiles = modifiedFiles = orphanedFiles = null

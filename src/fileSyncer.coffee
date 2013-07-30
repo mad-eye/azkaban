@@ -20,31 +20,8 @@ class FileSyncer extends EventEmitter
       file.projectId = projectId
       file.orderingPath = normalizePath file.path
       cleanFiles.push file
-    @completeParentFiles cleanFiles
     return cleanFiles
     
-
-  #Add missing parent dirs to files
-  #Modifies files, returns null
-  completeParentFiles: (files) ->
-    newFileMap = {}
-    newFileMap[file.path] = file for file in files
-
-    parentsMap = {}
-    for file in files
-      path = file.path
-      loop
-        path = _path.dirname path
-        break if path == '.' or path == '/' or !path?
-        if (path of parentsMap) or (path of newFileMap)
-          break
-        else
-          parentsMap[path] = {path: path, orderingPath: normalizePath(path), projectId: file.projectId, isDir: true}
-
-    for path, parent of parentsMap
-      files.push parent unless newFileMap[path]
-
-
   # returns [newFiles, unmodifiedFiles, modifiedFiles, orphanedFiles]
   partitionFiles: (files, existingFiles) ->
     newFiles = []
