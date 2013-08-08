@@ -35,10 +35,11 @@ class FileSyncer extends EventEmitter
         if existingFile.mtime < file.mtime
           logger.debug "File modified offline.",
             projectId: existingFile.projectId,
-            fileId:existingFile._id,
+            path: existingFile.path,
+            fileId: existingFile._id,
             existingMtime: existingFile.mtime,
             newMtime: file.mtime
-          _.extend existingFile, file
+          existingFile = _.extend existingFile, file
           modifiedFiles.push existingFile
         else
           unmodifiedFiles.push existingFile
@@ -54,7 +55,6 @@ class FileSyncer extends EventEmitter
   updateModifiedFiles: (modifiedFiles, callback) ->
     #filesToRefresh = _.filter modifiedFiles, (file) ->
       #file.lastOpened? && !file.modified
-    #console.log "Found files to refresh:", filesToRefresh
     #async.parallel [
     async.each modifiedFiles, (file, cb) ->
       file.modified_locally = true if file.modified or file.lastOpened?

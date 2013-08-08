@@ -116,23 +116,25 @@ describe 'FileSyncer', ->
         otherNewFile = {path:otherPath, isDir:false, mtime: ago}
         unopenedNewFile = {path:unopenedPath, isDir:false, mtime: now}
         deleteMissing = false
-        fileSyncer.syncFiles [newFile, otherNewFile], projectId, deleteMissing, (err, files) ->
+        fileSyncer.syncFiles [newFile, otherNewFile, unopenedNewFile], projectId, deleteMissing, (err, files) ->
           assert.isNull err
-          async.parallel [(cb) ->
-            File.findById fileId, (err, file) ->
-              savedFile = file
-              cb err
-          , (cb) ->
-            File.findById otherFileId, (err, file) ->
-              otherSavedFile = file
-              cb err
-          , (cb) ->
-            File.findById unopenedFileId, (err, file) ->
-              unopenedSavedFile = file
-              cb err
-          ], (err) ->
-            assert.isNull err
-            done()
+          setTimeout ->
+            async.parallel [(cb) ->
+              File.findById fileId, (err, file) ->
+                savedFile = file
+                cb err
+            , (cb) ->
+              File.findById otherFileId, (err, file) ->
+                otherSavedFile = file
+                cb err
+            , (cb) ->
+              File.findById unopenedFileId, (err, file) ->
+                unopenedSavedFile = file
+                cb err
+            ], (err) ->
+              assert.isNull err
+              done()
+            , 200 #Need to wait for updateModifiedFiles to go.
 
     it 'should update mtime only on new file', ->
       assert.equal savedFile.mtime, now, "savedFile should have new time"
