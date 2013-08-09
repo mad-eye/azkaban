@@ -177,6 +177,7 @@ class DementorChannel
   closeProject : (projectId, callback) ->
     logger.debug "Closing project", {projectId:projectId}
     Project.findById projectId, (err, project)=>
+      return null unless project
       port = project.port
       project.closed = true
       project.port = null
