@@ -34,6 +34,7 @@ describe 'DementorController', ->
       result = body = null
       projectName = 'golmac'
       projectId = null
+      now = Date.now()
       before (done) ->
         req =
           body:
@@ -57,6 +58,7 @@ describe 'DementorController', ->
         assert.ok project
         assert.ok project._id
         assert.equal project.name, projectName
+        assert.isTrue project.lastOpened > now, "Project has lastOpened #{project.lastOpened} <= #{now}"
       it "returns files correctly", ->
         returnedFiles = result.files
         assert.ok returnedFiles
@@ -140,6 +142,7 @@ describe 'DementorController', ->
       result = body = null
       projectName = 'gloth'
       projectId = null
+      now = Date.now()
 
       before (done) ->
         project = new Project
@@ -172,6 +175,7 @@ describe 'DementorController', ->
         assert.ok project._id
         assert.equal project._id, projectId
         assert.equal project.name, projectName
+        assert.isTrue project.lastOpened > now, "Project has lastOpened #{project.lastOpened} <= #{now}"
       it "returns files correctly", ->
         returnedFiles = result.files
         assert.ok returnedFiles
@@ -251,5 +255,4 @@ describe 'DementorController', ->
         assert.ok port
         assert port >= 7000
         assert port <= 8000
-        console.log "PORT IS, #{port}"
-        done()  
+        done()
