@@ -31,7 +31,11 @@ class DementorController
 
     tunnel = req.body['tunnel']
     writeProject = (port)=>
-      Project.create {name: req.body['projectName'], tunnel, port}, (err, proj) =>
+      fields = {name: req.body['projectName'], tunnel, port}
+      if req.params?['projectId']
+        #sometimes the project has been deleted; just recreate
+        fields._id = req.params['projectId']
+      Project.create fields, (err, proj) =>
         if err then sendErrorResponse(res, err); return
         logger.debug "Project created", {projectId:proj._id}
         @azkaban.fileSyncer.addScratchFile proj._id, (err, scratchFile) ->
@@ -62,11 +66,16 @@ class DementorController
         if err then sendErrorResponse(res, err); return
         res.json project:proj, files: files, warning: warning
 
-    Project.findById projectId, (err, proj)=>
+    Project.findById projectId, (err, proj) =>
       if err then sendErrorResponse(res, err); return
+      unless proj
+        #sometimes the project has been deleted; just recreate
+        @createProject req, res
+        return
       console.log proj
       proj.closed = false
       proj.tunnel = req.body.tunnel
+      proj.lastOpened = Date.now()
       if proj.tunnel and not proj.port
         @findOpenPort (port) ->
           proj.port = port

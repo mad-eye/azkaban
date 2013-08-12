@@ -130,3 +130,20 @@ describe "DementorController (functional)", ->
       assert.equal objects.body.project._id, projectId
 
     it "updates existing files in db for project"
+
+    it "should create a project with the correct id if none exists.", ->
+
+  describe "refresh with missing id", ->
+    projectName = 'otsung'
+    projectId = null
+    objects = {}
+    before (done) ->
+      projectId = uuid.v4()
+      sendRefreshRequest(projectId, projectName, files, objects, done)
+
+    it "should create a project with the correct id if none exists.", ->
+      assertResponseOk objects
+      assertValidResponseBody objects, projectName
+      project = objects.body.project
+      assert.equal project._id, projectId
+
