@@ -57,7 +57,7 @@ class Server
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
 
-    ddpUrl = "ws://#{Settings.apogeeDDPHost}/websocket"
+    ddpUrl = Settings.apogeeDDPUrl
     ddpClient = new DDPClient ddpUrl
     ddpClient.on 'ready', ->
       logger.debug "Connected to DDP server at #{ddpUrl}"

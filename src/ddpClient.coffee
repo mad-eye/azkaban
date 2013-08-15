@@ -6,7 +6,7 @@ WebSocket = require "ws"
 
 class DDPClient extends events.EventEmitter
   constructor: (url) ->
-    #TODO think about whehter we need a pool of connections here
+    #TODO think about whether we need a pool of connections here
     @ready = false
     @callbacks = {}
     @ws = new WebSocket url
