@@ -1,70 +1,58 @@
 events = require 'events'
 uuid = require 'node-uuid'
-WebSocket = require "ws"
+_ = require 'underscore'
+Ddp = require "ddp"
 {logger} = require './logger'
 {errors, errorType} = require 'madeye-common'
 
+DEFAULT_OPTIONS =
+  host: "localhost",
+  port: 3000,
+  auto_reconnect: true,
+  auto_reconnect_timer: 500
+
+wrapSocketError = (err) ->
+  return err unless err
+  return err if err.madeye
+  return errors.new errorType.SOCKET_ERROR, err
+
 class DDPClient extends events.EventEmitter
-  constructor: (url) ->
-    #TODO think about whether we need a pool of connections here
-    @ready = false
-    @callbacks = {}
-    @ws = new WebSocket url
-    @activateSocket()
+  constructor: (options) ->
+    options = _.extend DEFAULT_OPTIONS, options
+    @ddpClient = new Ddp options
+    @initialized = false
 
-  shutdown: ->
-    @ws?.close()
+  shutdown: (callback) ->
+    @emit 'trace', 'Shutting down'
+    @ddpClient?.close()
+    process.nextTick callback if callback
 
-  wrapSocketError : (err) ->
-    return err unless err
-    return err if err.madeye
-    if err.message == 'not open'
-      @ready = false
-    return errors.new errorType.SOCKET_ERROR
+  connect: (callback) ->
+    @ddpClient.connect (error) =>
+      @emit 'error', error if error
+      @emit 'debug', 'DDP connected' unless error
+      @_initialize()
+      callback?(wrapSocketError error)
 
+  _initialize: ->
+    return if @initialized
+    @initialized = true
+    @ddpClient.on 'message', (msg) =>
+      @emit 'trace', 'Ddp message: ' + msg
+    @ddpClient.on 'socket-close', (code, message) =>
+      @emit 'debug', "DDP closed: [#{code}] #{message}"
+    @ddpClient.on 'socket-error', (error) =>
+      @emit 'error', error
+    
+  subscribe: (collectionName, args...) ->
+    @ddpClient.subscribe collectionName, args, =>
+      @emit 'trace', "Subscribed to #{collectionName}"
 
-  sendMessage: (obj, callback)->
-    obj.id = uuid.v4()
-    @ws.send JSON.stringify(obj), (err) =>
-      if err
-        console.log "Error sending message", obj, err
-        err = @wrapSocketError err
-        if callback
-          return callback err
-        else
-          logger.error "Error sending message", message:obj, error:err
-      @callbacks[obj.id] = callback
-
-  activateSocket: ->
-    @ws.on "open", =>
-      @sendMessage {msg: "connect", version: "pre1", support: "pre1"}, (err) =>
-        @emit 'error', err if err
-
-    @ws.on "message", (message) =>
-      response = JSON.parse(message)
-      #Sometimes an initial empty message is sent.  We should ignore.
-      return unless response.msg
-      switch response.msg
-        when "connected"
-          #message received during initial handshake
-          @ready = true
-          @emit 'ready'
-        when 'failed'
-          #TODO: Make this a MadEye error
-          errorMessage = "Failed to connect to DDP server.  It suggests using version " + response.version
-          err = {type:"DDP_FAILED", message:errorMessage, version:response.version}
-          @emit 'error', err
-        when 'result'
-          @callbacks[response.id]?(null, response.result)
-        when 'updated'
-          #this is sent after markDirty.  ignore
-        else
-          #Should get this, ignore but log
-          logger.info "Got unexpected message from DDP server: #{message}", message: response
-
-  #callback(err)
+  #callback(err, result)
   invokeMethod: (method, params, callback) ->
-    return callback? 'not ready' unless @ready
-    @sendMessage {msg: "method", params: params, method: method}, callback
+    @emit 'trace', "Invoking #{method} with params:", params
+    @ddpClient.call method, params, (err, result) =>
+      callback? err, result
+      @emit 'trace', "#{method} returned #{result}"
 
 module.exports = DDPClient

@@ -14,6 +14,9 @@ HangoutController = require('./src/hangoutController')
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
 FileSyncer = require './src/fileSyncer'
+LogListener = require './src/logListener'
+
+listener = new LogListener
 
 class Server
   constructor: ->
@@ -58,9 +61,14 @@ class Server
       dementorChannel.attach socket
 
     ddpUrl = Settings.apogeeDDPUrl
-    ddpClient = new DDPClient ddpUrl
-    ddpClient.on 'ready', ->
-      logger.debug "Connected to DDP server at #{ddpUrl}"
+    ddpOptions =
+      host: Settings.ddpHost
+      port: Settings.ddpPort
+
+    ddpClient = new DDPClient ddpOptions
+    listener.listen ddpClient, 'ddpClient', 'debug'
+    ddpClient.connect (err) ->
+      logger.debug "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
       
     logger.info "Initializing azkaban"
     Azkaban.initialize
