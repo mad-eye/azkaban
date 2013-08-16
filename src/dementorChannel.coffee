@@ -26,7 +26,7 @@ class DementorChannel extends events.EventEmitter
       shutdowns.push (cb) =>
         socket.disconnect()
         @closeProject projectId, cb
-    async.each shutdowns, (err) ->
+    async.each shutdowns, (err) =>
       @emit 'trace', "Shut down all sockets"
       callback()
 
