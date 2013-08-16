@@ -8,9 +8,10 @@ async = require 'async'
 {crc32} = require 'madeye-common'
 FileSyncer = require './fileSyncer'
 redisClient = require("redis").createClient()
+events = require 'events'
 
 
-class DementorChannel
+class DementorChannel extends events.EventEmitter
   constructor: () ->
     @liveSockets = {}
     @socketProjectIds = {}
@@ -18,7 +19,7 @@ class DementorChannel
 
   shutdown: (callback) ->
     numSockets = _.keys(@liveSockets).length
-    logger.debug "Shutting down #{numSockets} sockets"
+    @emit 'debug', "Shutting down #{numSockets} sockets"
     return callback() if numSockets == 0
     shutdowns = []
     for projectId, socket of @liveSockets
@@ -26,16 +27,17 @@ class DementorChannel
         socket.disconnect()
         @closeProject projectId, cb
     async.each shutdowns, (err) ->
+      @emit 'trace', "Shut down all sockets"
       callback()
 
   handleError: (err, projectId, callback) ->
-    logger.error "Error in dementorChannel", projectId: projectId, err
+    @emit 'warn', "Error in dementorChannel", projectId: projectId, err
     callback err
 
   attach: (socket) ->
     socket.on 'disconnect', =>
       projectId = @socketProjectIds[socket.id]
-      logger.debug "Disconnecting socket #{socket.id}", projectId:projectId
+      @emit 'debug', "Disconnecting socket #{socket.id}", projectId:projectId
       #Don't close the project if another connection is 'active'
       if projectId && @liveSockets[projectId] == socket
         @closeProjectTimers[projectId] = setTimeout (=>
@@ -45,7 +47,7 @@ class DementorChannel
 
     #callback: (error) ->
     socket.on messageAction.HANDSHAKE, (projectId, callback) =>
-      logger.debug "Received handshake", projectId:projectId
+      @emit 'debug', "Received handshake", projectId:projectId
       @liveSockets[projectId] = socket
       @socketProjectIds[socket.id] = projectId
       @openProject projectId, (err) ->
@@ -71,10 +73,10 @@ class DementorChannel
     socket.on messageAction.LOCAL_FILES_ADDED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       data.projectId ?= projectId
-      logger.debug "Adding remote files", projectId:data.projectId
+      @emit 'debug', "Adding remote files", projectId:data.projectId
       error = validateData data
       if error
-        logger.error "Bad data in LOCAL_FILES_ADDED", {projectId, data, error}
+        @emit 'warn', "Bad data in LOCAL_FILES_ADDED", {projectId, data, error}
         return callback error
       @azkaban.fileSyncer.syncFiles data.files, data.projectId, (err, files) =>
         if err then callback wrapDbError err; return
@@ -90,13 +92,13 @@ class DementorChannel
       projectId ?= data.projectId
       unless data?.file?._id
         error = errors.new errorType.INVALID_PARAM, param:'file', value:data.file
-        logger.error "Bad data in LOCAL_FILES_SAVED", {projectId, data, error}
+        @emit 'warn', "Bad data in LOCAL_FILES_SAVED", {projectId, data, error}
         return callback error
       #TODO: Also accept paths if there is no _id
       File.findById data.file._id, (err, file) =>
         return @handleError wrapDbError(err), projectId, callback if err
         return @handleError errors.new(errorType.NO_FILE), projectId, callback unless file
-        logger.debug "Saving remote file", projectId:projectId, fileId: data.file._id, fileModified:file.modified
+        @emit 'debug', "Saving remote file", projectId:projectId, fileId: data.file._id, fileModified:file.modified
         return callback null, null unless file.lastOpened?
         checksum = crc32 data.contents
         return callback null, null if file.checksum? and checksum == file.checksum
@@ -119,10 +121,10 @@ class DementorChannel
     socket.on messageAction.LOCAL_FILES_REMOVED, (data, callback) =>
       projectId = @socketProjectIds[socket.id]
       projectId ?= data.projectId
-      logger.debug "Removing remote files", projectId: projectId, files: data.files
+      @emit 'debug', "Removing remote files", projectId: projectId, files: data.files
       error = validateData data
       if error
-        logger.error "Bad data in LOCAL_FILES_REMOVED", {projectId, data, error}
+        @emit 'warn', "Bad data in LOCAL_FILES_REMOVED", {projectId, data, error}
         return callback error
 
       message = null
@@ -135,7 +137,7 @@ class DementorChannel
           unless file.modified
             file.remove cb
           else
-            logger.debug "Removing modified file", projectId:projectId, fileId:file._id, path:file.path
+            @emit 'debug', "Removing modified file", projectId:projectId, fileId:file._id, path:file.path
             message ?= ''
             message += "The file #{file.path} is modified by others.  If they save it, it will be recreated.\n"
             file.update {$set: {removed:true}}, cb
@@ -165,7 +167,7 @@ class DementorChannel
 
   #callback: (err) ->
   openProject : (projectId, callback) ->
-    logger.debug "Opening project", {projectId:projectId}
+    @emit 'debug', "Opening project", {projectId:projectId}
     clearTimeout @closeProjectTimers[projectId]
     @closeProjectTimers[projectId] = null
     Project.update {_id:projectId}, {closed:false}, (err) =>
@@ -175,14 +177,14 @@ class DementorChannel
 
   #callback: (err) ->
   closeProject : (projectId, callback) ->
-    logger.debug "Closing project", {projectId:projectId}
+    @emit 'debug', "Closing project", {projectId:projectId}
     Project.findById projectId, (err, project)=>
       return null unless project
       port = project.port
       project.closed = true
       project.port = null
       project.save (err) =>
-        return callback?(err) if err        
+        return callback?(err) if err
         @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
         if port
           redisClient.smove "unavailablePorts", "availablePorts", port, (err, results)->
@@ -196,7 +198,7 @@ class DementorChannel
 
   #callback: (err) ->
   saveFile: (projectId, fileId, contents, callback) ->
-    logger.debug "Saving local file", {fileId:fileId, projectId:projectId}
+    @emit 'debug', "Saving local file", {fileId:fileId, projectId:projectId}
     socket = @liveSockets[projectId]
     unless socket?
       callback errors.new errorType.CONNECTION_CLOSED
@@ -205,7 +207,7 @@ class DementorChannel
 
   #callback: (err, contents) ->
   getFileContents: (projectId, fileId, callback) ->
-    logger.debug "Getting local file contents", {fileId:fileId, projectId:projectId}
+    @emit 'debug', "Getting local file contents", {fileId:fileId, projectId:projectId}
     socket = @liveSockets[projectId]
     unless socket?
       callback errors.new errorType.CONNECTION_CLOSED

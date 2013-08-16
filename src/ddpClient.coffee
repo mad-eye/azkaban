@@ -30,7 +30,7 @@ class DDPClient extends events.EventEmitter
   connect: (callback) ->
     @ddpClient.connect (error) =>
       @emit 'error', error if error
-      @emit 'debug', 'DDP connected' unless error
+      @emit 'debug', "DDP connected" unless error
       @_initialize()
       callback?(wrapSocketError error)
 

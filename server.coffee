@@ -16,7 +16,7 @@ mongoose = require 'mongoose'
 FileSyncer = require './src/fileSyncer'
 LogListener = require './src/logListener'
 
-listener = new LogListener
+listener = new LogListener logLevel: 'debug'
 
 class Server
   constructor: ->
@@ -57,6 +57,7 @@ class Server
       socketServer.set 'log level', 2
 
     dementorChannel = new DementorChannel
+    listener.listen dementorChannel, 'dementorChannel', 'debug'
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
 

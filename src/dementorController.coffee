@@ -72,7 +72,6 @@ class DementorController
         #sometimes the project has been deleted; just recreate
         @createProject req, res
         return
-      console.log proj
       proj.closed = false
       proj.tunnel = req.body.tunnel
       proj.lastOpened = Date.now()
