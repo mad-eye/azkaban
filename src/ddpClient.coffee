@@ -19,6 +19,7 @@ wrapSocketError = (err) ->
 class DDPClient extends events.EventEmitter
   constructor: (options) ->
     options = _.extend DEFAULT_OPTIONS, options
+    @emit 'debug', "Initializing DDPClient with options", options
     @ddpClient = new Ddp options
     @initialized = false
 
