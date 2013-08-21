@@ -8,6 +8,6 @@ else
     production=""
 fi
 
-npm install -q $production .madeye-common
-npm install -q $production
+npm install --loglevel error $production .madeye-common
+npm install --loglevel error $production
 
