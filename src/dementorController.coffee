@@ -47,6 +47,7 @@ class DementorController
 
     if tunnels
       @claimTunnelPorts tunnels, (err, tunnels)->
+        if err then sendErrorResponse(res, err); return
         writeProject(tunnels)
     else
       writeProject()
@@ -97,11 +98,22 @@ class DementorController
 #initialize if this is the first time running
 #(both availablePorts and unavailablePorts = 0
 
-  initRedisPortsCollections: ->
-    redisClient.smembers "availablePorts", (err, results)->
-      if results.length == 0
-        redisClient.smembers "unavailablePorts", (err, results)->
-          if results.length == 0
-            redisClient.sadd "availablePorts", [7000..8000]
+  initRedisPortsCollections: (reset=false, callback)->
+    init = ()->
+      redisClient.smembers "availablePorts", (err, results)->
+        if results.length == 0
+          redisClient.smembers "unavailablePorts", (err, results)->
+            if results.length == 0
+              redisClient.sadd "availablePorts", [7000..8000], (err, results)->
+                callback()
+
+    if reset == true
+      redisClient.del "availablePorts", (err, results)->
+        redisClient.del "unavailablePorts", (err, results)->
+          init()
+    else
+      init()
+
+#TODO tests around cleanup when project is stopped
 
 module.exports = DementorController

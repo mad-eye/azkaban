@@ -11,6 +11,8 @@ testUtils = require '../util/testUtils'
 {Azkaban} = require '../../src/azkaban'
 FileSyncer = require '../../src/fileSyncer'
 
+redisClient = require("redis").createClient()
+
 assertFilesCorrect = testUtils.assertFilesCorrect
 
 minDementorVersion = (new DementorController).minDementorVersion
@@ -20,7 +22,6 @@ describe 'DementorController', ->
   azkaban = Azkaban.instance()
   azkaban.setService 'fileSyncer', new FileSyncer()
   dementorController = new DementorController
-  dementorController.initRedisPortsCollections()
   azkaban.setService 'dementorController', dementorController
   azkaban.setService 'ddpClient', invokeMethod: ->
 
@@ -250,7 +251,7 @@ describe 'DementorController', ->
       #it "returns an error with the correct type", ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
-  describe "create project with multiple tunnels", ->
+  describe "create project with multiple tunnels", (done)->
     req =
       body:
         files: newFiles
@@ -268,6 +269,9 @@ describe 'DementorController', ->
           }
         ]
 
+    before (done)->
+      dementorController.initRedisPortsCollections true, done
+
     it "should return local and remote ports for all tunnels passed in", (done)->
       res = new MockResponse
       res.onEnd = (_body) ->
@@ -284,6 +288,10 @@ describe 'DementorController', ->
         assert.ok tunnels[1].name
         assert.ok tunnels[1].local
         assert.ok tunnels[1].remote
-        done()
+
+        #TODO make sure unavailablePorts match
+        redisClient.smembers "unavailablePorts", (err, results)->
+          assert.equal results.length, 2
+          done()
 
        dementorController.createProject req, res
