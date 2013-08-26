@@ -20,6 +20,7 @@ describe 'DementorController', ->
   azkaban = Azkaban.instance()
   azkaban.setService 'fileSyncer', new FileSyncer()
   dementorController = new DementorController
+  dementorController.initRedisPortsCollections()
   azkaban.setService 'dementorController', dementorController
   azkaban.setService 'ddpClient', invokeMethod: ->
 
@@ -249,10 +250,40 @@ describe 'DementorController', ->
       #it "returns an error with the correct type", ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
-  describe "findOpenPort", ->
-    it "should return a valid port", (done)->
-      dementorController.findOpenPort (port)->
-        assert.ok port
-        assert port >= 7000
-        assert port <= 8000
+  describe "create project with multiple tunnels", ->
+    req =
+      body:
+        files: newFiles
+        projectName: "multipleTunnels"
+        version: minDementorVersion
+        tunnels:[
+          {
+            name: "app"
+            local: 3000
+          }
+
+          {
+            name: "terminal"
+            local: 9490
+          }
+        ]
+
+    it "should return local and remote ports for all tunnels passed in", (done)->
+      res = new MockResponse
+      res.onEnd = (_body) ->
+        assert.ok _body
+        body = _body
+        result = JSON.parse _body
+        tunnels = result.project.tunnels
+        assert.ok tunnels
+        # console.log "TUNNELS", tunnels
+
+        assert.ok tunnels[0].name
+        assert.ok tunnels[0].local
+        assert.ok tunnels[0].remote
+        assert.ok tunnels[1].name
+        assert.ok tunnels[1].local
+        assert.ok tunnels[1].remote
         done()
+
+       dementorController.createProject req, res

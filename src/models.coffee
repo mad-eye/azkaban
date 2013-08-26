@@ -45,7 +45,7 @@ projectSchema = mongoose.Schema
   impressJS: Boolean
   hangoutUrl: String
   port: Number
-  tunnel: Boolean
+  tunnels: Array
   #files: [fileSchema]
 
 Project = mongoose.model 'Project', projectSchema, 'projects'

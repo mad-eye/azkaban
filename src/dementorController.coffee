@@ -4,6 +4,7 @@
 semver = require 'semver'
 FileSyncer = require './fileSyncer'
 redisClient = require("redis").createClient()
+async = require 'async'
 
 sendErrorResponse = (res, err) ->
   err = wrapDbError err
@@ -29,9 +30,9 @@ class DementorController
       sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
     warning = @nodeVersionWarning(req.body['nodeVersion'])
 
-    tunnel = req.body['tunnel']
-    writeProject = (port)=>
-      fields = {name: req.body['projectName'], tunnel, port}
+    tunnels = req.body['tunnels']
+    writeProject = (tunnels)=>
+      fields = {name: req.body['projectName'], tunnels}
       if req.params?['projectId']
         #sometimes the project has been deleted; just recreate
         fields._id = req.params['projectId']
@@ -44,9 +45,9 @@ class DementorController
           if err then sendErrorResponse(res, err); return
           res.json project:proj, files: files, warning: warning
 
-    if tunnel
-      @findOpenPort (port)->
-        writeProject(port)
+    if tunnels
+      @claimTunnelPorts tunnels, (err, tunnels)->
+        writeProject(tunnels)
     else
       writeProject()
 
@@ -83,11 +84,15 @@ class DementorController
         proj.save saveCallback
         
 
-  findOpenPort: (callback)=>
-    redisClient.srandmember "availablePorts", 1, (err, availablePorts)->
-      port = availablePorts[0]
-      redisClient.smove "availablePorts", "unavailablePorts", port, (err, results)->
-        callback(port)
+  claimTunnelPorts: (tunnels, callback)=>
+    redisClient.srandmember "availablePorts", tunnels.length, (err, availablePorts)->
+      return callback(err) if err
+      async.map availablePorts, (port, callback)->
+        redisClient.smove "availablePorts", "unavailablePorts", port, (err, results)->
+          tunnel = tunnels.pop()
+          tunnel["remote"] = port
+          callback(null, tunnel)
+      , callback
 
 #initialize if this is the first time running
 #(both availablePorts and unavailablePorts = 0
