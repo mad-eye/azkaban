@@ -175,28 +175,28 @@ class DementorChannel extends events.EventEmitter
       @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
       callback?()
 
-  #callback: (err) ->
   closeProject : (projectId, callback) ->
     @emit 'debug', "Closing project", {projectId:projectId}
     Project.findById projectId, (err, project)=>
-      return null unless project
+      return callback("PROJECT NOT FOUND") unless project
       tunnels = project.tunnels
       project.tunnels = null
       project.closed = true
       project.save (err) =>
-        return callback?(err) if err
-        @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
-        if tunnels
-          async.map tunnels, (tunnel, callback)->
-            redisClient.smove "unavailablePorts", "availablePorts", tunnel.remote, (err, results)->
-              callback err, results
-          , callback
-        else
-          callback?()
+        Project.findById projectId, (err, project)=>
+          return callback?(err) if err
+          @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+          if tunnels
+            async.map tunnels, (tunnel, callback)->
+              redisClient.smove "unavailablePorts", "availablePorts", tunnel.remote, (err, results)->
+                callback err, results
+            , callback
+          else
+            callback?()
 
 
-  #####
-  # Methods for Azkaban to call to give Dementor orders
+#####
+# Methods for Azkaban to call to give Dementor orders
 
   #callback: (err) ->
   saveFile: (projectId, fileId, contents, callback) ->
