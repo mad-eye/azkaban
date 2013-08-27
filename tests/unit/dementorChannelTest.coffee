@@ -3,6 +3,7 @@ assert = require('chai').assert
 uuid = require 'node-uuid'
 {MockSocket} = require 'madeye-common'
 {DementorChannel} = require '../../src/dementorChannel'
+DementorController = require '../../src/dementorController'
 {Azkaban} = require '../../src/azkaban'
 BolideClient = require '../../src/bolideClient'
 FileSyncer = require '../../src/fileSyncer'
@@ -13,8 +14,7 @@ async = require 'async'
 sharejs = require('share').client
 {Settings} = require 'madeye-common'
 sinon = require 'sinon'
-
-
+redisClient = require('redis').createClient()
 
 describe "DementorChannel", ->
   Azkaban.initialize()
@@ -353,7 +353,7 @@ describe "DementorChannel", ->
 
 
   describe 'closeProject', ->
-    projectId = null
+    project = null
     channel = null
     before (done) ->
       channel = new DementorChannel()
@@ -363,13 +363,39 @@ describe "DementorChannel", ->
       project = new Project
         name: 'nitfol'
         closed: false
+        tunnels:[
+          {
+            name: "app"
+            local: 3000
+            remote: 7000
+          }
+
+          {
+            name: "terminal"
+            local: 9490
+            remote: 7001
+          }
+        ]
       project.save (err) ->
         assert.equal err, null
-        projectId = project._id
-        channel.closeProject projectId, done
-    it 'should close project', (done) ->
-      Project.findOne {_id: projectId}, (err, proj) ->
-        assert.equal err, null
-        assert.equal proj.closed, true
         done()
-    
+
+    it 'should close project', (done) ->
+      channel.closeProject project.id, ->
+        project = Project.findOne project.id, (err, project)->
+          assert.equal project.closed, true
+          done()
+
+    it "should release any tunneled ports", (done) ->
+      dementorController = new DementorController
+      dementorController.initRedisPortsCollections true, ->
+        redisClient.smove "availablePorts", "unavailablePorts", 7000, (err)->
+          assert.isNull err
+          redisClient.smove "availablePorts", "unavailablePorts", 7001, (err)->
+            assert.isNull err
+            redisClient.smembers "unavailablePorts", (err, ports)->
+              assert.equal ports.length, 2
+              channel.closeProject project.id, ->
+                redisClient.smembers "unavailablePorts", (err, ports)->
+                  assert.equal ports.length, 0
+                  done()

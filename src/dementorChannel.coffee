@@ -180,15 +180,17 @@ class DementorChannel extends events.EventEmitter
     @emit 'debug', "Closing project", {projectId:projectId}
     Project.findById projectId, (err, project)=>
       return null unless project
-      port = project.port
+      tunnels = project.tunnels
+      project.tunnels = null
       project.closed = true
-      project.port = null
       project.save (err) =>
         return callback?(err) if err
         @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
-        if port
-          redisClient.smove "unavailablePorts", "availablePorts", port, (err, results)->
-            callback? err
+        if tunnels
+          async.map tunnels, (tunnel, callback)->
+            redisClient.smove "unavailablePorts", "availablePorts", tunnel.remote, (err, results)->
+              callback err, results
+          , callback
         else
           callback?()
 
