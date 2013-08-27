@@ -355,6 +355,7 @@ describe "DementorChannel", ->
   describe 'closeProject', ->
     project = null
     channel = null
+    projectId = null
     beforeEach (done) ->
       channel = new DementorChannel()
       azkaban.setService 'dementorChannel', channel
@@ -378,13 +379,13 @@ describe "DementorChannel", ->
         ]
       project.save (err) ->
         assert.equal err, null
+        projectId = project.id
         done()
 
     it 'should close project', (done) ->
-      channel.closeProject project.id, ->
-        Project.findOne project.id, (err, proj)->
-          project = proj
-          assert.equal project.closed, true
+      channel.closeProject projectId, (err)->
+        Project.findOne projectId, (err, proj)->
+          assert.equal proj.closed, true
           done()
 
     it "should release any tunneled ports", (done) ->
