@@ -355,7 +355,7 @@ describe "DementorChannel", ->
   describe 'closeProject', ->
     project = null
     channel = null
-    before (done) ->
+    beforeEach (done) ->
       channel = new DementorChannel()
       azkaban.setService 'dementorChannel', channel
       ddpSpy = sinon.spy()
@@ -382,7 +382,8 @@ describe "DementorChannel", ->
 
     it 'should close project', (done) ->
       channel.closeProject project.id, ->
-        project = Project.findOne project.id, (err, project)->
+        Project.findOne project.id, (err, proj)->
+          project = proj
           assert.equal project.closed, true
           done()
 
@@ -395,7 +396,7 @@ describe "DementorChannel", ->
             assert.isNull err
             redisClient.smembers "unavailablePorts", (err, ports)->
               assert.equal ports.length, 2
-              channel.closeProject project.id, ->
+              channel.closeProject project.id, (err, results)->
                 redisClient.smembers "unavailablePorts", (err, ports)->
                   assert.equal ports.length, 0
                   done()

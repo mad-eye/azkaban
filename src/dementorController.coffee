@@ -105,7 +105,7 @@ class DementorController
           redisClient.smembers "unavailablePorts", (err, results)->
             if results.length == 0
               redisClient.sadd "availablePorts", [7000..8000], (err, results)->
-                callback()
+                callback?()
 
     if reset == true
       redisClient.del "availablePorts", (err, results)->
