@@ -384,7 +384,7 @@ describe "DementorChannel", ->
 
     it 'should close project', (done) ->
       channel.closeProject projectId, (err)->
-        Project.findOne projectId, (err, proj)->
+        Project.findOne {_id: projectId}, (err, proj)->
           assert.equal proj.closed, true
           done()
 
