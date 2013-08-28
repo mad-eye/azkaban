@@ -186,7 +186,7 @@ class DementorChannel extends events.EventEmitter
       project.save (err) =>
         return callback?(err) if err
         @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
-        if tunnels.length > 0
+        if tunnels?.length > 0
           async.map tunnels, (tunnel, callback)->
             redisClient.smove "unavailablePorts", "availablePorts", tunnel.remote, (err, results)->
               callback err, results
