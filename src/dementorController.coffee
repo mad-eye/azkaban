@@ -25,7 +25,7 @@ class DementorController extends EventEmitter
     return null
 
   createProject: (req, res) =>
-    @emit 'trace', "Creating project"
+    @emit 'trace', 'Create request body:', req.body
     unless @checkVersion req.body['version']
       @sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
     warning = @nodeVersionWarning(req.body['nodeVersion'])
@@ -50,18 +50,9 @@ class DementorController extends EventEmitter
     unless @checkVersion req.body['version']
       @sendErrorResponse(res, errors.new errorType.OUT_OF_DATE); return
     warning = @nodeVersionWarning(req.body['nodeVersion'])
-    tunnel = req.body.tunnel
     projectId = req.params['projectId']
+    @emit 'trace', 'Refresh request body:', req.body
     
-    saveCallback = (err, proj) =>
-      if err then @sendErrorResponse(res, err); return
-      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', proj._id]
-      @emit 'debug', "Project refreshed", {projectId:proj._id}
-      deleteMissing = true
-      @azkaban.fileSyncer.syncFiles req.body['files'], proj._id, deleteMissing, (err, files) =>
-        if err then @sendErrorResponse(res, err); return
-        res.json project:proj, files: files, warning: warning
-
     Project.findById projectId, (err, proj) =>
       if err then @sendErrorResponse(res, err); return
       unless proj

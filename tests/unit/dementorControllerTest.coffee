@@ -250,19 +250,16 @@ describe 'DementorController', ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
   describe "create project with multiple tunnels", (done)->
-    tunnels = [
-          {
-            name: "app"
-            local: 3000
-            remote: 45012
-          }
-
-          {
-            name: "terminal"
-            local: 9490
-            remote: 32809
-          }
-        ]
+    tunnels = {
+      app:
+        name: "app"
+        local: 3000
+        remote: 45012
+      terminal:
+        name: "terminal"
+        local: 9490
+        remote: 32809
+    }
     req =
       body:
         files: newFiles

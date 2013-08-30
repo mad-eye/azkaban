@@ -1,12 +1,13 @@
 _ = require 'underscore'
 _path = require 'path'
-mongoose = require 'mongoose'
 async = require 'async'
 uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
 {logger} = require './logger'
+mongoose = require 'mongoose'
+Schema = mongoose.Schema
 
-fileSchema = mongoose.Schema
+fileSchema = Schema
   _id: {type: String, default: uuid.v4}
   projectId: {type: String, required: true}
   path: {type: String, required: true}
@@ -35,7 +36,7 @@ fileSchema.statics.findByProjectId = (projectId, options, callback) ->
 
 File = mongoose.model 'File', fileSchema, 'files'
 
-projectSchema = mongoose.Schema
+projectSchema = Schema
   _id: {type: String, default: uuid.v4}
   name: {type: String, required: true}
   closed: {type: Boolean, default: false}
@@ -45,12 +46,12 @@ projectSchema = mongoose.Schema
   impressJS: Boolean
   hangoutUrl: String
   port: Number
-  tunnels: Array
+  tunnels: Schema.Types.Mixed
   #files: [fileSchema]
 
 Project = mongoose.model 'Project', projectSchema, 'projects'
 
-projectStatusSchema = mongoose.Schema
+projectStatusSchema = Schema
   projectId: {type:String, required:true}
   userId: {type:String, required:true}
   isHangout: Boolean
