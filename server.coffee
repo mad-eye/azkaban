@@ -12,7 +12,6 @@ DDPClient = require('./src/ddpClient')
 HangoutController = require('./src/hangoutController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
-{logger} = require './src/logger'
 FileSyncer = require './src/fileSyncer'
 {LogListener} = require 'madeye-common'
 
@@ -48,7 +47,7 @@ class Server
 
 
   setupMongo: ->
-    logger.debug "Connecting to mongo #{Settings.mongoUrl}"
+    listener.log 'debug', "Connecting to mongo #{Settings.mongoUrl}"
     mongoose.connect Settings.mongoUrl
 
   setupServers: ->
@@ -72,9 +71,9 @@ class Server
     ddpClient = new DDPClient ddpOptions
     listener.listen ddpClient, 'ddpClient', 'debug'
     ddpClient.connect (err) ->
-      logger.debug "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
+      listener.log 'debug', "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
       
-    logger.info "Initializing azkaban"
+    listener.log 'info', "Initializing azkaban"
     Azkaban.initialize
       socketServer: socketServer
       httpServer: httpServer
@@ -102,7 +101,7 @@ class Server
     @azkaban.shutdownGracefully ->
       process.exit returnVal ? 0
     setTimeout ->
-      logger.error "Could not close connections in time, forcefully shutting down"
+      console.error "Could not close connections in time, forcefully shutting down"
       process.exit returnVal || 1
     , 10*1000
 
@@ -119,11 +118,11 @@ class Server
         console.error "Exiting because of uncaught exception: " + err
         if err.stack
           console.error err.stack
-        logger.error "Exiting because of uncaught exception: #{err.message}", error:err
+        console.error "Exiting because of uncaught exception: #{err.message}", error:err
         @shutdown(1)
 
     @azkaban.httpServer.listen @app.get('port'), =>
-      logger.info "Express server listening on port " + @app.get('port')
+      listener.log 'info', "Express server listening on port " + @app.get('port')
       callback?()
 
     
