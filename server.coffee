@@ -14,9 +14,12 @@ HangoutController = require('./src/hangoutController')
 mongoose = require 'mongoose'
 {logger} = require './src/logger'
 FileSyncer = require './src/fileSyncer'
-LogListener = require './src/logListener'
+{LogListener} = require 'madeye-common'
 
-listener = new LogListener logLevel: 'debug'
+listener = new LogListener
+  logLevel: 'debug'
+  onError: (err) ->
+    shutdown(err.code ? 1)
 
 class Server
   constructor: ->
