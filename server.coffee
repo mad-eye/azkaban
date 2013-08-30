@@ -68,6 +68,9 @@ class Server
       host: Settings.ddpHost
       port: Settings.ddpPort
 
+    dementorController = new DementorController
+    listener.listen dementorController, 'dementorController'
+
     ddpClient = new DDPClient ddpOptions
     listener.listen ddpClient, 'ddpClient', 'debug'
     ddpClient.connect (err) ->
@@ -78,7 +81,7 @@ class Server
       socketServer: socketServer
       httpServer: httpServer
       dementorChannel: dementorChannel
-      dementorController: new DementorController
+      dementorController: dementorController
       hangoutController: new HangoutController
       fileController: new FileController
       bolideClient: new BolideClient

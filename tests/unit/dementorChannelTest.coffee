@@ -14,7 +14,6 @@ async = require 'async'
 sharejs = require('share').client
 {Settings} = require 'madeye-common'
 sinon = require 'sinon'
-redisClient = require('redis').createClient()
 
 describe "DementorChannel", ->
   Azkaban.initialize()
@@ -388,16 +387,3 @@ describe "DementorChannel", ->
           assert.equal proj.closed, true
           done()
 
-    it "should release any tunneled ports", (done) ->
-      dementorController = new DementorController
-      dementorController.initRedisPortsCollections true, ->
-        redisClient.smove "availablePorts", "unavailablePorts", 7000, (err)->
-          assert.isNull err
-          redisClient.smove "availablePorts", "unavailablePorts", 7001, (err)->
-            assert.isNull err
-            redisClient.smembers "unavailablePorts", (err, ports)->
-              assert.equal ports.length, 2
-              channel.closeProject project.id, (err, results)->
-                redisClient.smembers "unavailablePorts", (err, ports)->
-                  assert.equal ports.length, 0
-                  done()

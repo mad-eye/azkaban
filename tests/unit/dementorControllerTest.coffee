@@ -11,8 +11,6 @@ testUtils = require '../util/testUtils'
 {Azkaban} = require '../../src/azkaban'
 FileSyncer = require '../../src/fileSyncer'
 
-redisClient = require("redis").createClient()
-
 assertFilesCorrect = testUtils.assertFilesCorrect
 
 minDementorVersion = (new DementorController).minDementorVersion
@@ -252,25 +250,25 @@ describe 'DementorController', ->
         #assert.equal result.error.type, errorType.DATABASE_ERROR
 
   describe "create project with multiple tunnels", (done)->
-    req =
-      body:
-        files: newFiles
-        projectName: "multipleTunnels"
-        version: minDementorVersion
-        tunnels:[
+    tunnels = [
           {
             name: "app"
             local: 3000
+            remote: 45012
           }
 
           {
             name: "terminal"
             local: 9490
+            remote: 32809
           }
         ]
-
-    before (done)->
-      dementorController.initRedisPortsCollections true, done
+    req =
+      body:
+        files: newFiles
+        projectName: "multipleTunnels"
+        version: minDementorVersion
+        tunnels: tunnels
 
     it "should return local and remote ports for all tunnels passed in", (done)->
       res = new MockResponse
@@ -278,20 +276,8 @@ describe 'DementorController', ->
         assert.ok _body
         body = _body
         result = JSON.parse _body
-        tunnels = result.project.tunnels
-        assert.ok tunnels
-        # console.log "TUNNELS", tunnels
-
-        assert.ok tunnels[0].name
-        assert.ok tunnels[0].local
-        assert.ok tunnels[0].remote
-        assert.ok tunnels[1].name
-        assert.ok tunnels[1].local
-        assert.ok tunnels[1].remote
-
-        #TODO make sure unavailablePorts match
-        redisClient.smembers "unavailablePorts", (err, results)->
-          assert.equal results.length, 2
-          done()
+        assert.ok result.project.tunnels
+        assert.deepEqual result.project.tunnels, tunnels
+        done()
 
        dementorController.createProject req, res
