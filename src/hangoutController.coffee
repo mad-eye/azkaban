@@ -28,7 +28,7 @@ class HangoutController extends EventEmitter
       apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
       inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
       unless hangoutUrl
-        console.log "Redirecting to", inactiveHangoutUrl
+        @emit 'trace', "Redirecting to", inactiveHangoutUrl
         res.redirect inactiveHangoutUrl
       else
         #Is this still active?  Check for projectStatuses

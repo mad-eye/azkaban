@@ -1,7 +1,8 @@
 mongoose = require 'mongoose'
 async = require 'async'
 {EventEmitter} = require 'events'
-{apogeeLogger, wrapDbError} = require './logger'
+{apogeeLogger} = require './logger'
+{wrapDbError} = require './models'
 
 
 metricSchema = mongoose.Schema

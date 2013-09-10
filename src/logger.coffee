@@ -24,31 +24,19 @@ fileOptions = (app) ->
   timestamp: true
   json: false
 
-#Add Loggly transport
-Loggly = require('winston-loggly').Loggly
-logglyOptions = (logglyKey) ->
-  level: 'debug'
-  json: true
-  subdomain: 'madeye'
-  inputToken: logglyKey
-
-makeLogger = (fileName, consoleName, logglyKey) ->
+makeLogger = (fileName, consoleName) ->
   transports = [
-    new (winston.transports.File)(fileOptions(fileName)),
-    new (Loggly)(logglyOptions(logglyKey))
+    new (winston.transports.File)(fileOptions(fileName))
   ]
   if process.env.MADEYE_DEBUG
     transports.push new (winston.transports.Console)(consoleOptions(consoleName))
 
   return new winston.Logger transports: transports
 
-logger = makeLogger 'azkaban', 'azkaban', Settings.logglyAzkabanKey
+logger = makeLogger 'azkaban', 'azkaban'
 
-apogeeLogger = makeLogger 'apogee-client', 'apogee', Settings.logglyApogeeKey
-
-dementorLogger = makeLogger 'dementor', 'dementor', Settings.logglyDementorKey
+apogeeLogger = makeLogger 'apogee-client', 'apogee'
 
 exports.logger = logger
-exports.dementorLogger = dementorLogger
 exports.apogeeLogger = apogeeLogger
 

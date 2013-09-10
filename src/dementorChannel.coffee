@@ -2,7 +2,6 @@ _ = require 'underscore'
 {Project, File, wrapDbError} = require './models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
-{dementorLogger} = require './logger'
 async = require 'async'
 {crc32} = require 'madeye-common'
 FileSyncer = require './fileSyncer'
@@ -150,15 +149,6 @@ class DementorChannel extends EventEmitter
         args = ['files']
         args.push f._id for f in data.files when f
         @azkaban.ddpClient.invokeMethod 'markDirty', args
-
-    #callback: (error) ->
-    socket.on messageAction.METRIC, (data, callback) =>
-      data.projectId ?= @socketProjectIds[socket.id]
-      level = data.level; delete data.level
-      message = data.message; delete data.message
-      dementorLogger.log level, message, data
-      callback?()
-
 
   #####
   # Helper methods

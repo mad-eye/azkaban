@@ -66,7 +66,6 @@ describe 'HangoutController', ->
       Project.update {_id:project._id}, {hangoutUrl:existingHangoutUrl}, (err, count) ->
         assert.isNull err
         ProjectStatus.create {projectId:project._id, userId:uuid.v4(), isHangout:true}, (err, doc) ->
-          console.log "Got status doc", doc
           assert.isNull err
           hangoutController.gotoHangout req, res
 
