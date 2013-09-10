@@ -2,7 +2,6 @@ _ = require 'underscore'
 _path = require 'path'
 {File, Project, wrapDbError} = require './models'
 {EventEmitter} = require 'events'
-{logger} = require './logger'
 async = require 'async'
 {crc32} = require("madeye-common")
 {normalizePath} = require("madeye-common")
@@ -15,7 +14,7 @@ class FileSyncer extends EventEmitter
     cleanFiles = []
     for file in files
       unless file
-        logger.error "Null file found in cleanupFiles", files:files
+        @emit 'warn', "Null file found in cleanupFiles", files:files
         continue
       file.projectId = projectId
       file.orderingPath = normalizePath file.path
@@ -33,7 +32,7 @@ class FileSyncer extends EventEmitter
       if file.path of existingFileMap
         existingFile = existingFileMap[file.path]
         if existingFile.mtime < file.mtime
-          logger.debug "File modified offline.",
+          @emit 'debug', "File modified offline.",
             projectId: existingFile.projectId,
             path: existingFile.path,
             fileId: existingFile._id,
@@ -88,16 +87,16 @@ class FileSyncer extends EventEmitter
         filesToReturn = savedFiles.concat unmodifiedFiles, modifiedFiles
         callback null, filesToReturn
 
-      @updateModifiedFiles modifiedFiles, (err) ->
+      @updateModifiedFiles modifiedFiles, (err) =>
         if err
-          logger.error "Error updating modified files", projectId:projectId, error:err
+          @emit 'warn', "Error updating modified files", projectId:projectId, error:err
 
       if deleteMissing
         if orphanedFiles.length > 0
-          logger.debug "Deleting #{orphanedFiles.length} files", projectId:projectId
+          @emit 'debug', "Deleting #{orphanedFiles.length} files", projectId:projectId
         for file in orphanedFiles
-          file.remove (err) ->
-            if err then logger.error "Error deleting file",
+          file.remove (err) =>
+            if err then @emit 'warn', "Error deleting file",
               error: wrapDbError err
               projectId: projectId
               fileId: file._id
@@ -119,7 +118,7 @@ class FileSyncer extends EventEmitter
   #callback: (err, contents) ->
   loadFile: (projectId, fileId, reset, callback) ->
     updateContents = (err, contents)=>
-      logger.debug "Returned file from dementor", {hasError:err?, projectId:projectId, fileId:fileId}
+      @emit 'debug', "Returned file from dementor", {hasError:err?, projectId:projectId, fileId:fileId}
       return callback err if err
       cleanContents = _cleanupLineEndings(contents)
       checksum = crc32 cleanContents if cleanContents?
@@ -128,7 +127,7 @@ class FileSyncer extends EventEmitter
         warning =
           title: "Inconsistent line endings"
           message: "We've converted them all into one type."
-      if reset then logger.debug "Resetting file contents", {projectId:projectId, fileId:fileId}
+      if reset then @emit 'debug', "Resetting file contents", {projectId:projectId, fileId:fileId}
       @azkaban.bolideClient.setDocumentContents fileId, cleanContents, reset, (err) =>
         callback err, checksum, warning
       File.update {_id:fileId}, {$set: {
@@ -137,7 +136,7 @@ class FileSyncer extends EventEmitter
         checksum: checksum
       }}, (err) =>
         @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
-        logger.error "Error updating loaded file", {projectId, fileId, error:err} if err
+        @emit 'warn', "Error updating loaded file", {projectId, fileId, error:err} if err
 
     project = Project.findOne _id: projectId, (err, project)=>
       unless project and project.impressJS

@@ -1,6 +1,5 @@
 {Project, File, wrapDbError} = require './models'
 {errors, errorType} = require 'madeye-common'
-{logger} = require './logger'
 semver = require 'semver'
 FileSyncer = require './fileSyncer'
 async = require 'async'

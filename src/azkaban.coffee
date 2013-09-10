@@ -1,40 +1,30 @@
-events = require 'events'
-{logger} = require './logger'
+{EventEmitter} = require 'events'
 async = require 'async'
 
-class Azkaban_ extends events.EventEmitter
+class Azkaban_ extends EventEmitter
   constructor: (services) ->
     for name, service of services
       @setService name, service
-    #@setup()
 
   setService: (name, service) ->
     @[name] = service
     service.azkaban = @
 
-  setup: ->
-    @socketServer.sockets.on 'connection', (socket) =>
-      @dementorChannel.attach socket
-    @socketServer.configure =>
-      @socketServer.set 'log level', 2
-
-  
-
   shutdownGracefully: (callback) ->
-    logger.debug "Shutting down gracefully."
+    @emit 'debug', "Shutting down gracefully."
     @ddpClient.shutdown()
     async.parallel
       http: (cb) =>
-        @httpServer.close ->
-          logger.debug "Http server shut down"
+        @httpServer.close =>
+          @emit 'debug', "Http server shut down"
           cb()
       mongoose: (cb) =>
-        @mongoose.disconnect ->
-          logger.debug "Mongoose shut down"
+        @mongoose.disconnect =>
+          @emit 'debug', "Mongoose shut down"
           cb()
       dementor: (cb) =>
-        @dementorChannel.shutdown ->
-          logger.debug "DementorChannel shut down"
+        @dementorChannel.shutdown =>
+          @emit 'debug', "DementorChannel shut down"
           cb()
     , callback
 
@@ -48,7 +38,6 @@ class Azkaban
     return _instance
 
   @reset: ->
-    #console.log "Resetting Azkaban"
     _instance = undefined
 
 exports.Azkaban = Azkaban

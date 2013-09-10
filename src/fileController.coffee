@@ -1,5 +1,5 @@
 async = require 'async'
-{logger} = require './logger'
+{EventEmitter} = require 'events'
 {Project, File, wrapDbError} = require './models'
 {crc32} = require("madeye-common")
 fs = require "fs"
@@ -10,13 +10,13 @@ _path = require "path"
 ncp.limit = 16
 _ = require 'underscore'
 
-class FileController
+class FileController extends EventEmitter
   constructor: (@settings=Settings) ->
     unless fs.existsSync @settings.userStaticFiles
       fs.mkdir @settings.userStaticFiles
 
   sendErrorResponse: (res, err) ->
-    logger.error err.message, err
+    @emit 'warn', err.message, err
     res.json 500, {error:err}
 
   #TODO: Check for permissions
@@ -25,6 +25,7 @@ class FileController
     fileId = req.params['fileId']
     projectId = req.params['projectId']
     reset = req.query?['reset'] ? false
+    @emit 'trace', "getFile for #{fileId}"
     @azkaban.fileSyncer.loadFile projectId, fileId, reset, (err, checksum, warning) =>
       if err
         @sendErrorResponse(res, err)
@@ -37,9 +38,9 @@ class FileController
     projectId = req.params['projectId']
     contents = req.body.contents
     checksum = crc32 contents if contents
-    logger.debug "Saving file contents", {projectId, fileId, checksum}
+    @emit 'debug', "Saving file contents", {projectId, fileId, checksum}
     @azkaban.dementorChannel.saveFile projectId, fileId, contents, (err) =>
-      logger.debug "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
+      @emit 'trace', "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
       if err
         @sendErrorResponse(res, err)
       else

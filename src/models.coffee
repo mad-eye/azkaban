@@ -3,7 +3,6 @@ _path = require 'path'
 async = require 'async'
 uuid = require 'node-uuid'
 {errors, errorType} = require 'madeye-common'
-{logger} = require './logger'
 mongoose = require 'mongoose'
 Schema = mongoose.Schema
 

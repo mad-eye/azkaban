@@ -1,8 +1,7 @@
-events = require 'events'
+{EventEmitter} = require 'events'
 uuid = require 'node-uuid'
 _ = require 'underscore'
 Ddp = require "ddp"
-{logger} = require './logger'
 {errors, errorType} = require 'madeye-common'
 
 DEFAULT_OPTIONS =
@@ -16,7 +15,7 @@ wrapSocketError = (err) ->
   return err if err.madeye
   return errors.new errorType.SOCKET_ERROR, err
 
-class DDPClient extends events.EventEmitter
+class DDPClient extends EventEmitter
   constructor: (options) ->
     options = _.extend DEFAULT_OPTIONS, options
     @emit 'debug', "Initializing DDPClient with options", options

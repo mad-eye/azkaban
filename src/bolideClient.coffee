@@ -1,7 +1,7 @@
 {Settings} = require("madeye-common")
 request = require "request"
 sharejs = require('share').client
-{logger} = require './logger'
+{EventEmitter} = require 'events'
 {errors, errorType} = require 'madeye-common'
 
 wrapShareError = (err) ->
@@ -9,14 +9,16 @@ wrapShareError = (err) ->
   return err if err.madeye
   errors.new errorType.SHAREJS_ERROR, cause:err
 
-class BolideClient
+class BolideClient extends EventEmitter
   constructor: ->
+    @emit 'trace', "Constructing BolideClient"
 
   #callback: (error) ->
   setDocumentContents: (docId, contents, reset=false, callback) ->
     if 'function' == typeof reset
       callback = reset
       reset = false
+    @emit 'trace', "setDocumentContents #{docId}"
     sharejs.open docId, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
       return callback wrapShareError error if error
       if doc.version > 0 and !reset
@@ -24,7 +26,8 @@ class BolideClient
       try #ShareJS throws errors, very frustrating
         if doc.getText()?.length > 0
           doc.del 0, doc.getText().length, (error, appliedOp)->
-            logger.error "Error delete document contents.", wrapShareError error if error
+            #XXX: Should return this error?
+            @emit 'warn', "Error delete document contents.", wrapShareError error if error
         doc.insert 0, contents, (error, appliedOp)->
           callback wrapShareError error
       catch error

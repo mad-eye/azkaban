@@ -1,6 +1,7 @@
 mongoose = require 'mongoose'
 async = require 'async'
-{logger, apogeeLogger, wrapDbError} = require './logger'
+{EventEmitter} = require 'events'
+{apogeeLogger, wrapDbError} = require './logger'
 
 
 metricSchema = mongoose.Schema
@@ -23,7 +24,7 @@ cleanDoc = (doc) ->
     newdoc[key] = doc[key] if doc[key]?
   return newdoc
 
-class ApogeeLogProcessor
+class ApogeeLogProcessor extends EventEmitter
   constructor: (interval=1000) ->
     @handle = setInterval =>
       @findAndLog()
@@ -38,7 +39,7 @@ class ApogeeLogProcessor
     #Read metrics and process them.
     Metric.findOneAndRemove {}, (err, doc) =>
       if err
-        logger.error 'Error processing Apogee logs', wrapDbError err
+        @emit 'warn', 'Error processing Apogee logs', wrapDbError err
         return
       if doc
         #Recurse all the way down.  Send the next request before we process things

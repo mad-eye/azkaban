@@ -59,38 +59,50 @@ class Server
       socketServer.set 'log level', 2
 
     dementorChannel = new DementorChannel
-    listener.listen dementorChannel, 'dementorChannel', 'debug'
+    listener.listen dementorChannel, 'dementorChannel'
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
-
-    ddpUrl = Settings.apogeeDDPUrl
-    ddpOptions =
-      host: Settings.ddpHost
-      port: Settings.ddpPort
 
     dementorController = new DementorController
     listener.listen dementorController, 'dementorController'
 
+    hangoutController = new HangoutController
+    listener.listen hangoutController, 'hangoutController'
+
+    fileController = new FileController
+    listener.listen fileController, 'fileController'
+
+    bolideClient = new BolideClient
+    listener.listen bolideClient, 'bolideClient'
+
+    fileSyncer = new FileSyncer
+    listener.listen fileSyncer, 'fileSyncer'
+
+    ddpOptions =
+      host: Settings.ddpHost
+      port: Settings.ddpPort
+
     ddpClient = new DDPClient ddpOptions
-    listener.listen ddpClient, 'ddpClient', 'debug'
+    listener.listen ddpClient, 'ddpClient'
     ddpClient.connect (err) ->
       listener.log 'debug', "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
-      
+
     listener.log 'info', "Initializing azkaban"
     Azkaban.initialize
-      socketServer: socketServer
       httpServer: httpServer
+      socketServer: socketServer
       dementorChannel: dementorChannel
       dementorController: dementorController
-      hangoutController: new HangoutController
-      fileController: new FileController
-      bolideClient: new BolideClient
+      hangoutController: hangoutController
+      fileController: fileController
+      bolideClient: bolideClient
+      fileSyncer: fileSyncer
+      ddpClient: ddpClient
       mongoose: mongoose
       apogeeLogProcessor: new ApogeeLogProcessor 1000 #interval to check metrics db
-      fileSyncer: new FileSyncer
-      ddpClient: ddpClient
 
     @azkaban = Azkaban.instance()
+    listener.listen @azkaban
 
     require('./routes')(@app)
     

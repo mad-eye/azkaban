@@ -2,15 +2,14 @@ _ = require 'underscore'
 {Project, File, wrapDbError} = require './models'
 {messageAction} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
-{logger} = require './logger'
 {dementorLogger} = require './logger'
 async = require 'async'
 {crc32} = require 'madeye-common'
 FileSyncer = require './fileSyncer'
-events = require 'events'
+{EventEmitter} = require 'events'
 
 
-class DementorChannel extends events.EventEmitter
+class DementorChannel extends EventEmitter
   constructor: () ->
     @liveSockets = {}
     @socketProjectIds = {}

@@ -30,7 +30,6 @@ describe 'HangoutController', ->
       res.onEnd = (_body) ->
         Project.findOne {_id: project._id}, (err,result)->
           assert.isNull err
-          console.log "Found result", result
           assert.equal result.hangoutUrl, hangoutTestUrl
           done()
       hangoutController.registerHangout req, res
