@@ -36,6 +36,10 @@ class Server
       @app.use(express.logger('dev'))
       @app.use(express.bodyParser())
       @app.use(express.methodOverride())
+      #Clear out prefix used by nginx in case it slips by, like on test
+      @app.use '/api', (req, res, next) ->
+        newUrl = req.originalUrl.substr 4
+        res.redirect newUrl
       @app.use(cors())
       @app.use(@app.router)
 
