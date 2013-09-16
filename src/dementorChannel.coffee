@@ -23,7 +23,7 @@ class DementorChannel extends EventEmitter
       shutdowns.push (cb) =>
         socket.disconnect()
         @closeProject projectId, cb
-    async.each shutdowns, (err) =>
+    async.parallel shutdowns, (err) =>
       @emit 'trace', "Shut down all sockets"
       callback()
 
@@ -166,7 +166,7 @@ class DementorChannel extends EventEmitter
   closeProject : (projectId, callback) ->
     @emit 'debug', "Closing project", {projectId:projectId}
     Project.findById projectId, (err, project)=>
-      return callback("PROJECT NOT FOUND") unless project
+      return callback?("PROJECT NOT FOUND") unless project
       project.tunnels = null
       project.closed = true
       project.save callback
