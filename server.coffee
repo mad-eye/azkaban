@@ -42,6 +42,7 @@ class Server
         res.redirect newUrl
       @app.use(cors())
       @app.use(@app.router)
+      @app.enable('trust proxy')
 
     @app.configure 'development', =>
       @app.use(express.errorHandler())

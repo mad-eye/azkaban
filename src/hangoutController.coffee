@@ -24,8 +24,12 @@ class HangoutController extends EventEmitter
     Project.findById projectId, 'hangoutUrl', (err, project) =>
       hangoutUrl = project?.hangoutUrl
       activeHangoutUrl = hangoutUrl + "?gid=" + Settings.hangoutAppId
-
-      apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
+      #if request goes through nginx, then use the host passed in
+      #TODO determine if scheme is http or https
+      if req.headers['x-forwarded-for']
+        apogeeUrl = "http://#{req.host}/edit/#{projectId}"
+      else
+        apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
       inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
       unless hangoutUrl
         @emit 'trace', "Redirecting to", inactiveHangoutUrl
