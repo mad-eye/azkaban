@@ -25,7 +25,7 @@ describe 'HangoutController', ->
 
     it "should allow registration of a hangout url", (done)->
       hangoutTestUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
-      req = {body: {hangoutUrl: hangoutTestUrl}, params: {projectId: project._id}}
+      req = {headers: {}, body: {hangoutUrl: hangoutTestUrl}, params: {projectId: project._id}}
       res = new MockResponse
       res.onEnd = (_body) ->
         Project.findOne {_id: project._id}, (err,result)->
@@ -44,7 +44,7 @@ describe 'HangoutController', ->
         done()
 
     it "should give new hangout url if project is not registered", (done) ->
-      req = {params: {projectId: project._id}}
+      req = {headers: {}, params: {projectId: project._id}}
       res = new MockResponse
       res.redirect = (url) ->
         apogeeUrl = "#{Settings.apogeeUrl}/edit/#{project._id}"
@@ -55,7 +55,7 @@ describe 'HangoutController', ->
       hangoutController.gotoHangout req, res
 
     it "should give existing hangout url if project is registered and there is a hangout projectStatus", (done) ->
-      req = {params: {projectId: project._id}}
+      req = {headers: {}, params: {projectId: project._id}}
       existingHangoutUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
       res = new MockResponse
       res.redirect = (url) ->
@@ -70,7 +70,7 @@ describe 'HangoutController', ->
           hangoutController.gotoHangout req, res
 
     it "should give a new hangout url if project is registered and there is no projectStatus", (done) ->
-      req = {params: {projectId: project._id}}
+      req = {headers: {}, params: {projectId: project._id}}
       existingHangoutUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
       res = new MockResponse
       res.redirect = (url) ->
@@ -84,7 +84,7 @@ describe 'HangoutController', ->
         hangoutController.gotoHangout req, res
 
     it "should give a new hangout url if project is registered and there is only non-hangout projectStatus", (done) ->
-      req = {params: {projectId: project._id}}
+      req = {headers: {}, params: {projectId: project._id}}
       existingHangoutUrl = "http://hangout.google.com/_/TEST#{uuid.v4()}"
       res = new MockResponse
       res.redirect = (url) ->
