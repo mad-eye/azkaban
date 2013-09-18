@@ -16,7 +16,8 @@ FileSyncer = require './src/fileSyncer'
 {LogListener} = require 'madeye-common'
 
 listener = new LogListener
-  logLevel: 'debug'
+  #logLevel: 'debug'
+  logLevel: 'trace'
   onError: (err) ->
     shutdown(err.code ? 1)
 

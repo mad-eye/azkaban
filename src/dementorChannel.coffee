@@ -165,11 +165,10 @@ class DementorChannel extends EventEmitter
 
   closeProject : (projectId, callback) ->
     @emit 'debug', "Closing project", {projectId:projectId}
-    Project.findById projectId, (err, project)=>
-      return callback?("PROJECT NOT FOUND") unless project
-      project.tunnels = null
-      project.closed = true
-      project.save callback
+    Project.update {_id:projectId}, {closed:true, tunnels:null}, (err) =>
+      return callback?(err) if err
+      @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', projectId]
+      callback?()
 
 #####
 # Methods for Azkaban to call to give Dementor orders

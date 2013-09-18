@@ -61,6 +61,7 @@ class DementorController extends EventEmitter
       proj.closed = false
       proj.tunnels = req.body['tunnels']
       proj.lastOpened = Date.now()
+      proj.name = req.body['projectName']
       proj.save (err, proj) =>
         if err then @sendErrorResponse(res, err); return
         @azkaban.ddpClient.invokeMethod 'markDirty', ['projects', proj._id]
