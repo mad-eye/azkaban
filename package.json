@@ -22,7 +22,7 @@
     "async": "0.2.9",
     "handlebars": "1.0.12",
     "ncp": "0.4.2",
-    "ddp": "0.3.3"
+    "ddp": "0.3.4"
   },
   "devDependencies": {
     "sinon": "~1.6.0",

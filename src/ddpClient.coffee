@@ -5,10 +5,11 @@ Ddp = require "ddp"
 {errors, errorType} = require 'madeye-common'
 
 DEFAULT_OPTIONS =
-  host: "localhost",
-  port: 3000,
-  auto_reconnect: true,
+  host: "localhost"
+  port: 3000
+  auto_reconnect: true
   auto_reconnect_timer: 500
+  use_ejson: true
 
 wrapSocketError = (err) ->
   return err unless err
