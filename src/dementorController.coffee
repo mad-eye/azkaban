@@ -7,7 +7,7 @@ async = require 'async'
 
 class DementorController extends EventEmitter
   constructor: () ->
-    @minDementorVersion = '0.1.11'
+    @minDementorVersion = '0.2.0'
     @minNodeVersion = '0.8.18'
 
   sendErrorResponse: (res, err) ->
