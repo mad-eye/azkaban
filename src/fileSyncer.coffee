@@ -56,7 +56,6 @@ class FileSyncer extends EventEmitter
       #file.lastOpened? && !file.modified
     #async.parallel [
     async.each modifiedFiles, (file, cb) ->
-      file.modified_locally = true if file.modified or file.lastOpened?
       file.save cb
     , callback
     #, async.each filesToRefresh, (file, cb) =>
@@ -120,26 +119,14 @@ class FileSyncer extends EventEmitter
     updateContents = (err, contents)=>
       @emit 'debug', "Returned file from dementor", {hasError:err?, projectId:projectId, fileId:fileId}
       return callback err if err
-      cleanContents = _cleanupLineEndings(contents)
-      checksum = crc32 cleanContents if cleanContents?
-      warning = null
-      unless cleanContents == contents
-        warning =
-          title: "Inconsistent line endings"
-          message: "We've converted them all into one type."
+      checksum = crc32 contents if contents?
       if reset then @emit 'debug', "Resetting file contents", {projectId:projectId, fileId:fileId}
-      @azkaban.bolideClient.setDocumentContents fileId, cleanContents, reset, (err) =>
-        callback err, checksum, warning
-      File.update {_id:fileId}, {$set: {
-        modified_locally: false
-        lastOpened: Date.now()
-        checksum: checksum
-      }}, (err) =>
-        @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
-        @emit 'warn', "Error updating loaded file", {projectId, fileId, error:err} if err
+      @azkaban.bolideClient.setDocumentContents fileId, contents, reset, (err) =>
+        callback err, checksum
 
     project = Project.findOne _id: projectId, (err, project)=>
       unless project and project.impressJS
+        #FIXME: OBSOLETE
         @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
           updateContents(err, contents)
       else

@@ -26,11 +26,11 @@ class FileController extends EventEmitter
     projectId = req.params['projectId']
     reset = req.query?['reset'] ? false
     @emit 'trace', "getFile for #{fileId}"
-    @azkaban.fileSyncer.loadFile projectId, fileId, reset, (err, checksum, warning) =>
+    @azkaban.fileSyncer.loadFile projectId, fileId, reset, (err, checksum) =>
       if err
         @sendErrorResponse(res, err)
       else
-        res.json projectId: projectId, fileId:fileId, checksum:checksum, warning: warning
+        res.json projectId: projectId, fileId:fileId, checksum:checksum
 
   saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
@@ -45,7 +45,6 @@ class FileController extends EventEmitter
         @sendErrorResponse(res, err)
       else
         res.json {projectId: projectId, fileId:fileId, saved:true}
-        File.update {_id:fileId}, {modified_locally:false, checksum}
         @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
   #TODO maybe this and createImpressJSProject should be broken out into another file?
@@ -61,9 +60,6 @@ class FileController extends EventEmitter
           @sendErrorResponse(res, err)
         else
           res.json {projectId, fileId, saved:true}
-          checksum = crc32 contents
-          File.update {_id:fileId}, {modified_locally:false, checksum}
-          @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
 
   #helper function for recursiveRead
   #callback: (err) ->

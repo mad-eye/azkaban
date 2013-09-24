@@ -17,8 +17,8 @@ fileSchema = Schema
   mtime: {type: Number, default: Date.now}
   modified: {type: Boolean, default: false}
   removed: {type: Boolean, default: false}
-  modified_locally: {type: Boolean, default: false}
-  checksum: Number
+  fsChecksum: Number
+  loadChecksum: Number
   lastOpened: Number
 
 fileSchema.index ({projectId: 1})
