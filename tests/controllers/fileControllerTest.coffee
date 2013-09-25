@@ -8,8 +8,6 @@ FileController = require '../../src/fileController'
 {Settings} = require 'madeye-common'
 {MockDb} = require '../mock/MockMongo'
 {MockSocket} = require 'madeye-common'
-{messageMaker, messageAction} = require 'madeye-common'
-{errors, errorType} = require 'madeye-common'
 server = require "../../server"
 sharejs = require('share').client
 

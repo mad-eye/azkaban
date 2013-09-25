@@ -4,7 +4,6 @@ url = require 'url'
 uuid = require 'node-uuid'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
-{messageMaker, messageAction} = require 'madeye-common'
 #Freeze errors.coffee from pre-ddp version
 {errors, errorType} = require '../../src/errors'
 testUtils = require '../util/testUtils'
