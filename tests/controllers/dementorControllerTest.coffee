@@ -5,7 +5,8 @@ uuid = require 'node-uuid'
 {MockDb} = require '../mock/MockMongo'
 {Settings} = require 'madeye-common'
 {messageMaker, messageAction} = require 'madeye-common'
-{errors, errorType} = require 'madeye-common'
+#Freeze errors.coffee from pre-ddp version
+{errors, errorType} = require '../../src/errors'
 testUtils = require '../util/testUtils'
 {Project} = require '../../src/models'
 DementorController = require '../../src/dementorController'
@@ -41,8 +42,6 @@ sendRefreshRequest = (projectId, projectName, files, objects, done) ->
 sendRequest = (options, objects, done) ->
   objects ?= {}
   request options, (err, _res, _body) ->
-    #console.log "Body type", typeof _body
-    #console.log "Found body ", _body
     if typeof _body == 'string'
       objects.bodyStr = _body
       try
@@ -55,20 +54,18 @@ sendRequest = (options, objects, done) ->
     done()
 
 assertResponseOk = (objects, isError=false, errorType=null) ->
-  it "returns a 200", ->
-    assert.ok objects.response.statusCode == 200
   if isError
+    it "returns a 500", ->
+      assert.ok objects.response.statusCode == 500
     it "returns an error", ->
       assert.ok objects?.body?.error, "Body #{objects.bodyStr} doesn't have error property."
     it "returns an error with the correct type", ->
       assert.equal objects.body.error.type, errorType
   else
+    it "returns a 200", ->
+      assert.ok objects.response.statusCode == 200
     it "does not return an error", ->
       assert.equal objects.body.error, null, "Body #{objects.bodyStr} should not have an error."
-
-###
-# Real DB tests
-###
 
 describe "DementorController (functional)", ->
   # INTEGRATION TEST -- requires app and MongoDb to be running.
@@ -80,70 +77,28 @@ describe "DementorController (functional)", ->
           {isDir: false, path:'dir1/file2'}
   ]
 
-  assertValidResponseBody = (objects, projectName) ->
-    #it "returns an id", ->
-      #assert.ok objects.body.id, "Body #{objects.bodyStr} doesn't have id property."
-    #it "returns a url", ->
-      #assert.ok objects.body.url, "Body #{objects.bodyStr} doesn't have url property."
-    #it "returns a url with the correct hostname", ->
-      ##console.log "Found url:", objects.body.url
-      #u = url.parse(objects.body.url)
-      #assert.ok u.hostname
-      #assert.equal u.hostname, Settings.apogeeHost
-    it "returns a project with valid info", ->
-      project = objects.body.project
-      assert.ok project
-      assert.ok project._id
-      assert.equal project.name, projectName
-    it "returns files correctly", ->
-      returnedFiles = objects.body.files
-      assert.ok returnedFiles
-      # this isn't true when parent directories are added
-      # assert.equal returnedFiles.length, files.length
-      assert.ok file._id for file in returnedFiles
-
-
   describe "init", ->
     projectName = 'cleesh'
     objects = {}
     before (done) ->
       sendInitRequest(projectName, files, objects, done)
-    assertResponseOk objects
-    assertValidResponseBody objects, projectName
+    assertResponseOk objects, true, errorType.OUT_OF_DATE
 
   describe "refresh", ->
     projectName = 'yimfil'
-    projectId = null
-    objects = {}
-    before (done) ->
-      project = new Project
-        name:projectName
-      project.save (err) ->
-        assert.equal err, null
-        projectId = project._id
-        sendRefreshRequest(projectId, projectName, files, objects, done)
-
-
-    assertResponseOk objects
-    assertValidResponseBody objects, projectName
-    it "should keep the right project id", ->
-      assert.equal objects.body.project._id, projectId
-
-    it "updates existing files in db for project"
-
-    it "should create a project with the correct id if none exists.", ->
-
-  describe "refresh with missing id", ->
-    projectName = 'otsung'
-    projectId = null
     objects = {}
     before (done) ->
       projectId = uuid.v4()
       sendRefreshRequest(projectId, projectName, files, objects, done)
 
-    it "should create a project with the correct id if none exists.", ->
-      assertResponseOk objects
-      assertValidResponseBody objects, projectName
-      project = objects.body.project
-      assert.equal project._id, projectId
+    assertResponseOk objects, true, errorType.OUT_OF_DATE
+
+  describe "refresh with missing id", ->
+    projectName = 'otsung'
+    objects = {}
+    before (done) ->
+      projectId = uuid.v4()
+      sendRefreshRequest(projectId, projectName, files, objects, done)
+
+    assertResponseOk objects, true, errorType.OUT_OF_DATE
 

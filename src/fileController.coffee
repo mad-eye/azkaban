@@ -4,7 +4,6 @@ async = require 'async'
 {crc32} = require("madeye-common")
 fs = require "fs"
 {Settings} = require 'madeye-common'
-uuid = require 'node-uuid'
 _path = require "path"
 {ncp} = require "ncp"
 ncp.limit = 16
@@ -34,18 +33,7 @@ class FileController extends EventEmitter
 
   saveFile: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
-    fileId = req.params['fileId']
-    projectId = req.params['projectId']
-    contents = req.body.contents
-    checksum = crc32 contents if contents
-    @emit 'debug', "Saving file contents", {projectId, fileId, checksum}
-    @azkaban.dementorChannel.saveFile projectId, fileId, contents, (err) =>
-      @emit 'trace', "Returned saveFile", {hasError:err?, projectId:projectId, fileId:fileId}
-      if err
-        @sendErrorResponse(res, err)
-      else
-        res.json {projectId: projectId, fileId:fileId, saved:true}
-        @azkaban.ddpClient.invokeMethod 'markDirty', ['files', fileId]
+    throw new Error 'saveFile is obsoleted; please correct calling function.'
 
   #TODO maybe this and createImpressJSProject should be broken out into another file?
   saveStaticFile: (req, res) ->
@@ -107,7 +95,9 @@ class FileController extends EventEmitter
         else
           fs.readFile path, 'utf-8', (err, data) ->
             return callback err if err
-            dbFile.checksum = crc32 data
+            checksum = crc32 data
+            dbFile.fsChecksum = checksum
+            dbFile.loadChecksum = checksum
             dbFile.save (err) ->
               return callback err if err
               azkaban.bolideClient.setDocumentContents dbFile._id, data, false, callback

@@ -13,13 +13,12 @@ HangoutController = require('./src/hangoutController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 FileSyncer = require './src/fileSyncer'
-{LogListener} = require 'madeye-common'
+{Logger} = require 'madeye-common'
 
-listener = new LogListener
-  #logLevel: 'debug'
-  logLevel: 'trace'
-  onError: (err) ->
+Logger.onError = (err) ->
     shutdown(err.code ? 1)
+
+log = new Logger
 
 class Server
   constructor: ->
@@ -53,7 +52,7 @@ class Server
 
 
   setupMongo: ->
-    listener.log 'debug', "Connecting to mongo #{Settings.mongoUrl}"
+    log.debug "Connecting to mongo #{Settings.mongoUrl}"
     mongoose.connect Settings.mongoUrl
 
   setupServers: ->
@@ -65,35 +64,35 @@ class Server
       socketServer.set 'log level', 2
 
     dementorChannel = new DementorChannel
-    listener.listen dementorChannel, 'dementorChannel'
+    Logger.listen dementorChannel, 'dementorChannel'
     socketServer.sockets.on 'connection', (socket) =>
       dementorChannel.attach socket
 
     dementorController = new DementorController
-    listener.listen dementorController, 'dementorController'
+    Logger.listen dementorController, 'dementorController'
 
     hangoutController = new HangoutController
-    listener.listen hangoutController, 'hangoutController'
+    Logger.listen hangoutController, 'hangoutController'
 
     fileController = new FileController
-    listener.listen fileController, 'fileController'
+    Logger.listen fileController, 'fileController'
 
     bolideClient = new BolideClient
-    listener.listen bolideClient, 'bolideClient'
+    Logger.listen bolideClient, 'bolideClient'
 
     fileSyncer = new FileSyncer
-    listener.listen fileSyncer, 'fileSyncer'
+    Logger.listen fileSyncer, 'fileSyncer'
 
     ddpOptions =
       host: Settings.ddpHost
       port: Settings.ddpPort
 
     ddpClient = new DDPClient ddpOptions
-    listener.listen ddpClient, 'ddpClient'
+    Logger.listen ddpClient, 'ddpClient'
     ddpClient.connect (err) ->
-      listener.log 'debug', "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
+      log.debug  "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
 
-    listener.log 'info', "Initializing azkaban"
+    log.info  "Initializing azkaban"
     Azkaban.initialize
       httpServer: httpServer
       socketServer: socketServer
@@ -108,7 +107,7 @@ class Server
       apogeeLogProcessor: new ApogeeLogProcessor 1000 #interval to check metrics db
 
     @azkaban = Azkaban.instance()
-    listener.listen @azkaban
+    Logger.listen @azkaban, 'azkaban'
 
     require('./routes')(@app)
     
@@ -143,7 +142,7 @@ class Server
         @shutdown(1)
 
     @azkaban.httpServer.listen @app.get('port'), =>
-      listener.log 'info', "Express server listening on port " + @app.get('port')
+      log.info  "Express server listening on port " + @app.get('port')
       callback?()
 
     

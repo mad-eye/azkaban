@@ -124,11 +124,11 @@ class FileSyncer extends EventEmitter
       @azkaban.bolideClient.setDocumentContents fileId, contents, reset, (err) =>
         callback err, checksum
 
-    project = Project.findOne _id: projectId, (err, project)=>
+
+    Project.findOne _id: projectId, (err, project)=>
+      console.log "### FS project", project
       unless project and project.impressJS
-        #FIXME: OBSOLETE
-        @azkaban.dementorChannel.getFileContents projectId, fileId, (err, contents) =>
-          updateContents(err, contents)
+        throw new Error 'DementorChannel is obsoleted; please update calling function.'
       else
         File.findOne _id: fileId, (err,file)->
           fs.readFile "#{Settings.userStaticFiles}/#{projectId}/#{file.path}", "utf-8", (err, contents)->
