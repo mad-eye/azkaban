@@ -141,11 +141,6 @@ describe 'FileSyncer', ->
       assert.equal otherSavedFile.mtime, ago, "otherSavedFile should have old time"
       assert.equal unopenedSavedFile.mtime, now, "unopenedSaved file should have new time"
 
-    it 'should set modified_locally=true only on the new file', ->
-      assert.isTrue savedFile.modified_locally
-      assert.isFalse otherSavedFile.modified_locally
-      assert.isFalse unopenedSavedFile.modified_locally
-
   describe 'partitionFiles', ->
     newFiles = unmodifiedFiles = modifiedFiles = orphanedFiles = null
     existingFiles = null
@@ -206,16 +201,6 @@ describe 'FileSyncer', ->
         modifiedFiles = Array.prototype.slice.call arguments, 1
         fileSyncer.updateModifiedFiles modifiedFiles, done
 
-    it 'should set modified_locally correctly', (done) ->
-      File.findByProjectId projectId, (err, files) ->
-        fileMap = {}
-        fileMap[file.path] = file for file in files
-        assert.ok !fileMap['file1.txt'].modified_locally
-        assert.isTrue fileMap['file2.txt'].modified_locally
-        assert.isTrue fileMap['file3.txt'].modified_locally
-        done()
-        
-        
   describe 'addScratchFile', ->
     projectId = uuid.v4()
     
