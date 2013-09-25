@@ -1,14 +1,11 @@
 express = require('express')
 http = require('http')
-io = require 'socket.io'
 {Settings} = require 'madeye-common'
-{DementorChannel} = require './src/dementorChannel'
 {Azkaban} = require './src/azkaban'
 FileController = require('./src/fileController')
 BolideClient = require "./src/bolideClient"
 ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
-DDPClient = require('./src/ddpClient')
 HangoutController = require('./src/hangoutController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
@@ -56,17 +53,8 @@ class Server
     mongoose.connect Settings.mongoUrl
 
   setupServers: ->
-    #Set up http/socket servers
+    #Set up http servers
     httpServer = http.createServer(@app)
-
-    socketServer = io.listen httpServer
-    socketServer.configure ->
-      socketServer.set 'log level', 2
-
-    dementorChannel = new DementorChannel
-    Logger.listen dementorChannel, 'dementorChannel'
-    socketServer.sockets.on 'connection', (socket) =>
-      dementorChannel.attach socket
 
     dementorController = new DementorController
     Logger.listen dementorController, 'dementorController'
@@ -83,26 +71,14 @@ class Server
     fileSyncer = new FileSyncer
     Logger.listen fileSyncer, 'fileSyncer'
 
-    ddpOptions =
-      host: Settings.ddpHost
-      port: Settings.ddpPort
-
-    ddpClient = new DDPClient ddpOptions
-    Logger.listen ddpClient, 'ddpClient'
-    ddpClient.connect (err) ->
-      log.debug  "Connected to DDP server at #{Settings.ddpHost}:#{Settings.ddpPort}"
-
     log.info  "Initializing azkaban"
     Azkaban.initialize
       httpServer: httpServer
-      socketServer: socketServer
-      dementorChannel: dementorChannel
       dementorController: dementorController
       hangoutController: hangoutController
       fileController: fileController
       bolideClient: bolideClient
       fileSyncer: fileSyncer
-      ddpClient: ddpClient
       mongoose: mongoose
       apogeeLogProcessor: new ApogeeLogProcessor 1000 #interval to check metrics db
 

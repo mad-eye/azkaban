@@ -12,7 +12,6 @@ class Azkaban_ extends EventEmitter
 
   shutdownGracefully: (callback) ->
     @emit 'debug', "Shutting down gracefully."
-    @ddpClient.shutdown()
     async.parallel
       http: (cb) =>
         @httpServer.close =>
@@ -21,10 +20,6 @@ class Azkaban_ extends EventEmitter
       mongoose: (cb) =>
         @mongoose.disconnect =>
           @emit 'debug', "Mongoose shut down"
-          cb()
-      dementor: (cb) =>
-        @dementorChannel.shutdown =>
-          @emit 'debug', "DementorChannel shut down"
           cb()
     , callback
 

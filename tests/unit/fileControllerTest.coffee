@@ -15,7 +15,6 @@ describe 'fileController', ->
   Azkaban.initialize()
   azkaban = Azkaban.instance()
   azkaban.setService 'fileSyncer', new FileSyncer
-  azkaban.setService 'ddpClient', {invokeMethod: ->}
   fileController = undefined
 
   describe 'createImpressJSProject', ->
@@ -77,9 +76,6 @@ describe 'fileController', ->
       controller.saveStaticFile
 
       azkaban.setService "fileController", controller
-
-      azkaban.setService "ddpClient",
-        invokeMethod: ->
 
       novelContents = "a tale"
 
