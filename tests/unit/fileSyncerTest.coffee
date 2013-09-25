@@ -88,59 +88,6 @@ describe 'FileSyncer', ->
         assertFilesCorrect [doc], [scratchFile]
         done()
 
-  describe 'syncFiles with mtime', ->
-    projectId = uuid.v4()
-    fileId = otherFileId = null
-    savedFile = otherSavedFile = unopenedSavedFile = null
-    now = Date.now()
-    ago = now - 60*1000
-    before (done) ->
-      path = "path.txt"
-      otherPath = "anotherpath.txt"
-      unopenedPath = "unopened.txt"
-      existingFile = new File addOrderingPath {path:path, projectId, isDir:false, mtime:ago, modified:true, lastOpened: Date.now()}
-      fileId = existingFile._id
-      otherExistingFile = new File addOrderingPath {path:otherPath, projectId, isDir:false, mtime:ago, lastOpened: Date.now()}
-      otherFileId = otherExistingFile._id
-      unopenedFile = new File addOrderingPath {path:unopenedPath, projectId, isDir:false, mtime:ago}
-      unopenedFileId = unopenedFile._id
-      async.parallel [(cb) ->
-        existingFile.save cb
-      , (cb) ->
-        otherExistingFile.save cb
-      , (cb) ->
-        unopenedFile.save cb
-      ], (err, savedFiles) ->
-        assert.isNull err, "Found error #{err}"
-        newFile = {path:path, isDir:false, mtime: now}
-        otherNewFile = {path:otherPath, isDir:false, mtime: ago}
-        unopenedNewFile = {path:unopenedPath, isDir:false, mtime: now}
-        deleteMissing = false
-        fileSyncer.syncFiles [newFile, otherNewFile, unopenedNewFile], projectId, deleteMissing, (err, files) ->
-          assert.isNull err
-          setTimeout ->
-            async.parallel [(cb) ->
-              File.findById fileId, (err, file) ->
-                savedFile = file
-                cb err
-            , (cb) ->
-              File.findById otherFileId, (err, file) ->
-                otherSavedFile = file
-                cb err
-            , (cb) ->
-              File.findById unopenedFileId, (err, file) ->
-                unopenedSavedFile = file
-                cb err
-            ], (err) ->
-              assert.isNull err
-              done()
-            , 200 #Need to wait for updateModifiedFiles to go.
-
-    it 'should update mtime only on new file', ->
-      assert.equal savedFile.mtime, now, "savedFile should have new time"
-      assert.equal otherSavedFile.mtime, ago, "otherSavedFile should have old time"
-      assert.equal unopenedSavedFile.mtime, now, "unopenedSaved file should have new time"
-
   describe 'partitionFiles', ->
     newFiles = unmodifiedFiles = modifiedFiles = orphanedFiles = null
     existingFiles = null
