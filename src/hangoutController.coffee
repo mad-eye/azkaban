@@ -27,7 +27,7 @@ class HangoutController extends EventEmitter
       #if request goes through nginx, then use the host passed in
       #TODO determine if scheme is http or https
       if req.headers['x-forwarded-for']
-        apogeeUrl = "http://#{req.host}/edit/#{projectId}"
+        apogeeUrl = "#{req.protocol}://#{req.host}/edit/#{projectId}"
       else
         apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
       inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
