@@ -25,11 +25,10 @@ class HangoutController extends EventEmitter
       hangoutUrl = project?.hangoutUrl
       activeHangoutUrl = hangoutUrl + "?gid=" + Settings.hangoutAppId
       #if request goes through nginx, then use the host passed in
-      #TODO determine if scheme is http or https
-      if req.host == "madeye.io"
-        apogeeUrl = "https://#{req.host}/edit/#{projectId}"
-      else if req.headers['x-forwarded-for']
-        apogeeUrl = "#{req.protocol}://#{req.host}/edit/#{projectId}"
+      if req.headers['x-forwarded-for']
+        protocol = req.headers['x-forwarded-protocol'] ? req.protocol
+        @emit 'trace', 'Found protocol from nginx:', protocol
+        apogeeUrl = "#{protocol}://#{req.host}/edit/#{projectId}"
       else
         apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
       inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
