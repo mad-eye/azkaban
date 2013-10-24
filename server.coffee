@@ -15,7 +15,7 @@ FileSyncer = require './src/fileSyncer'
 Logger.onError = (err) ->
     shutdown(err.code ? 1)
 
-log = new Logger
+log = new Logger 'app'
 
 class Server
   constructor: ->
