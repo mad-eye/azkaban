@@ -50,6 +50,14 @@ projectSchema = Schema
 
 Project = mongoose.model 'Project', projectSchema, 'projects'
 
+activeDirectorySchema = Schema
+  projectId: {type:String, required:true}
+  path: {type: String, required: true}
+  activated: Number
+  loaded: Boolean
+
+ActiveDirectory = mongoose.model 'ActiveDirectory', activeDirectorySchema, 'activeDirectories'
+
 projectStatusSchema = Schema
   projectId: {type:String, required:true}
   userId: {type:String, required:true}
@@ -68,5 +76,6 @@ wrapDbError = (err) ->
 
 exports.File = File
 exports.Project = Project
+exports.ActiveDirectory = ActiveDirectory
 exports.ProjectStatus = ProjectStatus
 exports.wrapDbError = wrapDbError
