@@ -8,6 +8,7 @@ routes = (app) ->
   fileController = azkaban.fileController
   dementorController = azkaban.dementorController
   hangoutController = azkaban.hangoutController
+  stripeController = azkaban.stripeController
 
   app.post '/file-upload/:fileId', (req, res)->
 
@@ -42,6 +43,9 @@ routes = (app) ->
 
   app.put '/hangout/:projectId', (req, res) ->
     hangoutController.registerHangout(req, res)
+
+  app.post '/stripe', (req, res) ->
+    stripeController.receiveWebhook req, res
 
   simpleHangoutTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/simpleHangoutApp.xml.hbs", "utf-8"))
   simpleHangoutXml = simpleHangoutTemplate {apogeeUrl: Settings.apogeeUrl}

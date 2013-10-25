@@ -7,6 +7,7 @@ BolideClient = require "./src/bolideClient"
 ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
 HangoutController = require('./src/hangoutController')
+StripeController = require('./src/stripeController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 FileSyncer = require './src/fileSyncer'
@@ -62,6 +63,9 @@ class Server
     hangoutController = new HangoutController
     Logger.listen hangoutController, 'hangoutController'
 
+    stripeController = new StripeController
+    Logger.listen stripeController, 'stripeController'
+
     fileController = new FileController
     Logger.listen fileController, 'fileController'
 
@@ -76,6 +80,7 @@ class Server
       httpServer: httpServer
       dementorController: dementorController
       hangoutController: hangoutController
+      stripeController: stripeController
       fileController: fileController
       bolideClient: bolideClient
       fileSyncer: fileSyncer
