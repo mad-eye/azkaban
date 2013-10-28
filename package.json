@@ -10,7 +10,7 @@
     "request": "2.22.0",
     "coffee-script": "1.6.3",
     "express": "3.3.4",
-    "share": "git://github.com/mad-eye/ShareJS.git#ace-cursors",
+    "share": "git://github.com/mad-eye/ShareJS.git#madeye",
     "underscore": "1.5.1",
     "node-uuid": "1.4.0",
     "madeye-common": "0.0.4",
