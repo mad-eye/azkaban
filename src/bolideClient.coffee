@@ -19,7 +19,8 @@ class BolideClient extends EventEmitter
       callback = reset
       reset = false
     @emit 'trace', "setDocumentContents #{docId}"
-    sharejs.open docId, 'text2', "#{Settings.bolideUrl}/channel", (error, doc) ->
+    #TODO replace hard coded localhost or remove impress.js functionality
+    sharejs.open docId, 'text2', "http://localhost:3003/channel", (error, doc) ->
       return callback wrapShareError error if error
       if doc.version > 0 and !reset
         return callback errors.new errorType.INITIALIZED_FILE_NOT_EMPTY
