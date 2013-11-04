@@ -66,7 +66,20 @@ wrapDbError = (err) ->
   return err if err.madeye
   errors.new errorType.DATABASE_ERROR, cause:err
 
+stripeEventSchema = Schema
+  id: {type:String, required:true}
+  created: {type:Number, required:true}
+  livemode: {type:Boolean, required:true}
+  type: {type:String, required:true}
+  data: Schema.Types.Mixed
+  object: {type:String, required:true}
+  pending_webhooks: Number
+  request: {type:String, required:true}
+
+StripeEvent = mongoose.model 'StripeEvent', stripeEventSchema, 'stripeEvents'
+
 exports.File = File
 exports.Project = Project
 exports.ProjectStatus = ProjectStatus
+exports.StripeEvent = StripeEvent
 exports.wrapDbError = wrapDbError
