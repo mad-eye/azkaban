@@ -52,6 +52,8 @@ class Server
   setupMongo: ->
     log.debug "Connecting to mongo #{Settings.mongoUrl}"
     mongoose.connect Settings.mongoUrl
+    #Start cleanup service (every hour)
+    require './src/projectCleaner'
 
   setupServers: ->
     #Set up http servers
