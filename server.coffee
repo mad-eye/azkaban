@@ -8,6 +8,7 @@ ApogeeLogProcessor = require './src/apogeeLogProcessor'
 DementorController = require('./src/dementorController')
 HangoutController = require('./src/hangoutController')
 StripeController = require('./src/stripeController')
+MailService = require('./src/mailService')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 FileSyncer = require './src/fileSyncer'
