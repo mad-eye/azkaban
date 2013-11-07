@@ -11,7 +11,7 @@ StripeController = require('./src/stripeController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 FileSyncer = require './src/fileSyncer'
-{Logger} = require 'madeye-common'
+Logger = require 'pince'
 
 Logger.onError = (err) ->
     shutdown(err.code ? 1)

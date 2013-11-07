@@ -20,7 +20,8 @@
     "semver": "2.0.10",
     "async": "0.2.9",
     "handlebars": "1.0.12",
-    "ncp": "0.4.2"
+    "ncp": "0.4.2",
+    "pince": "0.0.2"
   },
   "devDependencies": {
     "sinon": "~1.6.0",
