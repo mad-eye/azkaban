@@ -6,6 +6,8 @@ async = require 'async'
 {Settings} = require 'madeye-common'
 Logger = require 'pince'
 child_process = require 'child_process'
+exec = child_process.exec
+hat = require 'hat'
 
 randomString = -> hat 32, 16
 log = new Logger 'prisonController'
@@ -21,21 +23,22 @@ class PrisonController extends EventEmitter
     key = req.body.publicKey?.trim()
     #TODO: Validate key; make sure it's not null and has other good properties
     log.debug "Registering public key\n", key
+    entry = """command="echo" #{key}"""
+    tmpFile = '/tmp/' + randomString()
     authKeyPath = '/home/prisoner/.ssh/authorized_keys'
-    command = @_command key, authKeyPath
-    sshCommand = """ssh ubuntu@#{Settings.tunnelHost} "#{command}" """
-    log.trace "Running (as uid #{process.getuid()})", sshCommand
-    child_process.exec sshCommand, (err, stdout, stderr) =>
-      log.trace "Returning from adding public key to prisoner."
-      log.trace '[stdout]', stdout if stdout
-      log.info '[stderr]', stderr if stderr
+    async.series [
+      (cb) ->
+        exec "echo '#{entry}' > #{tmpFile}", cb
+    , (cb) ->
+        exec "rsync #{tmpFile} ubuntu@#{Settings.tunnelHost}:#{tmpFile}", cb
+    , (cb) ->
+        exec "ssh ubuntu@#{Settings.tunnelHost} 'cat #{tmpFile} | sudo tee -a #{authKeyPath}'", cb
+    ], (err, result) ->
       if err
         @sendErrorResponse res, err
       else
         res.end()
 
-  _command: (key, authKeyPath) ->
-    """echo command=\"echo''\" #{key} | sudo tee -a #{authKeyPath}"""
 
 module.exports = PrisonController
 
