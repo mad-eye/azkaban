@@ -47,9 +47,13 @@ routes = (app) ->
   app.post '/stripe', (req, res) ->
     stripeController.receiveWebhook req, res
 
+  app.post '/prisonKey', (req, res) ->
+    azkaban.prisonController.registerPrisonKey req, res
+
   simpleHangoutTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/simpleHangoutApp.xml.hbs", "utf-8"))
   simpleHangoutXml = simpleHangoutTemplate {apogeeUrl: Settings.apogeeUrl}
   app.get "/simpleHangoutApp.xml", (req, res) ->
     res.write simpleHangoutXml
     res.end()
+
 module.exports = routes
