@@ -32,6 +32,7 @@ class PrisonController extends EventEmitter
     , (cb) ->
         exec "rsync #{tmpFile} ubuntu@#{Settings.tunnelHost}:#{tmpFile}", cb
     , (cb) ->
+        #append tmpFile to file at authkeyPath
         exec "ssh ubuntu@#{Settings.tunnelHost} 'cat #{tmpFile} | sudo tee -a #{authKeyPath}'", cb
     ], (err, result) ->
       if err
