@@ -22,7 +22,7 @@ class PrisonController extends EventEmitter
   registerPrisonKey: (req, res) ->
     key = req.body.publicKey?.trim()
     #TODO: Validate key; make sure it's not null and has other good properties
-    log.debug "Registering public key\n", key
+    log.debug "Registering public key"
     entry = """command="echo" #{key}"""
     tmpFile = '/tmp/' + randomString()
     authKeyPath = '/home/prisoner/.ssh/authorized_keys'
@@ -30,10 +30,10 @@ class PrisonController extends EventEmitter
       (cb) ->
         exec "echo '#{entry}' > #{tmpFile}", cb
     , (cb) ->
-        exec "rsync #{tmpFile} ubuntu@#{Settings.tunnelHost}:#{tmpFile}", cb
+        exec "rsync -e 'ssh -i /home/ubuntu/.ssh/id_rsa' #{tmpFile} ubuntu@#{Settings.tunnelHost}:#{tmpFile}", cb
     , (cb) ->
         #append tmpFile to file at authkeyPath
-        exec "ssh ubuntu@#{Settings.tunnelHost} 'cat #{tmpFile} | sudo tee -a #{authKeyPath}'", cb
+        exec "ssh -i /home/ubuntu/.ssh/id_rsa ubuntu@#{Settings.tunnelHost} 'cat #{tmpFile} | sudo tee -a #{authKeyPath}'", cb
     ], (err, result) ->
       if err
         sendErrorResponse res, err
