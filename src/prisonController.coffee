@@ -12,12 +12,12 @@ hat = require 'hat'
 randomString = -> hat 32, 16
 log = new Logger 'prisonController'
 
+sendErrorResponse = (res, err) ->
+  log.warn err.message, err
+  res.json 500, {error:err}
+
 class PrisonController extends EventEmitter
   constructor: ->
-
-  sendErrorResponse: (res, err) ->
-    log.warn err.message, err
-    res.json 500, {error:err}
 
   registerPrisonKey: (req, res) ->
     key = req.body.publicKey?.trim()
@@ -36,7 +36,7 @@ class PrisonController extends EventEmitter
         exec "ssh ubuntu@#{Settings.tunnelHost} 'cat #{tmpFile} | sudo tee -a #{authKeyPath}'", cb
     ], (err, result) ->
       if err
-        @sendErrorResponse res, err
+        sendErrorResponse res, err
       else
         res.end()
 
