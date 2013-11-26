@@ -11,14 +11,6 @@ sendErrorResponse = (res, err) ->
 class HangoutController extends EventEmitter
   constructor: () ->
 
-  registerHangout: (req, res) =>
-    projectId = req.params['projectId']
-    hangoutUrl = req.body['hangoutUrl']
-    Project.update {_id:projectId}, {hangoutUrl}, (err, count) =>
-      if err then sendErrorResponse(res, err); return
-      @emit 'debug', "Hangout registered", {projectId, hangoutUrl}
-      res.end()
-
   gotoHangout: (req, res) =>
     projectId = req.params['projectId']
     Project.findById projectId, 'hangoutUrl', (err, project) =>

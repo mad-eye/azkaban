@@ -29,7 +29,8 @@ if (appData){
   gapi.hangout.onApiReady.add(function(eventObj) {
     gapi.hangout.data.setValue("projectUrl", appData);
     var hangoutUrl = gapi.hangout.getHangoutUrl();
-    theIFrame.src = appData + "?hangout=true&hangoutUrl=" + hangoutUrl;
+    var hangoutId = gapi.hangout.getHangoutId();
+    theIFrame.src = appData + "?hangout=true&hangoutUrl=" + hangoutUrl + "&hangoutId=" + hangoutId;
   });
 } else {
   gapi.hangout.onApiReady.add(function(eventObj) {
@@ -39,7 +40,9 @@ if (appData){
       theIFrame.src = projectUrl + "?hangout=true";
     }
     else {
-      theIFrame.src = "{{apogeeUrl}}/projectSelection";
+      var hangoutUrl = gapi.hangout.getHangoutUrl();
+      var hangoutId = gapi.hangout.getHangoutId();
+      theIFrame.src = "{{apogeeUrl}}/projectSelection?hangout=true&hangoutUrl=" + hangoutUrl + "&hangoutId=" + hangoutId;;
     }
   });
 }
