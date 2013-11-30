@@ -24,21 +24,13 @@ class HangoutController extends EventEmitter
       else
         apogeeUrl = "#{Settings.apogeeUrl}/edit/#{projectId}"
       inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
+      #Apogee controls the hangoutUrl now
       unless hangoutUrl
         @emit 'trace', "Redirecting to", inactiveHangoutUrl
         res.redirect inactiveHangoutUrl
       else
-        #Is this still active?  Check for projectStatuses
-        ProjectStatus.find {projectId, isHangout:true}, (err, results) =>
-          @emit 'warn', "Error checking project status", error: wrapDbError err if err
-          if err or !results or results.length == 0
-            @emit 'trace', "Redirecting to", inactiveHangoutUrl
-            res.redirect inactiveHangoutUrl
-          else
-            @emit 'trace', "Redirecting to", activeHangoutUrl
-            res.redirect activeHangoutUrl
-
-
+        @emit 'trace', "Redirecting to", inactiveHangoutUrl
+        res.redirect inactiveHangoutUrl
 
 
 module.exports = HangoutController
