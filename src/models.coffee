@@ -66,6 +66,11 @@ wrapDbError = (err) ->
   return err if err.madeye
   errors.new errorType.DATABASE_ERROR, cause:err
 
+newsletterEmailSchema = Schema
+  email: String
+
+NewsletterEmail = mongoose.model 'NewsletterEmail', newsletterEmailSchema, 'newsletterEmails'
+
 stripeEventSchema = Schema
   id: {type:String, required:true}
   created: {type:Number, required:true}
@@ -82,4 +87,5 @@ exports.File = File
 exports.Project = Project
 exports.ProjectStatus = ProjectStatus
 exports.StripeEvent = StripeEvent
+exports.NewsletterEmail = NewsletterEmail
 exports.wrapDbError = wrapDbError

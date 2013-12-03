@@ -50,6 +50,9 @@ routes = (app) ->
   app.post '/prisonKey', (req, res) ->
     azkaban.prisonController.registerPrisonKey req, res
 
+  app.post '/submitEmail', (req, res) ->
+    azkaban.emailController.submitEmail req, res
+
   simpleHangoutTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/simpleHangoutApp.xml.hbs", "utf-8"))
   simpleHangoutXml = simpleHangoutTemplate {apogeeUrl: Settings.apogeeUrl}
   app.get "/simpleHangoutApp.xml", (req, res) ->

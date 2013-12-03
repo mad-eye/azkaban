@@ -9,6 +9,7 @@ DementorController = require('./src/dementorController')
 HangoutController = require('./src/hangoutController')
 StripeController = require('./src/stripeController')
 PrisonController = require('./src/prisonController')
+EmailController = require('./src/emailController')
 {cors} = require 'madeye-common'
 mongoose = require 'mongoose'
 FileSyncer = require './src/fileSyncer'
@@ -83,6 +84,7 @@ class Server
       hangoutController: hangoutController
       stripeController: stripeController
       prisonController: new PrisonController
+      emailController: new EmailController
       fileController: fileController
       bolideClient: bolideClient
       fileSyncer: fileSyncer
