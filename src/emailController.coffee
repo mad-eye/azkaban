@@ -14,7 +14,7 @@ class EmailController
   submitEmail: (req, res) ->
     res.header 'Access-Control-Allow-Origin', '*'
     email = req.body.email
-    NewsletterEmail.create {email}, (err) ->
+    NewsletterEmail.update {email}, {email, added: Date.now()}, {upsert:true}, (err) =>
       if err
         @sendErrorResponse(res, err)
       else

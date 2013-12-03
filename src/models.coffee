@@ -68,6 +68,7 @@ wrapDbError = (err) ->
 
 newsletterEmailSchema = Schema
   email: String
+  added: {type: Date, default: Date.now}
 
 NewsletterEmail = mongoose.model 'NewsletterEmail', newsletterEmailSchema, 'newsletterEmails'
 
