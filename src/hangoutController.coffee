@@ -30,10 +30,10 @@ class HangoutController extends EventEmitter
       inactiveHangoutUrl = Settings.hangoutPrefix + "?gid=" + Settings.hangoutAppId + "&gd=" + apogeeUrl
       #Apogee controls the hangoutUrl now
       if hangoutUrl
-        log.trace "Redirecting to", activeHangoutUrl
+        log.trace "Found hangoutUrl #{hangoutUrl}, redirecting to", activeHangoutUrl
         res.redirect activeHangoutUrl
       else
-        log.trace "Redirecting to", inactiveHangoutUrl
+        log.trace "New hangout, redirecting to", inactiveHangoutUrl
         res.redirect inactiveHangoutUrl
 
 
