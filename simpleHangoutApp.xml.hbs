@@ -23,7 +23,6 @@ Loading your MadEye project.  We'll be done in just a moment!
 </div>
 
 <script>var appData = gadgets.views.getParams()['appData'];
-var projectUrl = appData;
 var theIFrame = document.getElementById("theIFrame");
 if (appData){
   gapi.hangout.onApiReady.add(function(eventObj) {
@@ -35,15 +34,15 @@ if (appData){
 } else {
   gapi.hangout.onApiReady.add(function(eventObj) {
     var state = gapi.hangout.data.getState();
+    var baseUrl;
     if (state.projectUrl){
-      projectUrl = state.projectUrl
-      theIFrame.src = projectUrl + "?hangout=true";
+      baseUrl = state.projectUrl;
+    } else {
+      baseUrl = "{{apogeeUrl}}/projectSelection";
     }
-    else {
-      var hangoutUrl = gapi.hangout.getHangoutUrl();
-      var hangoutId = gapi.hangout.getHangoutId();
-      theIFrame.src = "{{apogeeUrl}}/projectSelection?hangout=true&hangoutUrl=" + hangoutUrl + "&hangoutId=" + hangoutId;;
-    }
+    var hangoutUrl = gapi.hangout.getHangoutUrl();
+    var hangoutId = gapi.hangout.getHangoutId();
+    theIFrame.src = baseUrl + "?hangout=true&hangoutUrl=" + hangoutUrl + "&hangoutId=" + hangoutId;;
   });
 }
 </script>
