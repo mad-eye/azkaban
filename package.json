@@ -7,19 +7,19 @@
     "test": "bin/test"
   },
   "dependencies": {
-    "request": "2.22.0",
+    "request": "2.30.0",
     "coffee-script": "1.6.3",
-    "express": "3.3.4",
+    "express": "3.4.7",
     "share": "git://github.com/mad-eye/ShareJS.git#madeye",
-    "underscore": "1.5.1",
-    "node-uuid": "1.4.0",
+    "underscore": "1.5.2",
+    "node-uuid": "1.4.1",
     "madeye-common": "0.0.4",
-    "mongoose": "3.6.15",
-    "semver": "2.0.10",
+    "mongoose": "3.8.3",
+    "semver": "2.2.1",
     "async": "0.2.9",
     "handlebars": "1.0.12",
     "ncp": "0.4.2",
-    "pince": "0.0.4",
+    "pince": "0.0.6",
     "hat": "0.0.3"
   },
   "devDependencies": {
