@@ -1,8 +1,10 @@
 mongoose = require 'mongoose'
 async = require 'async'
 {EventEmitter} = require 'events'
-{apogeeLogger} = require './logger'
 {wrapDbError} = require './models'
+Logger = require 'pince'
+
+logger = new Logger 'apogeeClient'
 
 
 metricSchema = mongoose.Schema
@@ -47,6 +49,6 @@ class ApogeeLogProcessor extends EventEmitter
         @findAndLog()
         level = doc.level; delete doc.level
         message = doc.message; delete doc.message
-        apogeeLogger.log level, message, cleanDoc doc
+        logger[level] message, cleanDoc doc
 
 module.exports = ApogeeLogProcessor
