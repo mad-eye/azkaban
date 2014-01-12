@@ -53,6 +53,15 @@ routes = (app) ->
   app.post '/submitEmail', (req, res) ->
     azkaban.emailController.submitEmail req, res
 
+  installScriptTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/install_madeye.sh.hbs", "utf-8"))
+  installScript = installScriptTemplate {
+    madeyeVersion: '0.4.2'
+    warehouseUrl: Settings.warehouseUrl
+  }
+  app.get "/install", (req, res) ->
+    res.write installScript
+    res.end()
+
   simpleHangoutTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/simpleHangoutApp.xml.hbs", "utf-8"))
   simpleHangoutXml = simpleHangoutTemplate {apogeeUrl: Settings.apogeeUrl}
   app.get "/simpleHangoutApp.xml", (req, res) ->
