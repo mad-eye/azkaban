@@ -65,13 +65,14 @@ curl --progress-bar --fail "$TARBALL_URL" | tar -xzf - -C "$INSTALL_TMPDIR"
 # bomb out if it didn't work, eg no net
 test -x "${INSTALL_TMPDIR}/dist/madeye"
 
-
-DIST_DIR="$HOME/.madeye/dist"
+MADEYE_DIR="$HOME/.madeye"
+DIST_DIR="$MADEYE_DIR/dist"
 rm -rf $DIST_DIR
+mkdir "$MADEYE_DIR"
 mv "${INSTALL_TMPDIR}/dist" $DIST_DIR
 rmdir "${INSTALL_TMPDIR}"
 
-MADEYE_CMD="$HOME/.madeye/dist/madeye"
+MADEYE_CMD="$MADEYE_DIR/dist/madeye"
 # just double-checking :)
 test -x $MADEYE_CMD
 
