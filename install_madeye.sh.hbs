@@ -17,8 +17,6 @@ PREFIX="/usr/local"
 set -e
 set -u
 
-MADEYE_VERSION={{madeyeVersion}}
-
 # Let's display everything on stderr.
 #XXX: Do we want this?
 #exec 1>&2
@@ -56,7 +54,7 @@ fi
 
 trap "echo Installation failed." EXIT
 
-TARBALL_URL="{{warehouseUrl}}/${MADEYE_VERSION}/madeye_${MADEYE_VERSION}_${PLATFORM}.tgz"
+TARBALL_URL="{{warehouseUrl}}/latest/${PLATFORM}"
 echo "Using tarball url $TARBALL_URL"
 
 INSTALL_TMPDIR="$HOME/.madeye-install-tmp"

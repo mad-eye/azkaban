@@ -55,7 +55,6 @@ routes = (app) ->
 
   installScriptTemplate = handlebars.compile(fs.readFileSync("#{__dirname}/install_madeye.sh.hbs", "utf-8"))
   installScript = installScriptTemplate {
-    madeyeVersion: '0.4.2'
     warehouseUrl: Settings.warehouseUrl
   }
   app.get "/install", (req, res) ->
