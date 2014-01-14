@@ -68,7 +68,7 @@ test -x "${INSTALL_TMPDIR}/dist/madeye"
 MADEYE_DIR="$HOME/.madeye"
 DIST_DIR="$MADEYE_DIR/dist"
 rm -rf $DIST_DIR
-mkdir "$MADEYE_DIR"
+mkdir -p "$MADEYE_DIR"
 mv "${INSTALL_TMPDIR}/dist" $DIST_DIR
 rmdir "${INSTALL_TMPDIR}"
 
@@ -79,6 +79,33 @@ test -x $MADEYE_CMD
 echo
 echo "MadEye has been installed in your home directory (~/.madeye)."
 
+# If we find an npm-madeye, try to uninstall it.
+if command npm -g list 2>/dev/null | grep -q "├─┬ madeye"; then
+  read -p "We've found another MadEye installed by npm that we need to remove.  Can we remove it? [y/n] " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Uninstalling the npm-installed MadEye."
+    if npm uninstall -g madeye >/dev/null 2>&1; then
+      echo "Successfully removed"
+    elif type sudo >/dev/null 2>&1; then
+      echo "This may prompt for your password."
+      if sudo npm uninstall -g madeye >/dev/null 2>&1; then
+        echo "Successfully removed"
+      else
+        echo "We were unable to remove the npm-installed MadEye.  Please run 'sudo npm uninstall -g madeye' and run this installer again."
+        exit 1
+      fi
+    else # no sudo
+      echo "We were unable to remove the npm-installed MadEye.  Please uninstall MadEye from npm and run this installer again."
+      exit 1
+    fi
+  else
+    echo "We'll need to remove the npm-installed MadEye to continue.  Exiting install."
+    exit 1
+  fi
+fi
+
+# Link binary to /usr/local/bin/madeye
 if ln -f -s "$MADEYE_CMD" "$PREFIX/bin/madeye" >/dev/null 2>&1; then
   echo "Linking madeye to $PREFIX/bin/madeye for your convenience."
   cat <<"EOF"
