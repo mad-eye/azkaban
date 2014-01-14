@@ -24,7 +24,8 @@ set -u
 UNAME=$(uname)
 if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
   #TODO: Support SunOS type
-  echo "Sorry, this OS is not supported yet."
+  echo "Sorry, the MadEye installer doesn't support this OS yet."
+  echo "Please install MadEye by installing Node.js (http://nodejs.org) and running 'sudo npm install -g madeye'."
   exit 1
 fi
 
@@ -35,6 +36,7 @@ if [ "$UNAME" = "Darwin" ] ; then
     # Can't just test uname -m = x86_64, because Snow Leopard can
     # return other values.
     echo "Only 64-bit Intel processors are supported at this time."
+    echo "Please install MadEye by installing Node.js (http://nodejs.org) and running 'sudo npm install -g madeye'."
     exit 1
   fi
   PLATFORM="darwin-x64"
@@ -42,8 +44,8 @@ elif [ "$UNAME" = "Linux" ] ; then
   ### Linux ###
   ARCH=$(uname -m)
   if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
-    echo "Unusable architecture: $ARCH"
-    echo "MadEye only supports i686 and x86_64 for now."
+    echo "The MadEye installer only supports i686 and x86_64 architectures for now."
+    echo "Please install MadEye by installing Node.js (http://nodejs.org) and running 'sudo npm install -g madeye'."
     exit 1
   elif [ "$ARCH" = "i686" ]; then
     PLATFORM="linux-x86"
