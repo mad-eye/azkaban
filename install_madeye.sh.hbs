@@ -83,26 +83,19 @@ echo "MadEye has been installed in your home directory (~/.madeye)."
 
 # If we find an npm-madeye, try to uninstall it.
 if command npm -g list 2>/dev/null | grep -q "├─┬ madeye"; then
-  read -p "We've found another MadEye installed by npm that we need to remove.  Can we remove it? [y/n] " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Uninstalling the npm-installed MadEye."
-    if npm uninstall -g madeye >/dev/null 2>&1; then
-      echo "Successfully removed"
-    elif type sudo >/dev/null 2>&1; then
-      echo "This may prompt for your password."
-      if sudo npm uninstall -g madeye >/dev/null 2>&1; then
-        echo "Successfully removed"
-      else
-        echo "We were unable to remove the npm-installed MadEye.  Please run 'sudo npm uninstall -g madeye' and run this installer again."
-        exit 1
-      fi
-    else # no sudo
-      echo "We were unable to remove the npm-installed MadEye.  Please uninstall MadEye from npm and run this installer again."
+  echo "We've found another MadEye installed by npm that we need to remove."
+  if npm uninstall -g madeye >/dev/null 2>&1; then
+    echo "Successfully removed the extraneous copy of MadEye."
+  elif type sudo >/dev/null 2>&1; then
+    echo "This may prompt for your password."
+    if sudo npm uninstall -g madeye >/dev/null 2>&1; then
+      echo "Successfully removed the extraneous copy of MadEye."
+    else
+      echo "We were unable to remove the npm-installed MadEye.  Please run 'sudo npm uninstall -g madeye' and run this installer again."
       exit 1
     fi
-  else
-    echo "We'll need to remove the npm-installed MadEye to continue.  Exiting install."
+  else # no sudo
+    echo "We were unable to remove the npm-installed MadEye.  Please uninstall MadEye from npm and run this installer again."
     exit 1
   fi
 fi
