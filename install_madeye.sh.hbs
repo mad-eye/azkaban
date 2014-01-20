@@ -4,10 +4,9 @@
 ## know what shell the user has. Debian uses 'dash' for 'sh', for
 ## example.
 
+#TODO: Enable `madeye update`
 # Is MadEye already installed (in /usr/local/bin)? If so, just run the updater
 # instead of starting from scratch. 
-
-#TODO: Enable `madeye update`
 #if [ -x /usr/local/bin/madeye ]; then
   #exec /usr/local/bin/madeye update
 #fi
@@ -17,8 +16,8 @@ PREFIX="/usr/local"
 set -e
 set -u
 
-# Let's display everything on stderr.
 #XXX: Do we want this?
+# Let's display everything on stderr.
 #exec 1>&2
 
 UNAME=$(uname)
@@ -69,14 +68,14 @@ test -x "${INSTALL_TMPDIR}/dist/madeye"
 
 MADEYE_DIR="$HOME/.madeye"
 DIST_DIR="$MADEYE_DIR/dist"
-rm -rf $DIST_DIR
+rm -rf "$DIST_DIR"
 mkdir -p "$MADEYE_DIR"
-mv "${INSTALL_TMPDIR}/dist" $DIST_DIR
-rmdir "${INSTALL_TMPDIR}"
+mv "${INSTALL_TMPDIR}/dist" "$DIST_DIR"
+rmdir "$INSTALL_TMPDIR"
 
 MADEYE_CMD="$MADEYE_DIR/dist/madeye"
 # just double-checking :)
-test -x $MADEYE_CMD
+test -x "$MADEYE_CMD"
 
 echo
 echo "MadEye has been installed in your home directory (~/.madeye)."
