@@ -34,7 +34,7 @@ if [ "$UNAME" = "Darwin" ] ; then
   if [ "i386" != "$(uname -p)" -o "1" != "$(sysctl -n hw.cpu64bit_capable 2>/dev/null || echo 0)" ] ; then
     # Can't just test uname -m = x86_64, because Snow Leopard can
     # return other values.
-    echo "Only 64-bit Intel processors are supported at this time."
+    echo "The MadEye installer only supports 64-bit Intel processors at this time."
     echo "Please install MadEye by installing Node.js (http://nodejs.org) and running 'sudo npm install -g madeye'."
     exit 1
   fi
