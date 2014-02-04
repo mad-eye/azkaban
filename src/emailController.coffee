@@ -1,6 +1,7 @@
 async = require 'async'
 _ = require 'underscore'
 {NewsletterEmail, wrapDbError} = require './models'
+Logger = require 'pince'
 
 log = new Logger 'emailController'
 
