@@ -21,7 +21,7 @@ fileSchema = Schema
   loadChecksum: Number
   lastOpened: Number
 
-fileSchema.index ({projectId: 1})
+fileSchema.index {projectId: 1}
 fileSchema.index {projectId: 1, path: 1}, unique: true
 
 fileSchema.statics.findByProjectId = (projectId, options, callback) ->
@@ -59,7 +59,14 @@ projectStatusSchema = Schema
   heartbeat: Number
   iconId: Number #XXX: This will probably change, and maybe break?
 
+projectStatusSchema.index {projectId: 1}
 ProjectStatus = mongoose.model 'ProjectStatus', projectStatusSchema, 'projectStatus'
+
+workspaceSchema = Schema
+  userId: {type:String, required:true}
+
+workspaceSchema.index {userId: 1}, unique: true
+Workspaces = mongoose.model 'Workspace', workspaceSchema, 'workspaces'
 
 wrapDbError = (err) ->
   return err unless err?
