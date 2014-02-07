@@ -50,18 +50,6 @@ projectSchema = Schema
 
 Project = mongoose.model 'Project', projectSchema, 'projects'
 
-projectStatusSchema = Schema
-  projectId: {type:String, required:true}
-  userId: {type:String, required:true}
-  isHangout: Boolean
-  connectionId: String
-  filePath: String
-  heartbeat: Number
-  iconId: Number #XXX: This will probably change, and maybe break?
-
-projectStatusSchema.index {projectId: 1}
-ProjectStatus = mongoose.model 'ProjectStatus', projectStatusSchema, 'projectStatus'
-
 workspaceSchema = Schema
   userId: {type:String, required:true}
 
@@ -93,7 +81,6 @@ StripeEvent = mongoose.model 'StripeEvent', stripeEventSchema, 'stripeEvents'
 
 exports.File = File
 exports.Project = Project
-exports.ProjectStatus = ProjectStatus
 exports.StripeEvent = StripeEvent
 exports.NewsletterEmail = NewsletterEmail
 exports.wrapDbError = wrapDbError
