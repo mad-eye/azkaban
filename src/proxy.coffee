@@ -6,9 +6,8 @@ httpProxy = require 'http-proxy'
 proxy = new httpProxy.createProxyServer {ws: true}
 
 proxyServer = http.createServer (req, res)->
-  [reqUrl, projectId, path] = projectId = /\/([\w\d]+)(.*)/.exec(req.url)
+  [reqUrl, projectId, path] = /\/([\w\d]+)(.*)/.exec(req.url)
   Project.findOne _id: projectId, (err, project)=>
-    #TODO handle error
     port = project.tunnels.terminal.remotePort
     # target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}#{path}"
     target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}"
@@ -19,7 +18,7 @@ proxyServer = http.createServer (req, res)->
       console.log "SOMETHING", something
 
 proxyServer.on "upgrade", (req, socket, head)->
-  [reqUrl, projectId, path] = projectId = /\/([\w\d]+)(.*)/.exec(req.url)
+  [reqUrl, projectId, path] = /\/([\w\d]+)(.*)/.exec(req.url)
   Project.findOne _id: projectId, (err, project)=>
     #TODO handle error
     port = project.tunnels.terminal.remotePort
@@ -27,7 +26,7 @@ proxyServer.on "upgrade", (req, socket, head)->
     target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}"
     # strip project ID from the URL
     req.url = path
-    proxy.ws req, socket, head, target: {host: "tunnel-test.madeye.io", port}, (err) ->
+    proxy.ws req, socket, head, target: {host: process.env.MADEYE_TUNNEL_HOST, port}, (err) ->
       console.error "*ERROR*", err
 
-proxyServer.listen 4159
+proxyServer.listen process.env.MADEYE_PROXY_PORT
