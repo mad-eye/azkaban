@@ -6,33 +6,34 @@ httpProxy = require 'http-proxy'
 proxy = new httpProxy.createProxyServer {ws: true}
 
 proxyServer = http.createServer (req, res)->
+  findTunnel req, res, (err, port)->
+    return if err
+    target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}"
+    proxy.web req, res, {target: target}, (err)->
+      console.error "PROXY ERROR", err if err
+
+proxyServer.on "upgrade", (req, socket, head)->
+  findTunnel req, null, (err,port)->
+    return if err
+    proxy.ws req, socket, head, target: {host: process.env.MADEYE_TUNNEL_HOST, port}, (err) ->
+      console.error "*ERROR*", err if err
+
+findTunnel = (req, res, callback)->
   [reqUrl, projectId, path] = /\/([\w\d]+)(.*)/.exec(req.url)
   Project.findOne _id: projectId, (err, project)=>
     unless project
-      res.statusCode = 400
-      return res.end "PROJECT NOT FOUND"
+      res.statusCode = 400 if res
+      error = "PROJECT NOT FOUND"
     unless project.tunnels and project.tunnels.terminal
-      res.statusCode = 500
-      return res.end "PROJECT HAS NO TERMINAL TUNNEL"
-    port = project.tunnels.terminal.remotePort
-    # target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}#{path}"
-    target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}"
-    # strip project ID from the URL
-    req.url = path
-    proxy.web req, res, {target: target}, (err, something)->
-      console.error "ERROR", err
-      console.log "SOMETHING", something
-
-proxyServer.on "upgrade", (req, socket, head)->
-  [reqUrl, projectId, path] = /\/([\w\d]+)(.*)/.exec(req.url)
-  Project.findOne _id: projectId, (err, project)=>
-    #TODO handle error
-    port = project.tunnels.terminal.remotePort
-    # target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}#{path}"
-    target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}"
-    # strip project ID from the URL
-    req.url = path
-    proxy.ws req, socket, head, target: {host: process.env.MADEYE_TUNNEL_HOST, port}, (err) ->
-      console.error "*ERROR*", err
+      res.statusCode = 500 if res
+      error = "PROJECT HAS NO TERMINAL TUNNEL"
+    if error
+      res.end error if res
+      callback error
+    else
+      port = project.tunnels.terminal.remotePort
+      # strip project ID from the URL
+      req.url = path
+      callback null, port
 
 proxyServer.listen process.env.MADEYE_PROXY_PORT
