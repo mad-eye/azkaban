@@ -8,6 +8,12 @@ proxy = new httpProxy.createProxyServer {ws: true}
 proxyServer = http.createServer (req, res)->
   [reqUrl, projectId, path] = /\/([\w\d]+)(.*)/.exec(req.url)
   Project.findOne _id: projectId, (err, project)=>
+    unless project
+      res.statusCode = 400
+      return res.end "PROJECT NOT FOUND"
+    unless project.tunnels and project.tunnels.terminal
+      res.statusCode = 500
+      return res.end "PROJECT HAS NO TERMINAL TUNNEL"
     port = project.tunnels.terminal.remotePort
     # target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}#{path}"
     target = "http://#{process.env.MADEYE_TUNNEL_HOST}:#{port}"
