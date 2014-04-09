@@ -2,7 +2,7 @@ _ = require 'underscore'
 _path = require 'path'
 async = require 'async'
 uuid = require 'node-uuid'
-{errors, errorType} = require 'madeye-common'
+{errors} = require 'madeye-common'
 mongoose = require 'mongoose'
 Schema = mongoose.Schema
 
@@ -57,9 +57,13 @@ workspaceSchema.index {userId: 1}, unique: true
 Workspaces = mongoose.model 'Workspace', workspaceSchema, 'workspaces'
 
 wrapDbError = (err) ->
-  return err unless err?
-  return err if err.madeye
-  errors.new errorType.DATABASE_ERROR, cause:err
+  #did this ever work? it seems like error types are never exported?
+
+  # return err unless err?
+  # return err if err.madeye
+  # console.log "CAUSE", err
+  # errors.new DATABASE_ERROR, cause:err/
+  throw err
 
 newsletterEmailSchema = Schema
   email: String
