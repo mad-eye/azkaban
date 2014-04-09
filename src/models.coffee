@@ -57,13 +57,10 @@ workspaceSchema.index {userId: 1}, unique: true
 Workspaces = mongoose.model 'Workspace', workspaceSchema, 'workspaces'
 
 wrapDbError = (err) ->
-  #did this ever work? it seems like error types are never exported?
-
-  # return err unless err?
-  # return err if err.madeye
-  # console.log "CAUSE", err
-  # errors.new DATABASE_ERROR, cause:err/
-  throw err
+  return err unless err?
+  return err if err.madeye
+  #console.log "CAUSE", err
+  errors.new DATABASE_ERROR, cause:err
 
 newsletterEmailSchema = Schema
   email: String
