@@ -90,4 +90,4 @@ describe 'fileController', ->
       file = new File {path: "novel.txt", isDir: false, orderingPath: "novel.txt", projectId}
       file.save (err)->
         console.error err if err
-        controller.saveStaticFile {params: {fileId: file._id}, body: {contents: novelContents}}, fakeResponse
+        controller.saveStaticFile {params: {fileId: file._id}, body: {contents: novelContents, static:true}}, fakeResponse

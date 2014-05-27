@@ -31,12 +31,10 @@ class FileController extends EventEmitter
       else
         res.json projectId: projectId, fileId:fileId, checksum:checksum
 
-  saveFile: (req, res) ->
-    res.header 'Access-Control-Allow-Origin', '*'
-    throw new Error 'saveFile is obsoleted; please correct calling function.'
-
   #TODO maybe this and createImpressJSProject should be broken out into another file?
   saveStaticFile: (req, res) ->
+    unless req.body["static"]
+      throw new Error 'saveFile for non-static files is obsoleted; please correct calling function.'
     res.header 'Access-Control-Allow-Origin', '*'
     fileId = req.params['fileId']
     contents = req.body.contents

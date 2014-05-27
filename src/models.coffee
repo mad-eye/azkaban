@@ -59,8 +59,7 @@ Workspaces = mongoose.model 'Workspace', workspaceSchema, 'workspaces'
 wrapDbError = (err) ->
   return err unless err?
   return err if err.madeye
-  #console.log "CAUSE", err
-  errors.new DATABASE_ERROR, cause:err
+  errors.new 'DatabaseError', cause:err
 
 newsletterEmailSchema = Schema
   email: String
