@@ -1,6 +1,5 @@
 express = require('express')
 http = require('http')
-{Settings} = require 'madeye-common'
 {Azkaban} = require './src/azkaban'
 FileController = require('./src/fileController')
 BolideClient = require "./src/bolideClient"
@@ -31,7 +30,7 @@ class Server
     @app = express()
 
     @app.configure =>
-      @app.set('port', Settings.azkabanPort)
+      @app.set('port', 4004)
       @app.use(express.favicon())
       @app.use(express.logger('dev'))
       @app.use(express.bodyParser())
@@ -52,8 +51,11 @@ class Server
 
 
   setupMongo: ->
-    log.debug "Connecting to mongo #{Settings.mongoUrl}"
-    mongoose.connect Settings.mongoUrl
+    mongoHost = process.env.MONGO_PORT_27017_TCP_ADDR
+    mongoPort = process.env.MONGO_PORT_27017_TCP_PORT
+    mongoUrl = "mongodb://#{mongoHost}:#{mongoPort}/meteor"
+
+    mongoose.connect mongoUrl
 
   setupServers: ->
     #Set up http servers

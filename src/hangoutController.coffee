@@ -1,5 +1,6 @@
 {Project, ProjectStatus, wrapDbError} = require './models'
 {EventEmitter} = require 'events'
+# XXX NO SETTINGS
 {Settings} = require 'madeye-common'
 {errors, errorType} = require 'madeye-common'
 Logger = require 'pince'
@@ -19,6 +20,7 @@ class HangoutController extends EventEmitter
     Project.findById projectId, 'hangoutUrl', (err, project) =>
       console.log "Found project", project
       hangoutUrl = project?.hangoutUrl
+# XXX NO SETTINGS
       activeHangoutUrl = hangoutUrl + "?gid=" + Settings.hangoutAppId
       #if request goes through nginx, then use the host passed in
       if req.headers['x-forwarded-for']

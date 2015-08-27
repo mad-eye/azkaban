@@ -20,7 +20,9 @@ class BolideClient extends EventEmitter
       reset = false
     @emit 'trace', "setDocumentContents #{docId}"
     #TODO replace hard coded localhost or remove impress.js functionality
-    sharejs.open docId, 'text2', "http://localhost:3003/channel", (error, doc) ->
+    bolideHost = process.env.BOLIDE_PORT_3003_TCP_ADDR
+    bolidePort = process.env.BOLIDE_PORT_3003_TCP_PORT
+    sharejs.open docId, 'text2', "http://#{bolideHost}:#{bolidePort}/channel", (error, doc) ->
       return callback wrapShareError error if error
       if doc.version > 0 and !reset
         return callback errors.new errorType.INITIALIZED_FILE_NOT_EMPTY
