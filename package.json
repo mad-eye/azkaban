@@ -20,7 +20,8 @@
     "handlebars": "1.0.12",
     "ncp": "0.4.2",
     "pince": "0.0.6",
-    "hat": "0.0.3"
+    "hat": "0.0.3",
+    "http-proxy": "~1.0.2"
   },
   "devDependencies": {
     "sinon": "~1.7.0",
